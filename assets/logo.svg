@@ -3,8 +3,8 @@
   <rect width="1024" height="1024" fill="#000000"/>
   <!-- szürke út (#555, mint a térképen) lefelé a kép széléig -->
   <rect x="494" y="512" width="36" height="512" fill="#555555"/>
-  <!-- fekete keret a háromszög körül (ugyanaz az arány, mint az appban: 1.65×) -->
-  <polygon points="512,237 640,624 384,624" fill="#000000"/>
+  <!-- fekete keret a háromszög körül (ugyanaz az arány, mint az appban: 1.12×) -->
+  <polygon points="512,290 599,570 425,570" fill="#000000"/>
   <!-- fehér háromszög felfelé (magas:széles ≈ 1.6) -->
   <polygon points="512,310 590,560 434,560" fill="#FFFFFF"/>
 </svg>
