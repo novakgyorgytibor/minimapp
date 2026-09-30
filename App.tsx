@@ -1,7 +1,7 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
@@ -12,6 +12,7 @@ import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks, type MaskGeometry } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
+import { parseDevLink } from './src/nav/devLink';
 import { nextManeuverSegment } from './src/nav/maneuverSegments';
 import { lineProgressAt, mercatorCumulative } from './src/nav/lineProgress';
 import { angleDiff } from './src/nav/heading';
@@ -93,6 +94,28 @@ function Main() {
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.requestId]);
+
+  // Fejlesztői mélylink (csak dev buildben): cél beállítása, és kérésre automatikus indulás
+  const pendingStart = useRef(false);
+  useEffect(() => {
+    if (!__DEV__) return;
+    const handle = (url: string | null) => {
+      const link = parseDevLink(url);
+      if (!link) return;
+      pendingStart.current = link.start;
+      dispatch({ type: 'CANCEL' });
+      dispatch({ type: 'SET_DEST', dest: link.dest, label: link.label });
+    };
+    Linking.getInitialURL().then(handle).catch(() => {});
+    const sub = Linking.addEventListener('url', (e) => handle(e.url));
+    return () => sub.remove();
+  }, []);
+  useEffect(() => {
+    if (pendingStart.current && s.phase === 'preview' && s.route && !s.loading) {
+      pendingStart.current = false;
+      dispatch({ type: 'START' });
+    }
+  }, [s.phase, s.route, s.loading]);
 
   // Érkezés után 5 s → idle
   useEffect(() => {
