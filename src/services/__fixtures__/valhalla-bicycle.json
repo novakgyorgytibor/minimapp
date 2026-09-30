@@ -1,0 +1,305 @@
+{
+    "trip": {
+        "locations": [
+            {
+                "type": "break",
+                "lat": 47.4979,
+                "lon": 19.0402,
+                "side_of_street": "right",
+                "original_index": 0
+            },
+            {
+                "type": "break",
+                "lat": 47.507,
+                "lon": 19.046,
+                "side_of_street": "right",
+                "original_index": 1
+            }
+        ],
+        "legs": [
+            {
+                "maneuvers": [
+                    {
+                        "type": 2,
+                        "instruction": "Kerékpározzon keletre a(z) Clark Ádám tér utcán.",
+                        "verbal_succinct_transition_instruction": "Kerékpározzon keletre. aztán Forduljon jobbra.",
+                        "verbal_pre_transition_instruction": "Kerékpározzon keletre a(z) Clark Ádám tér utcán. aztán Forduljon jobbra.",
+                        "verbal_post_transition_instruction": "Haladjon tovább 10 méter távot.",
+                        "street_names": [
+                            "Clark Ádám tér"
+                        ],
+                        "bearing_after": 73,
+                        "time": 2.266,
+                        "length": 0.013,
+                        "cost": 3.286,
+                        "begin_shape_index": 0,
+                        "end_shape_index": 2,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 10,
+                        "instruction": "Forduljon jobbra.",
+                        "verbal_transition_alert_instruction": "Forduljon jobbra.",
+                        "verbal_succinct_transition_instruction": "Forduljon jobbra. aztán Haladjon tovább a(z) a kerékpárút utcán.",
+                        "verbal_pre_transition_instruction": "Forduljon jobbra. aztán Haladjon tovább a(z) a kerékpárút utcán.",
+                        "verbal_post_transition_instruction": "Haladjon tovább 20 méter távot.",
+                        "bearing_before": 73,
+                        "bearing_after": 131,
+                        "time": 2.781,
+                        "length": 0.017,
+                        "cost": 10.672,
+                        "begin_shape_index": 2,
+                        "end_shape_index": 5,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 8,
+                        "instruction": "Haladjon tovább a(z) a kerékpárút utcán.",
+                        "verbal_transition_alert_instruction": "Haladjon tovább a(z) a kerékpárút utcán.",
+                        "verbal_pre_transition_instruction": "Haladjon tovább a(z) a kerékpárút utcán. aztán Forduljon balra a(z) a kerékpárút utcára.",
+                        "verbal_post_transition_instruction": "Haladjon tovább kevesebb, mint 10 méter távot.",
+                        "bearing_before": 134,
+                        "bearing_after": 147,
+                        "time": 1.0,
+                        "length": 0.005,
+                        "cost": 1.362,
+                        "begin_shape_index": 5,
+                        "end_shape_index": 6,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 15,
+                        "instruction": "Forduljon balra a(z) a kerékpárút utcára.",
+                        "verbal_transition_alert_instruction": "Forduljon balra a(z) a kerékpárút utcára.",
+                        "verbal_succinct_transition_instruction": "Forduljon balra. aztán Forduljon balra a(z) Lánchíd utca utcára.",
+                        "verbal_pre_transition_instruction": "Forduljon balra a(z) a kerékpárút utcára. aztán Forduljon balra a(z) Lánchíd utca utcára.",
+                        "verbal_post_transition_instruction": "Haladjon tovább 10 méter távot.",
+                        "bearing_before": 147,
+                        "bearing_after": 70,
+                        "time": 5.8,
+                        "length": 0.014,
+                        "cost": 10.789,
+                        "begin_shape_index": 6,
+                        "end_shape_index": 8,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 15,
+                        "instruction": "Forduljon balra a(z) Lánchíd utca/3/4/5/6/7 utcára.",
+                        "verbal_transition_alert_instruction": "Forduljon balra a(z) Lánchíd utca utcára.",
+                        "verbal_succinct_transition_instruction": "Forduljon balra. aztán Térjen be a(z) Clark Ádám tér utcára és válassza a(z) 1. kijáratot a(z) Széchenyi lánchíd utcára.",
+                        "verbal_pre_transition_instruction": "Forduljon balra a(z) Lánchíd utca, 3 utcára. aztán Térjen be a(z) Clark Ádám tér utcára és válassza a(z) 1. kijáratot a(z) Széchenyi lánchíd utcára.",
+                        "verbal_post_transition_instruction": "Haladjon tovább 20 méter távot.",
+                        "street_names": [
+                            "Lánchíd utca",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7"
+                        ],
+                        "bearing_before": 69,
+                        "bearing_after": 6,
+                        "time": 6.554,
+                        "length": 0.022,
+                        "cost": 50.542,
+                        "begin_shape_index": 8,
+                        "end_shape_index": 11,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 26,
+                        "instruction": "Térjen be a(z) Clark Ádám tér utcáraés válassza a(z) 1. kijáratot a(z) Széchenyi lánchíd utca felé.",
+                        "verbal_transition_alert_instruction": "Térjen be a(z) Clark Ádám tér utcára és válassza a(z) 1. kijáratot a(z) Széchenyi lánchíd utcára.",
+                        "verbal_succinct_transition_instruction": "Menjen be a körforgalomba és válassza a(z) 1. kijáratot.",
+                        "verbal_pre_transition_instruction": "Térjen be a(z) Clark Ádám tér utcára és válassza a(z) 1. kijáratot a(z) Széchenyi lánchíd utcára.",
+                        "street_names": [
+                            "Clark Ádám tér"
+                        ],
+                        "bearing_before": 7,
+                        "bearing_after": 22,
+                        "time": 2.258,
+                        "length": 0.016,
+                        "cost": 4.262,
+                        "begin_shape_index": 11,
+                        "end_shape_index": 14,
+                        "roundabout_exit_count": 1,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 27,
+                        "instruction": "Hagyja el a körforgalmat a(z) Széchenyi lánchíd utcára fordulva.",
+                        "verbal_succinct_transition_instruction": "Hagyja el a körforgalmat.",
+                        "verbal_pre_transition_instruction": "Hagyja el a körforgalmat a(z) Széchenyi lánchíd felé.",
+                        "verbal_post_transition_instruction": "Haladjon tovább 500 méter távot.",
+                        "street_names": [
+                            "Széchenyi lánchíd"
+                        ],
+                        "bearing_before": 22,
+                        "bearing_after": 43,
+                        "time": 95.096,
+                        "length": 0.497,
+                        "cost": 173.64,
+                        "begin_shape_index": 14,
+                        "end_shape_index": 27,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 9,
+                        "instruction": "Forduljon jobbra a(z) Széchenyi István tér utcára.",
+                        "verbal_transition_alert_instruction": "Forduljon jobbra a(z) Széchenyi István tér utcára.",
+                        "verbal_succinct_transition_instruction": "Forduljon jobbra. aztán Használja a kijáratot.",
+                        "verbal_pre_transition_instruction": "Forduljon jobbra a(z) Széchenyi István tér utcára. aztán Használja a kijáratot.",
+                        "verbal_post_transition_instruction": "Haladjon tovább 60 méter távot.",
+                        "street_names": [
+                            "Széchenyi István tér"
+                        ],
+                        "bearing_before": 146,
+                        "bearing_after": 164,
+                        "time": 10.09,
+                        "length": 0.058,
+                        "cost": 23.904,
+                        "begin_shape_index": 27,
+                        "end_shape_index": 28,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 20,
+                        "instruction": "Használja a kijáratot.",
+                        "verbal_transition_alert_instruction": "Használja a kijáratot.",
+                        "verbal_pre_transition_instruction": "Használja a kijáratot. aztán Tartson jobbra, hogy betérjen a(z) Széchenyi István tér utcára.",
+                        "street_names": [
+                            "Széchenyi István tér"
+                        ],
+                        "bearing_before": 164,
+                        "bearing_after": 172,
+                        "time": 4.7,
+                        "length": 0.022,
+                        "cost": 7.771,
+                        "begin_shape_index": 28,
+                        "end_shape_index": 29,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 23,
+                        "instruction": "Tartson jobbra, hogy a(z) Széchenyi István tér utcára térhessen.",
+                        "verbal_transition_alert_instruction": "Tartson jobbra, hogy betérjen a(z) Széchenyi István tér utcára.",
+                        "verbal_pre_transition_instruction": "Tartson jobbra, hogy betérjen a(z) Széchenyi István tér utcára. aztán Forduljon jobbra, hogy ráhajtson a rámpára.",
+                        "street_names": [
+                            "Széchenyi István tér"
+                        ],
+                        "bearing_before": 172,
+                        "bearing_after": 180,
+                        "time": 6.831,
+                        "length": 0.039,
+                        "cost": 11.356,
+                        "begin_shape_index": 29,
+                        "end_shape_index": 37,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 18,
+                        "instruction": "Forduljon jobbra, hogy a rámpára hajtson.",
+                        "verbal_transition_alert_instruction": "Forduljon jobbra, hogy ráhajtson a rámpára.",
+                        "verbal_pre_transition_instruction": "Forduljon jobbra, hogy ráhajtson a rámpára.",
+                        "street_names": [
+                            "Jane Haining rakpart"
+                        ],
+                        "bearing_before": 250,
+                        "bearing_after": 307,
+                        "time": 16.994,
+                        "length": 0.076,
+                        "cost": 40.297,
+                        "begin_shape_index": 37,
+                        "end_shape_index": 43,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 9,
+                        "instruction": "Forduljon jobbra, hogy a(z) Jane Haining rakpart utcán maradjon.",
+                        "verbal_transition_alert_instruction": "Forduljon jobbra hogy a(z) Jane Haining rakpart utcán maradjon.",
+                        "verbal_succinct_transition_instruction": "Forduljon jobbra.",
+                        "verbal_pre_transition_instruction": "Forduljon jobbra hogy a(z) Jane Haining rakpart utcán maradjon.",
+                        "verbal_post_transition_instruction": "Haladjon tovább 900 méter távot.",
+                        "street_names": [
+                            "Jane Haining rakpart"
+                        ],
+                        "bearing_before": 339,
+                        "bearing_after": 4,
+                        "time": 204.139,
+                        "length": 0.938,
+                        "cost": 428.68,
+                        "begin_shape_index": 43,
+                        "end_shape_index": 83,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    },
+                    {
+                        "type": 5,
+                        "instruction": "Az úti célja erre van: jobbra.",
+                        "verbal_transition_alert_instruction": "Az Ön úti célja jobbra lesz.",
+                        "verbal_pre_transition_instruction": "Az Ön úti célja jobbra van.",
+                        "bearing_before": 6,
+                        "time": 0.0,
+                        "length": 0.0,
+                        "cost": 0.0,
+                        "begin_shape_index": 83,
+                        "end_shape_index": 83,
+                        "travel_mode": "bicycle",
+                        "travel_type": "hybrid"
+                    }
+                ],
+                "summary": {
+                    "has_time_restrictions": false,
+                    "has_toll": false,
+                    "has_highway": false,
+                    "has_ferry": false,
+                    "min_lat": 47.497968,
+                    "min_lon": 19.040124,
+                    "max_lat": 47.507079,
+                    "max_lon": 19.047266,
+                    "time": 358.513,
+                    "length": 1.718,
+                    "cost": 766.567
+                },
+                "shape": "mt`ryAwvbic@q@uFSaBbA{CfAoB|@y@hAgAi@gDk@mDwDEqBa@_B[kAoAwAs@{AWgAcBuAcC}AgF}^gdDk`@wkDBwGNoCrAsGf@}Ax@}Av@wA~@}@vB{Bp^eL|JqA|C_@`BNj@LlDhBLr@ZrAJ~@NxAOvEsArCqDv@yJ`CiDh@}H`EoGOkFk@kHwAaDu@{Cq@wASgACmABw@`@m@\\o@z@oBhDmBhCu@|@_N`NqO|IuGxCcJpE_LjE}Ap@uLlCo{AlYqg@|JwUlEkJdC_NtB{PlB{Fb@sQ|@oLh@_Qp@wTZcCAwBCeKIiFOsLc@qMw@e[uBiJw@"
+            }
+        ],
+        "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 47.497968,
+            "min_lon": 19.040124,
+            "max_lat": 47.507079,
+            "max_lon": 19.047266,
+            "time": 358.513,
+            "length": 1.718,
+            "cost": 766.567
+        },
+        "status_message": "Found route between points",
+        "status": 0,
+        "units": "kilometers",
+        "language": "hu-HU"
+    }
+}
