@@ -1,4 +1,7 @@
+import { fadeSteps } from './map/fade';
 import type { Mode } from './types';
+
+const FADE = fadeSteps(12);
 
 export const config = {
   tileJsonUrl: 'https://tiles.openfreemap.org/planet',
@@ -14,8 +17,9 @@ export const config = {
 
   // Halványítás a képernyőhöz mérten: a maszk-sugarak = arányok × külső sugár,
   // külső sugár = képernyőszélesség × az alábbi arány (így bármelyik zoomon ugyanúgy néz ki).
-  maskFractions: [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1],
-  maskOpacities: [0.2, 0.2, 0.2, 0.2, 0.2, 1],
+  // 12 lépcső, lágy S-görbe szerinti sötétedés (lásd map/fade.ts) – ne látsszon éles kör
+  maskFractions: FADE.fractions,
+  maskOpacities: FADE.opacities,
   idleFadeScreenFraction: 0.5,
   corridorFadeScreenFraction: 0.3,
 
