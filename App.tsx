@@ -104,11 +104,11 @@ function Main() {
 
   const onSelectAlt = useCallback(() => dispatch({ type: 'SELECT_ALT' }), []);
 
-  // ◎: a nyíl a képernyő közepére (előnézetben is az útvonal helyett)
-  const [focusMe, setFocusMe] = useState(false);
+  // ◎: vissza a követésre – előnézetben az útvonalválasztós nézetre, egyébként a nyílra középre.
+  // A nonce miatt akkor is újra beáll, ha a kamera célja közben nem változott.
   const recenter = () => {
     setFollow(true);
-    setFocusMe(true);
+    setRecenterNonce((n) => n + 1);
   };
   // ✕ / Mégse: vissza a jelenlegi pozícióra, akkor is, ha a kamera célja nem változott
   const [recenterNonce, setRecenterNonce] = useState(0);
@@ -119,10 +119,7 @@ function Main() {
   };
 
   // Fázisváltáskor a kamera újra követ
-  useEffect(() => {
-    setFollow(true);
-    setFocusMe(false);
-  }, [s.phase]);
+  useEffect(() => setFollow(true), [s.phase]);
 
   // Nézet (képernyő közepe + zoom), csak érdemi változásnál frissítve (nextView).
   const { width: screenW, height: screenH } = useWindowDimensions();
@@ -214,7 +211,7 @@ function Main() {
     return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])] as [number, number, number, number];
   }, [s.route, s.alt, s.phase]);
 
-  const camera = cameraFor({ phase: s.phase, pos: cameraPos, heading: loc.heading ?? 0, bbox: previewBbox, follow, northUp, focusMe });
+  const camera = cameraFor({ phase: s.phase, pos: cameraPos, heading: loc.heading ?? 0, bbox: previewBbox, follow, northUp });
 
   if (loc.status === 'denied') return <PermissionScreen onRequest={loc.request} />;
 
@@ -284,7 +281,7 @@ function Main() {
                 <Speed mps={loc.speed} />
                 <Compass bearing={mapBearing} onPress={onCompassPress} />
               </View>
-              {(!follow || (s.phase === 'preview' && !focusMe)) && (
+              {!follow && (
                 <Pressable onPress={recenter} style={styles.recenter} hitSlop={12}>
                   <Text style={styles.recenterText}>◎</Text>
                 </Pressable>

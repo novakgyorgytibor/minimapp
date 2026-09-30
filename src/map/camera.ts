@@ -14,13 +14,12 @@ export interface CameraInput {
   follow: boolean;
   /** Navigáció közben is észak legyen felül (a tájolóra koppintva kapcsolható). */
   northUp: boolean;
-  /** A ◎ gombbal kért középre állás: előnézetben is a felhasználóra áll az útvonal helyett. */
-  focusMe: boolean;
 }
 
-export function cameraFor({ phase, pos, heading, bbox, follow, northUp, focusMe }: CameraInput): CameraStop | null {
+export function cameraFor({ phase, pos, heading, bbox, follow, northUp }: CameraInput): CameraStop | null {
   if (!follow) return null;
-  if (phase === 'preview' && bbox && !focusMe) {
+  // Előnézetben mindig az útvonalválasztós nézet (a ◎ is ide áll vissza)
+  if (phase === 'preview' && bbox) {
     return { bounds: bbox, padding: { top: 140, bottom: 260, left: 48, right: 48 }, bearing: 0, pitch: 0, duration: 800 };
   }
   if (!pos) return null;
