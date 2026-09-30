@@ -21,7 +21,10 @@ export interface Smoothed {
 const DEFAULT_ACCURACY_M = 15;
 const POOR_ACCURACY_M = 50;
 const STALE_MS = 30_000;
-const HOLD_M = 5;
+// Álló helyzetben ennyin belül (vagy a jelzett hibahatáron belül) nem mozdítjuk a jelölőt
+const HOLD_M = 8;
+// Ez alatt állónak tekintjük (az Android álló helyzetben is jelez kis, hamis sebességet)
+const MOVING_MPS = 1.5;
 
 /**
  * Pozíciósimítás a jelölő ugrálása ellen:
@@ -41,7 +44,7 @@ export function smoothFix(prev: Smoothed | null, fix: Fix): Smoothed {
   if (acc > POOR_ACCURACY_M && prevAcc < acc / 2 && fix.t - prev.t < STALE_MS) return prev;
 
   const speed = fix.speedMps !== null && fix.speedMps > 0 ? fix.speedMps : 0;
-  if (speed < 1 && haversineM(prev.pos, fix.pos) < Math.max(HOLD_M, acc / 2)) return prev;
+  if (speed < MOVING_MPS && haversineM(prev.pos, fix.pos) < Math.max(HOLD_M, acc)) return prev;
 
   // Folyamatzaj: amennyit az idő alatt mozoghattunk (legalább gyalogtempó)
   const q = 4 * Math.max(speed, 1) ** 2 * Math.max(dt, 0.1);

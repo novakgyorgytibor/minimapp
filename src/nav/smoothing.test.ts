@@ -40,3 +40,15 @@ test('noisy fixes while walking are damped (moves only part of the way)', () => 
   expect(moved).toBeGreaterThan(2);
   expect(moved).toBeLessThan(15);
 });
+
+test('standing still: jitter within the reported accuracy is ignored (city / indoor GPS wander)', () => {
+  const s0 = smoothFix(null, fix(0, 12, 0, 0));
+  expect(smoothFix(s0, fix(11, 12, 0.6, 1000))).toBe(s0);
+  // Android reports small bogus speeds while standing
+  expect(smoothFix(s0, fix(7, 5, 1.2, 1000))).toBe(s0);
+});
+
+test('walking still moves once the displacement exceeds the hold radius', () => {
+  const s0 = smoothFix(null, fix(0, 5, 1.2, 0));
+  expect(smoothFix(s0, fix(15, 5, 1.2, 10_000))).not.toBe(s0);
+});

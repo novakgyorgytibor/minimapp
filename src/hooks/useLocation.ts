@@ -1,7 +1,7 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { angleDiff, pickHeading } from '../nav/heading';
+import { angleDiff, pickHeading, smoothHeading } from '../nav/heading';
 import { effectiveSpeed, locationOptions, SPEED_STALE_MS } from '../nav/power';
 import { smoothFix, type Smoothed } from '../nav/smoothing';
 import type { LngLat } from '../types';
@@ -29,12 +29,12 @@ export function useLocation(navigating: boolean) {
   const course = useRef<{ deg: number | null; speed: number }>({ deg: null, speed: 0 });
   const smoothed = useRef<Smoothed | null>(null);
 
-  // Csak >3° változásnál renderelünk újra (az iránytű másodpercenként sokszor jelez)
+  // Csak >5° változásnál renderelünk újra (az iránytű másodpercenként sokszor, zajosan jelez)
   const updateHeading = useCallback(() => {
     setHeading((last) => {
       const next = pickHeading({ compass: compass.current, course: course.current.deg, speedMps: course.current.speed, last });
       if (next === null || last === null) return next;
-      return angleDiff(last, next) > 3 ? next : last;
+      return angleDiff(last, next) > 5 ? next : last;
     });
   }, []);
 
@@ -87,7 +87,8 @@ export function useLocation(navigating: boolean) {
 
     Location.watchHeadingAsync((h) => {
       const deg = h.trueHeading >= 0 ? h.trueHeading : h.magHeading;
-      compass.current = deg >= 0 ? deg : null;
+      // Simított iránytű: a zajos Android-iránytű ne remegtesse a nyilat
+      compass.current = deg >= 0 ? smoothHeading(compass.current, deg) : null;
       updateHeading();
     })
       .then(keep)

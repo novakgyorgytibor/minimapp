@@ -1,4 +1,4 @@
-import { angleDiff, pickHeading } from './heading';
+import { angleDiff, pickHeading, smoothHeading } from './heading';
 
 test('moving fast: follows the course', () => {
   expect(pickHeading({ compass: 90, course: 180, speedMps: 2.5, last: null })).toBe(180);
@@ -32,4 +32,24 @@ test.each([
   [45, 45, 0],
 ])('angleDiff(%p, %p) = %p', (a, b, d) => {
   expect(angleDiff(a, b)).toBeCloseTo(d, 6);
+});
+
+describe('smoothHeading', () => {
+  test('first value is taken as is', () => {
+    expect(smoothHeading(null, 90)).toBe(90);
+  });
+  test('moves only part of the way (low-pass)', () => {
+    const h = smoothHeading(90, 130);
+    expect(h).toBeGreaterThan(90);
+    expect(h).toBeLessThan(110);
+  });
+  test('wraps around north correctly (350° → 10° goes through 0°, not 180°)', () => {
+    const h = smoothHeading(350, 10);
+    expect(angleDiff(h, 355)).toBeLessThan(3);
+  });
+  test('converges to a steady value', () => {
+    let h: number = 0;
+    for (let i = 0; i < 40; i++) h = smoothHeading(h, 200);
+    expect(angleDiff(h, 200)).toBeLessThan(1);
+  });
 });

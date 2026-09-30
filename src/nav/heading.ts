@@ -23,3 +23,10 @@ export function pickHeading({ compass, course, speedMps, last }: HeadingInput): 
 export function angleDiff(a: number, b: number): number {
   return Math.abs(((b - a + 540) % 360) - 180);
 }
+
+/** Körkörös mozgóátlag az iránytű zajára (360°-on átfordulva is helyes). */
+export function smoothHeading(prev: number | null, next: number, alpha = 0.25): number {
+  if (prev === null) return next;
+  const diff = ((next - prev + 540) % 360) - 180;
+  return (prev + alpha * diff + 360) % 360;
+}
