@@ -1,39 +1,7 @@
-import type { Step } from '../types';
+import type { Lane, Step } from '../types';
 
-// Valhalla maneuver type → rövid angol szöveg
-const LABELS: Record<number, string> = {
-  1: 'Start',
-  2: 'Start right',
-  3: 'Start left',
-  4: 'Arrive',
-  5: 'Arrive, on the right',
-  6: 'Arrive, on the left',
-  7: 'Continue',
-  8: 'Continue straight',
-  9: 'Bear right',
-  10: 'Turn right',
-  11: 'Sharp right',
-  12: 'Make a U-turn',
-  13: 'Make a U-turn',
-  14: 'Sharp left',
-  15: 'Turn left',
-  16: 'Bear left',
-  17: 'Take the ramp',
-  18: 'Take the ramp right',
-  19: 'Take the ramp left',
-  20: 'Take the exit right',
-  21: 'Take the exit left',
-  22: 'Keep straight',
-  23: 'Keep right',
-  24: 'Keep left',
-  25: 'Merge',
-  26: 'Roundabout',
-  27: 'Exit the roundabout',
-  28: 'Take the ferry',
-  29: 'Leave the ferry',
-  37: 'Merge right',
-  38: 'Merge left',
-};
+const LANES_WITHIN_M = 500;
+const MAX_TOWARD = 3;
 
 function ordinal(n: number): string {
   const rem100 = n % 100;
@@ -41,10 +9,109 @@ function ordinal(n: number): string {
   return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'}`;
 }
 
+const TURN: Record<string, string> = {
+  uturn: 'Make a U-turn',
+  'sharp right': 'Sharp right',
+  right: 'Turn right',
+  'slight right': 'Bear right',
+  straight: 'Continue straight',
+  'slight left': 'Bear left',
+  left: 'Turn left',
+  'sharp left': 'Sharp left',
+};
+
+const side = (modifier?: string) =>
+  modifier?.includes('left') ? 'left' : modifier?.includes('right') ? 'right' : undefined;
+
+function label(step: Step): string | undefined {
+  const { kind, modifier } = step;
+  switch (kind) {
+    case 'depart':
+      return 'Start';
+    case 'arrive':
+      return side(modifier) ? `Arrive, on the ${side(modifier)}` : 'Arrive';
+    case 'roundabout':
+    case 'rotary':
+    case 'roundabout turn':
+      return step.roundaboutExit ? `Roundabout, ${ordinal(step.roundaboutExit)} exit` : 'Enter the roundabout';
+    case 'exit roundabout':
+    case 'exit rotary':
+      return 'Exit the roundabout';
+    case 'merge':
+      return side(modifier) ? `Merge ${side(modifier)}` : 'Merge';
+    case 'on ramp':
+      return side(modifier) ? `Take the ramp ${side(modifier)}` : 'Take the ramp';
+    case 'off ramp':
+      return step.exitNumber ? `Take exit ${step.exitNumber}` : side(modifier) ? `Take the exit ${side(modifier)}` : 'Take the exit';
+    case 'fork':
+      return `Keep ${side(modifier) ?? 'straight'}`;
+    case 'new name':
+    case 'continue':
+      return modifier && modifier !== 'straight' ? TURN[modifier] : 'Continue';
+    case 'turn':
+    case 'end of road':
+    case 'notification':
+      return modifier ? TURN[modifier] : undefined;
+    default:
+      return undefined;
+  }
+}
+
 export function maneuverText(step: Step): string {
-  let label = LABELS[step.type];
-  if (!label) return step.instruction;
-  if (step.type === 26 && step.roundaboutExitCount) label = `${label}, ${ordinal(step.roundaboutExitCount)} exit`;
-  const street = step.streetNames[0];
-  return street && step.type !== 4 ? `${label} · ${street}` : label;
+  const l = label(step);
+  if (!l) return step.instruction;
+  const street = step.streetNames[0] ?? step.ref?.split(';')[0].trim();
+  return street && step.kind !== 'arrive' ? `${l} · ${street}` : l;
+}
+
+const ARROW: Record<string, string> = {
+  uturn: '↶',
+  'sharp right': '↘',
+  right: '↱',
+  'slight right': '↗',
+  straight: '↑',
+  none: '↑',
+  'slight left': '↖',
+  left: '↰',
+  'sharp left': '↙',
+};
+
+export function maneuverArrow(step: Step): string {
+  if (step.kind === 'arrive') return '◉';
+  if (step.kind === 'roundabout' || step.kind === 'rotary' || step.kind === 'roundabout turn') return '↺';
+  return ARROW[step.modifier ?? 'straight'] ?? '↑';
+}
+
+export function laneArrow(lane: Lane): string {
+  return ARROW[lane.indications[0]] ?? '↑';
+}
+
+/** Sávok csak a manőver előtti utolsó 500 m-en. */
+export function lanesToShow(step: Step, distToManeuverM: number): Lane[] {
+  if (!step.lanes?.length || distToManeuverM > LANES_WITHIN_M) return [];
+  return step.lanes;
+}
+
+export interface SignInfo {
+  exit?: string;
+  refs: string[];
+  toward: string[];
+}
+
+/** Táblaszöveg ("M7, M1: Győr, Bécs-Wien") → útszámok + irányok; kijáratszám ha van. */
+export function signInfo(step: Step): SignInfo | null {
+  if (!step.destinations && !step.exitNumber) return null;
+  const splitList = (s: string, sep: string) => s.split(sep).map((x) => x.trim()).filter(Boolean);
+  let refs = step.ref ? splitList(step.ref, ';') : [];
+  let toward: string[] = [];
+  if (step.destinations) {
+    const colon = step.destinations.indexOf(':');
+    if (colon >= 0) {
+      refs = splitList(step.destinations.slice(0, colon), ',');
+      toward = splitList(step.destinations.slice(colon + 1), ',');
+    } else {
+      toward = splitList(step.destinations, ',');
+    }
+  }
+  return { exit: step.exitNumber, refs, toward: toward.slice(0, MAX_TOWARD) };
 }

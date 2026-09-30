@@ -6,9 +6,9 @@ const M_PER_DEG_LAT = 111_195;
 // Kelet felé 10 pont, 0.001° lon lépésekkel (~75 m / lépés 47.5°-on), összesen ~676 m
 const coords: LngLat[] = Array.from({ length: 10 }, (_, i) => [19 + i * 0.001, 47.5]);
 const route = buildRoute(coords, 600, [
-  { type: 1, instruction: 'Indulás', streetNames: [], beginIndex: 0 },
-  { type: 10, instruction: 'Jobbra', streetNames: ['Fő utca'], beginIndex: 4 },
-  { type: 4, instruction: 'Megérkezett', streetNames: [], beginIndex: 9 },
+  { kind: 'depart', instruction: 'Start', streetNames: [], beginIndex: 0 },
+  { kind: 'turn', modifier: 'right', instruction: 'Turn right', streetNames: ['Fő utca'], beginIndex: 4 },
+  { kind: 'arrive', instruction: 'Arrive', streetNames: [], beginIndex: 9 },
 ]);
 
 test('on the route at the start', () => {

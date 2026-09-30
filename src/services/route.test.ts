@@ -1,6 +1,6 @@
-import fixture from './__fixtures__/valhalla-bicycle.json';
+import fixture from './__fixtures__/valhalla-osrm-auto.json';
 import { rejection } from '../testUtils';
-import { buildRoute, decodePolyline, getRoute, parseValhalla, RouteError } from './route';
+import { buildRoute, decodePolyline, getRoute, parseOsrm, RouteError } from './route';
 import { HttpError } from './http';
 
 test('decodes the reference polyline (precision 5) as [lng, lat]', () => {
@@ -17,9 +17,9 @@ test('buildRoute computes cumulative distances, step distances and bbox', () => 
     [[19, 47.5], [19, 47.51], [19.01, 47.51]],
     120,
     [
-      { type: 1, instruction: 'Indulás', streetNames: [], beginIndex: 0 },
-      { type: 10, instruction: 'Jobbra', streetNames: ['A utca'], beginIndex: 1 },
-      { type: 4, instruction: 'Cél', streetNames: [], beginIndex: 2 },
+      { kind: 'depart', instruction: 'Start', streetNames: [], beginIndex: 0 },
+      { kind: 'turn', modifier: 'right', instruction: 'Turn right', streetNames: ['A utca'], beginIndex: 1 },
+      { kind: 'arrive', instruction: 'Arrive', streetNames: [], beginIndex: 2 },
     ],
   );
   expect(r.cumDistM[0]).toBe(0);
@@ -30,17 +30,40 @@ test('buildRoute computes cumulative distances, step distances and bbox', () => 
   expect(r.durationS).toBe(120);
 });
 
-test('parses a real Valhalla response', () => {
-  const r = parseValhalla(fixture);
-  expect(r.coords.length).toBeGreaterThan(50);
-  // Első pont a Clark Ádám tér környékén, [lng, lat] sorrendben
-  expect(r.coords[0][0]).toBeCloseTo(19.04, 2);
-  expect(r.coords[0][1]).toBeCloseTo(47.498, 2);
-  expect(r.distanceM).toBeGreaterThan(1200);
-  expect(r.distanceM).toBeLessThan(2500);
-  expect(r.steps.length).toBe(fixture.trip.legs[0].maneuvers.length);
-  expect(r.steps[r.steps.length - 1].beginIndex).toBe(r.coords.length - 1);
-  expect(r.steps.every((s) => typeof s.instruction === 'string')).toBe(true);
+const osrmSteps = fixture.routes[0].legs[0].steps;
+
+test('parses a real Valhalla OSRM-format response', () => {
+  const r = parseOsrm(fixture);
+  expect(r.steps).toHaveLength(osrmSteps.length);
+  // Vincellér utca környékéről indul, [lng, lat] sorrendben
+  expect(r.coords[0][0]).toBeCloseTo(19.034, 2);
+  expect(r.coords[0][1]).toBeCloseTo(47.474, 2);
+  expect(r.durationS).toBeCloseTo(fixture.routes[0].duration, 3);
+  // a lépésgeometriák összefűzése kb. a teljes hosszt adja
+  expect(r.distanceM).toBeGreaterThan(fixture.routes[0].distance * 0.97);
+  expect(r.distanceM).toBeLessThan(fixture.routes[0].distance * 1.03);
+  // minden lépés a saját manőverpontján kezdődik
+  r.steps.forEach((st, i) => {
+    const loc = osrmSteps[i].maneuver.location;
+    expect(r.coords[st.beginIndex][0]).toBeCloseTo(loc[0], 4);
+    expect(r.coords[st.beginIndex][1]).toBeCloseTo(loc[1], 4);
+  });
+  expect(r.steps[0].kind).toBe('depart');
+  expect(r.steps[r.steps.length - 1].kind).toBe('arrive');
+});
+
+test('keeps signs, exit numbers, refs and lanes', () => {
+  const r = parseOsrm(fixture);
+  const exit = r.steps.find((s) => s.kind === 'off ramp')!;
+  expect(exit).toMatchObject({ modifier: 'slight right', exitNumber: '16', ref: 'M7', destinations: 'M0 gyűrű ring, Érd észak' });
+  expect(exit.lanes).toEqual([
+    { indications: ['straight'], valid: false },
+    { indications: ['straight'], valid: false },
+    { indications: ['slight right'], valid: true },
+  ]);
+  const plain = r.steps.find((s) => s.kind === 'turn')!;
+  expect(plain.lanes ?? []).toEqual([]);
+  expect(plain.streetNames.length).toBe(1);
 });
 
 test('getRoute posts the Valhalla request and parses it', async () => {
@@ -55,6 +78,7 @@ test('getRoute posts the Valhalla request and parses it', async () => {
     costing: 'bicycle',
     language: 'en-US',
     units: 'kilometers',
+    format: 'osrm',
   });
 });
 

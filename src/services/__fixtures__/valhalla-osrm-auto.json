@@ -1,0 +1,3124 @@
+{
+    "routes": [
+        {
+            "weight_name": "auto",
+            "weight": 1277.461,
+            "duration": 1075.978,
+            "distance": 15117.257,
+            "legs": [
+                {
+                    "via_waypoints": [],
+                    "admins": [
+                        {
+                            "iso_3166_1_alpha3": "HUN",
+                            "iso_3166_1": "HU"
+                        }
+                    ],
+                    "weight": 1277.461,
+                    "duration": 1075.978,
+                    "steps": [
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        true
+                                    ],
+                                    "bearings": [
+                                        343
+                                    ],
+                                    "duration": 5.412,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 6.224,
+                                    "geometry_index": 0,
+                                    "location": [
+                                        19.033936,
+                                        47.473766
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "bearings": [
+                                        163,
+                                        343
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 1,
+                                    "location": [
+                                        19.033794,
+                                        47.474078
+                                    ]
+                                }
+                            ],
+                            "maneuver": {
+                                "instruction": "Drive north on Karolina út.",
+                                "type": "depart",
+                                "bearing_after": 343,
+                                "bearing_before": 0,
+                                "location": [
+                                    19.033936,
+                                    47.473766
+                                ]
+                            },
+                            "name": "Karolina út",
+                            "duration": 23.412,
+                            "distance": 156.08,
+                            "driving_side": "right",
+                            "weight": 26.924,
+                            "mode": "driving",
+                            "geometry": "keqpyA_tvhc@oRzGm_Ap["
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        true,
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        73,
+                                        163,
+                                        253,
+                                        344
+                                    ],
+                                    "duration": 8.32,
+                                    "turn_weight": 23.75,
+                                    "turn_duration": 5.395,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 27.114,
+                                    "geometry_index": 2,
+                                    "location": [
+                                        19.033337,
+                                        47.475109
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true,
+                                        false
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        73,
+                                        163,
+                                        253,
+                                        344
+                                    ],
+                                    "duration": 10.945,
+                                    "turn_weight": 30.0,
+                                    "turn_duration": 5.395,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 36.382,
+                                    "geometry_index": 3,
+                                    "location": [
+                                        19.033175,
+                                        47.475075
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        163,
+                                        343
+                                    ],
+                                    "duration": 10.05,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 11.558,
+                                    "geometry_index": 4,
+                                    "location": [
+                                        19.033318,
+                                        47.474756
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        163,
+                                        343
+                                    ],
+                                    "duration": 7.5,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 8.625,
+                                    "geometry_index": 5,
+                                    "location": [
+                                        19.033577,
+                                        47.474178
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        87,
+                                        163,
+                                        267,
+                                        343
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true,
+                                        false,
+                                        false
+                                    ],
+                                    "in": 3,
+                                    "turn_duration": 0.019,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 7,
+                                    "location": [
+                                        19.033766,
+                                        47.473752
+                                    ]
+                                }
+                            ],
+                            "maneuver": {
+                                "modifier": "uturn",
+                                "instruction": "Make a left U-turn at Kökörcsin utca to stay on Karolina út.",
+                                "type": "continue",
+                                "bearing_after": 163,
+                                "bearing_before": 343,
+                                "location": [
+                                    19.033337,
+                                    47.475109
+                                ]
+                            },
+                            "name": "Karolina út",
+                            "duration": 38.484,
+                            "distance": 178.0,
+                            "driving_side": "right",
+                            "weight": 85.576,
+                            "mode": "driving",
+                            "geometry": "iyspyAqnuhc@bAbI|R}Gbc@eOpU_I`Cy@`EuA"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        true,
+                                        true,
+                                        true,
+                                        false
+                                    ],
+                                    "in": 3,
+                                    "bearings": [
+                                        90,
+                                        153,
+                                        262,
+                                        343
+                                    ],
+                                    "duration": 4.204,
+                                    "turn_weight": 12.5,
+                                    "turn_duration": 3.004,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 13.88,
+                                    "geometry_index": 8,
+                                    "location": [
+                                        19.033809,
+                                        47.473655
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true,
+                                        false
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        82,
+                                        170,
+                                        261,
+                                        351
+                                    ],
+                                    "duration": 10.671,
+                                    "turn_duration": 0.021,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 12.248,
+                                    "geometry_index": 9,
+                                    "location": [
+                                        19.033697,
+                                        47.473644
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        81,
+                                        264
+                                    ],
+                                    "duration": 5.25,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 6.038,
+                                    "geometry_index": 12,
+                                    "location": [
+                                        19.032765,
+                                        47.473542
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        84,
+                                        261,
+                                        345
+                                    ],
+                                    "duration": 8.424,
+                                    "turn_weight": 2.5,
+                                    "turn_duration": 0.024,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 12.16,
+                                    "geometry_index": 13,
+                                    "location": [
+                                        19.032306,
+                                        47.473507
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        81,
+                                        260,
+                                        345
+                                    ],
+                                    "duration": 7.821,
+                                    "turn_weight": 2.5,
+                                    "turn_duration": 0.021,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 11.47,
+                                    "geometry_index": 14,
+                                    "location": [
+                                        19.031569,
+                                        47.473429
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        false
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        80,
+                                        261,
+                                        344
+                                    ],
+                                    "duration": 10.357,
+                                    "turn_weight": 2.5,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 14.402,
+                                    "geometry_index": 15,
+                                    "location": [
+                                        19.030895,
+                                        47.47335
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        81,
+                                        261,
+                                        344
+                                    ],
+                                    "duration": 7.071,
+                                    "turn_weight": 2.5,
+                                    "turn_duration": 0.021,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 10.431,
+                                    "geometry_index": 16,
+                                    "location": [
+                                        19.029995,
+                                        47.473251
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        81,
+                                        260,
+                                        345
+                                    ],
+                                    "duration": 13.821,
+                                    "turn_weight": 2.2,
+                                    "turn_duration": 0.021,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 17.725,
+                                    "geometry_index": 17,
+                                    "location": [
+                                        19.029373,
+                                        47.473182
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        80,
+                                        259
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 18,
+                                    "location": [
+                                        19.02817,
+                                        47.473045
+                                    ]
+                                }
+                            ],
+                            "maneuver": {
+                                "modifier": "right",
+                                "instruction": "Turn right onto Hamzsabégi út.",
+                                "type": "turn",
+                                "bearing_after": 262,
+                                "bearing_before": 163,
+                                "location": [
+                                    19.033809,
+                                    47.473655
+                                ]
+                            },
+                            "name": "Hamzsabégi út",
+                            "duration": 69.867,
+                            "distance": 445.0,
+                            "driving_side": "right",
+                            "weight": 100.885,
+                            "mode": "driving",
+                            "geometry": "m~ppyAalvhc@T~EJhC\\pG`Djl@dAt[zC`m@|Cbi@dEfw@hCze@pGdjAp@hK"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        79,
+                                        249,
+                                        274
+                                    ],
+                                    "duration": 3.17,
+                                    "turn_weight": 8.3,
+                                    "turn_duration": 0.02,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 11.844,
+                                    "geometry_index": 19,
+                                    "location": [
+                                        19.027973,
+                                        47.47302
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        94,
+                                        229,
+                                        289
+                                    ],
+                                    "duration": 14.719,
+                                    "turn_weight": 3.3,
+                                    "turn_duration": 0.019,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 19.837,
+                                    "geometry_index": 21,
+                                    "location": [
+                                        19.027692,
+                                        47.473034
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        111,
+                                        201,
+                                        291
+                                    ],
+                                    "duration": 1.207,
+                                    "turn_weight": 2.2,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 3.55,
+                                    "geometry_index": 23,
+                                    "location": [
+                                        19.026472,
+                                        47.473347
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        23,
+                                        111,
+                                        203,
+                                        291
+                                    ],
+                                    "duration": 8.557,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 3,
+                                    "weight": 9.405,
+                                    "geometry_index": 24,
+                                    "location": [
+                                        19.026367,
+                                        47.473374
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        111,
+                                        201,
+                                        291
+                                    ],
+                                    "duration": 8.324,
+                                    "turn_weight": 1.9,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 11.049,
+                                    "geometry_index": 25,
+                                    "location": [
+                                        19.025656,
+                                        47.473559
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        111,
+                                        199,
+                                        292
+                                    ],
+                                    "duration": 2.241,
+                                    "turn_weight": 1.9,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 4.358,
+                                    "geometry_index": 26,
+                                    "location": [
+                                        19.02482,
+                                        47.473776
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        112,
+                                        283,
+                                        305
+                                    ],
+                                    "duration": 2.003,
+                                    "turn_weight": 4.275,
+                                    "turn_duration": 0.017,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 6.46,
+                                    "geometry_index": 27,
+                                    "location": [
+                                        19.024599,
+                                        47.473836
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        28,
+                                        125,
+                                        208,
+                                        329
+                                    ],
+                                    "duration": 2.89,
+                                    "turn_duration": 0.035,
+                                    "admin_index": 0,
+                                    "out": 3,
+                                    "weight": 3.141,
+                                    "geometry_index": 29,
+                                    "location": [
+                                        19.024427,
+                                        47.473916
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        28,
+                                        154,
+                                        260,
+                                        345
+                                    ],
+                                    "entry": [
+                                        true,
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 1,
+                                    "turn_weight": 11.4,
+                                    "turn_duration": 0.015,
+                                    "admin_index": 0,
+                                    "out": 3,
+                                    "geometry_index": 33,
+                                    "location": [
+                                        19.024281,
+                                        47.474091
+                                    ]
+                                }
+                            ],
+                            "maneuver": {
+                                "modifier": "slight right",
+                                "instruction": "Bear right onto Ajnácskő utca.",
+                                "type": "turn",
+                                "bearing_after": 274,
+                                "bearing_before": 259,
+                                "location": [
+                                    19.027973,
+                                    47.47302
+                                ]
+                            },
+                            "name": "Ajnácskő utca",
+                            "duration": 45.361,
+                            "distance": 326.0,
+                            "driving_side": "right",
+                            "weight": 83.502,
+                            "mode": "driving",
+                            "geometry": "wvopyAi_khc@@tI]zEy@nGwPvbAu@pEqJlk@qLfs@wBxL}AdDaApDUz@y@zAgAdAeEdAkEbAcBr@"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        true,
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        75,
+                                        165,
+                                        267,
+                                        298
+                                    ],
+                                    "duration": 4.225,
+                                    "turn_weight": 15.2,
+                                    "turn_duration": 0.625,
+                                    "admin_index": 0,
+                                    "out": 3,
+                                    "weight": 19.16,
+                                    "geometry_index": 35,
+                                    "location": [
+                                        19.024221,
+                                        47.474243
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        83,
+                                        118,
+                                        281
+                                    ],
+                                    "duration": 8.19,
+                                    "turn_weight": 6.425,
+                                    "turn_duration": 0.061,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 15.367,
+                                    "geometry_index": 36,
+                                    "location": [
+                                        19.023987,
+                                        47.474328
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        100,
+                                        240
+                                    ],
+                                    "duration": 14.981,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 16.479,
+                                    "geometry_index": 43,
+                                    "location": [
+                                        19.023103,
+                                        47.47449
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        17,
+                                        25,
+                                        201
+                                    ],
+                                    "duration": 2.142,
+                                    "turn_weight": 8.8,
+                                    "turn_duration": 0.024,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 11.129,
+                                    "geometry_index": 47,
+                                    "location": [
+                                        19.022244,
+                                        47.473527
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        21,
+                                        203
+                                    ],
+                                    "duration": 31.341,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 34.475,
+                                    "geometry_index": 48,
+                                    "location": [
+                                        19.022147,
+                                        47.473358
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        33,
+                                        210,
+                                        317
+                                    ],
+                                    "duration": 21.409,
+                                    "turn_duration": 0.021,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 22.992,
+                                    "geometry_index": 59,
+                                    "location": [
+                                        19.020203,
+                                        47.47107
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        30,
+                                        210,
+                                        311
+                                    ],
+                                    "duration": 13.348,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 14.342,
+                                    "geometry_index": 62,
+                                    "location": [
+                                        19.018852,
+                                        47.469499
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        29,
+                                        206,
+                                        306
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "turn_duration": 0.024,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 65,
+                                    "location": [
+                                        19.018022,
+                                        47.468513
+                                    ]
+                                }
+                            ],
+                            "maneuver": {
+                                "modifier": "left",
+                                "instruction": "Turn left onto Nagyszőlős utca.",
+                                "type": "turn",
+                                "bearing_after": 281,
+                                "bearing_before": 345,
+                                "location": [
+                                    19.024221,
+                                    47.474243
+                                ]
+                            },
+                            "name": "Nagyszőlős utca",
+                            "duration": 98.095,
+                            "distance": 886.0,
+                            "driving_side": "right",
+                            "weight": 136.562,
+                            "mode": "driving",
+                            "geometry": "ecrpyAytchc@iDrMIpD[jFg@fDyDvS]vCa@bEBlDf@jEpAvDlC|D|r@rb@pI`EtHbEdN|GfWrMjL`HnIdGzGjGnNjPxOfRpFrGxEfFlMtLnAbA`gAz|@rVlSpMlKv[bWhQhNrJnG"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        26,
+                                        201,
+                                        217
+                                    ],
+                                    "duration": 43.648,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "turn_duration": 0.024,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 45.805,
+                                    "geometry_index": 66,
+                                    "location": [
+                                        19.017886,
+                                        47.468327
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        39,
+                                        49,
+                                        229
+                                    ],
+                                    "duration": 9.325,
+                                    "turn_weight": 0.7,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 10.484,
+                                    "geometry_index": 82,
+                                    "location": [
+                                        19.014717,
+                                        47.46535
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        53,
+                                        234
+                                    ],
+                                    "duration": 8.047,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 8.449,
+                                    "geometry_index": 87,
+                                    "location": [
+                                        19.013799,
+                                        47.464856
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        38,
+                                        54,
+                                        235
+                                    ],
+                                    "duration": 4.561,
+                                    "turn_weight": 2.1,
+                                    "turn_duration": 0.008,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 6.881,
+                                    "geometry_index": 88,
+                                    "location": [
+                                        19.012985,
+                                        47.464456
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        55,
+                                        238,
+                                        251
+                                    ],
+                                    "duration": 6.044,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "turn_duration": 0.008,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 6.337,
+                                    "geometry_index": 89,
+                                    "location": [
+                                        19.012523,
+                                        47.464237
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        58,
+                                        238
+                                    ],
+                                    "duration": 11.329,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 11.613,
+                                    "geometry_index": 90,
+                                    "location": [
+                                        19.011883,
+                                        47.463962
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        39,
+                                        60,
+                                        240
+                                    ],
+                                    "duration": 5.738,
+                                    "turn_duration": 0.021,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 5.861,
+                                    "geometry_index": 93,
+                                    "location": [
+                                        19.01067,
+                                        47.463464
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        62,
+                                        244
+                                    ],
+                                    "duration": 17.153,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 17.582,
+                                    "geometry_index": 95,
+                                    "location": [
+                                        19.010042,
+                                        47.463233
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        68,
+                                        247
+                                    ],
+                                    "duration": 13.659,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 13.659,
+                                    "geometry_index": 99,
+                                    "location": [
+                                        19.008091,
+                                        47.462624
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        69,
+                                        250
+                                    ],
+                                    "duration": 2.435,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 2.435,
+                                    "geometry_index": 102,
+                                    "location": [
+                                        19.006494,
+                                        47.462194
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        70,
+                                        251
+                                    ],
+                                    "duration": 57.282,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 57.282,
+                                    "geometry_index": 103,
+                                    "location": [
+                                        19.006202,
+                                        47.462124
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        76,
+                                        256
+                                    ],
+                                    "duration": 10.376,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 10.376,
+                                    "geometry_index": 111,
+                                    "location": [
+                                        18.999304,
+                                        47.460782
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        76,
+                                        256
+                                    ],
+                                    "duration": 2.118,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 2.118,
+                                    "geometry_index": 113,
+                                    "location": [
+                                        18.998036,
+                                        47.460572
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        76,
+                                        256
+                                    ],
+                                    "duration": 11.859,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 11.859,
+                                    "geometry_index": 114,
+                                    "location": [
+                                        18.997775,
+                                        47.460529
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        76,
+                                        257
+                                    ],
+                                    "duration": 24.776,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 24.776,
+                                    "geometry_index": 115,
+                                    "location": [
+                                        18.996326,
+                                        47.460289
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        77,
+                                        256,
+                                        265
+                                    ],
+                                    "duration": 41.313,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "turn_duration": 0.019,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 41.294,
+                                    "geometry_index": 116,
+                                    "location": [
+                                        18.993302,
+                                        47.459809
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        63,
+                                        76,
+                                        255
+                                    ],
+                                    "duration": 43.607,
+                                    "turn_weight": 16.95,
+                                    "turn_duration": 15.019,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 46.253,
+                                    "geometry_index": 118,
+                                    "location": [
+                                        18.988276,
+                                        47.458972
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        71,
+                                        248
+                                    ],
+                                    "duration": 27.741,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 28.435,
+                                    "geometry_index": 121,
+                                    "location": [
+                                        18.984866,
+                                        47.458219
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        67,
+                                        246
+                                    ],
+                                    "duration": 17.12,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 17.976,
+                                    "geometry_index": 123,
+                                    "location": [
+                                        18.981659,
+                                        47.457313
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        66,
+                                        246
+                                    ],
+                                    "duration": 4.44,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 4.773,
+                                    "geometry_index": 126,
+                                    "location": [
+                                        18.976476,
+                                        47.455725
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        66,
+                                        246
+                                    ],
+                                    "duration": 24.36,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 26.187,
+                                    "geometry_index": 127,
+                                    "location": [
+                                        18.975123,
+                                        47.455323
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        74,
+                                        255,
+                                        267
+                                    ],
+                                    "duration": 15.567,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 17.116,
+                                    "geometry_index": 131,
+                                    "location": [
+                                        18.96757,
+                                        47.453371
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        81,
+                                        262,
+                                        270
+                                    ],
+                                    "duration": 40.687,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 43.731,
+                                    "geometry_index": 136,
+                                    "location": [
+                                        18.962517,
+                                        47.452653
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        90,
+                                        268
+                                    ],
+                                    "duration": 8.2,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 8.815,
+                                    "geometry_index": 142,
+                                    "location": [
+                                        18.949032,
+                                        47.452293
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        82,
+                                        88,
+                                        269
+                                    ],
+                                    "duration": 23.887,
+                                    "turn_weight": 2.4,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 27.474,
+                                    "geometry_index": 143,
+                                    "location": [
+                                        18.946305,
+                                        47.452242
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        89,
+                                        269
+                                    ],
+                                    "duration": 4.8,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 4.92,
+                                    "geometry_index": 146,
+                                    "location": [
+                                        18.938376,
+                                        47.45217
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        89,
+                                        269
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 147,
+                                    "location": [
+                                        18.936782,
+                                        47.452157
+                                    ]
+                                }
+                            ],
+                            "destinations": "M7, M1: Győr, Bécs-Wien, BALATON, Nagykanizsa",
+                            "maneuver": {
+                                "modifier": "slight left",
+                                "instruction": "Keep left to take M7 toward Győr/Bécs-Wien/BALATON/Nagykanizsa.",
+                                "type": "fork",
+                                "bearing_after": 201,
+                                "bearing_before": 206,
+                                "location": [
+                                    19.017886,
+                                    47.468327
+                                ]
+                            },
+                            "name": "Budaörsi út",
+                            "duration": 522.193,
+                            "distance": 7607.001,
+                            "driving_side": "right",
+                            "weight": 545.663,
+                            "mode": "driving",
+                            "ref": "M1; M7",
+                            "geometry": "mqfpyA{hwgc@hOhH|H`FhJ~GbPnMbNnL~H`H`KnJ|KpL|ClDdD~DhJ|KfJzLpJ`NzJpOzKtRfK~SlDhHrDzHnH|PlHnQZv@~Wzq@tLz[dP~f@hAhD`T|q@vFpRhCzIbIj[jI`^pFjVpKjg@pFbZbIbc@bGh]rGj`@jCfQl^piCnDl[bNjiAr@dHlE|b@~Efj@lIz~@hEnd@vDza@jFjk@tAhO~MpyA~\\~{Dze@nhFlLroAbFte@vPdpAdUf|AtQldA|d@~aCjq@jcDr[j|AfSdaAbXpsAbk@psCre@vlC`WxgBdN|kAzKvdAfFdo@vIrkAhHzlAtCjj@vGx`BfBdaAdDffBdCxkFVflBJndFdBliD`AzeFt@|gEVv~@XrbBRnk@dBnnKMjs@{AdgAsCr~@eFdeAaDto@cItwB"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        97,
+                                        271,
+                                        279
+                                    ],
+                                    "duration": 15.63,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "slight left"
+                                            ],
+                                            "valid_indication": "slight left",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight left",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight left",
+                                            "valid": true,
+                                            "active": true
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        }
+                                    ],
+                                    "turn_duration": 0.03,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 15.99,
+                                    "geometry_index": 155,
+                                    "location": [
+                                        18.922834,
+                                        47.452581
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        70,
+                                        248
+                                    ],
+                                    "duration": 3.6,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 3.69,
+                                    "geometry_index": 165,
+                                    "location": [
+                                        18.917727,
+                                        47.452174
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        63,
+                                        241
+                                    ],
+                                    "duration": 10.16,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 10.414,
+                                    "geometry_index": 168,
+                                    "location": [
+                                        18.916639,
+                                        47.451845
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        42,
+                                        223
+                                    ],
+                                    "duration": 0.32,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 0.328,
+                                    "geometry_index": 176,
+                                    "location": [
+                                        18.913992,
+                                        47.45045
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        43,
+                                        220
+                                    ],
+                                    "duration": 4.12,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 4.223,
+                                    "geometry_index": 177,
+                                    "location": [
+                                        18.913919,
+                                        47.450397
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        37,
+                                        216
+                                    ],
+                                    "duration": 17.56,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 17.999,
+                                    "geometry_index": 181,
+                                    "location": [
+                                        18.91307,
+                                        47.449667
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        34,
+                                        213
+                                    ],
+                                    "duration": 0.2,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 0.21,
+                                    "geometry_index": 184,
+                                    "location": [
+                                        18.90969,
+                                        47.446451
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        33,
+                                        215
+                                    ],
+                                    "duration": 0.68,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 0.714,
+                                    "geometry_index": 185,
+                                    "location": [
+                                        18.90965,
+                                        47.44641
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        35,
+                                        214
+                                    ],
+                                    "duration": 7.84,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 8.232,
+                                    "geometry_index": 186,
+                                    "location": [
+                                        18.909524,
+                                        47.446289
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        24,
+                                        34,
+                                        215
+                                    ],
+                                    "duration": 4.767,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 4.998,
+                                    "geometry_index": 187,
+                                    "location": [
+                                        18.908076,
+                                        47.44483
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        35,
+                                        214
+                                    ],
+                                    "duration": 24.24,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 24.846,
+                                    "geometry_index": 188,
+                                    "location": [
+                                        18.907167,
+                                        47.443956
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        34,
+                                        214
+                                    ],
+                                    "duration": 6.04,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 6.191,
+                                    "geometry_index": 190,
+                                    "location": [
+                                        18.902621,
+                                        47.439467
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        35,
+                                        215
+                                    ],
+                                    "duration": 4.4,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 4.51,
+                                    "geometry_index": 192,
+                                    "location": [
+                                        18.901485,
+                                        47.438347
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        35,
+                                        215
+                                    ],
+                                    "duration": 1.12,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 1.148,
+                                    "geometry_index": 193,
+                                    "location": [
+                                        18.90065,
+                                        47.437536
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        35,
+                                        217
+                                    ],
+                                    "duration": 0.44,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 0.451,
+                                    "geometry_index": 194,
+                                    "location": [
+                                        18.900433,
+                                        47.43733
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        37,
+                                        215
+                                    ],
+                                    "duration": 0.2,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 0.205,
+                                    "geometry_index": 195,
+                                    "location": [
+                                        18.900342,
+                                        47.437248
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        35,
+                                        214
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 196,
+                                    "location": [
+                                        18.900303,
+                                        47.437211
+                                    ]
+                                }
+                            ],
+                            "destinations": "E 71, M7: Balaton, BALATON, Nagykanizsa, Székesfehérvár",
+                            "maneuver": {
+                                "modifier": "slight left",
+                                "instruction": "Keep left to stay on M7 toward BALATON/Nagykanizsa/Székesfehérvár.",
+                                "type": "fork",
+                                "bearing_after": 271,
+                                "bearing_before": 277,
+                                "location": [
+                                    18.922834,
+                                    47.452581
+                                ]
+                            },
+                            "name": "",
+                            "duration": 108.158,
+                            "distance": 2703.0,
+                            "driving_side": "right",
+                            "weight": 111.16,
+                            "mode": "driving",
+                            "ref": "M7",
+                            "geometry": "iygoyAct}ac@S|eACdW\\fc@~@d]|@xZjAtVzAfW`CdZ|CvX`F|[pC|OvEbWfH|Y|GpVdIhWzH~SzIjTrIrRfKvS~IrOlLdQhBpCrEdGpCvDtO~QvPbSxhAtoAziAhmAhs@fs@pAnApFzFdzAnyAru@xw@vt@ju@xaFvdF`_Az_A|DbEtq@ds@zKpLbDtDhAlArnAxmA"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        34,
+                                        214,
+                                        225
+                                    ],
+                                    "duration": 3.761,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "turn_duration": 0.014,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 3.841,
+                                    "geometry_index": 197,
+                                    "location": [
+                                        18.899042,
+                                        47.435937
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        41,
+                                        216
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "toll",
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 200,
+                                    "location": [
+                                        18.89858,
+                                        47.435603
+                                    ]
+                                }
+                            ],
+                            "exits": "16",
+                            "destinations": "M0 gyűrű ring, Érd észak",
+                            "maneuver": {
+                                "modifier": "slight right",
+                                "instruction": "Take exit 16 toward M0 gyűrű ring.",
+                                "type": "off ramp",
+                                "bearing_after": 225,
+                                "bearing_before": 214,
+                                "location": [
+                                    18.899042,
+                                    47.435937
+                                ]
+                            },
+                            "name": "",
+                            "duration": 15.707,
+                            "distance": 197.0,
+                            "driving_side": "right",
+                            "weight": 16.085,
+                            "mode": "driving",
+                            "ref": "M7",
+                            "geometry": "aignyAceo`c@nDbGxDhGpHlKrXvZzM~NlX`["
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        37,
+                                        216,
+                                        224
+                                    ],
+                                    "duration": 9.057,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight",
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "turn_duration": 0.021,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 9.263,
+                                    "geometry_index": 203,
+                                    "location": [
+                                        18.897431,
+                                        47.434548
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "straight"
+                                            ],
+                                            "valid_indication": "straight",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        36,
+                                        214
+                                    ],
+                                    "duration": 5.973,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 6.122,
+                                    "geometry_index": 205,
+                                    "location": [
+                                        18.896475,
+                                        47.433655
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        34,
+                                        214
+                                    ],
+                                    "duration": 5.482,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 5.619,
+                                    "geometry_index": 206,
+                                    "location": [
+                                        18.895923,
+                                        47.433111
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "slight left"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        34,
+                                        215
+                                    ],
+                                    "duration": 9.327,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 9.56,
+                                    "geometry_index": 207,
+                                    "location": [
+                                        18.895423,
+                                        47.432617
+                                    ]
+                                },
+                                {
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "slight left"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "bearings": [
+                                        35,
+                                        216
+                                    ],
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "geometry_index": 208,
+                                    "location": [
+                                        18.894562,
+                                        47.431773
+                                    ]
+                                }
+                            ],
+                            "destinations": "M0 gyűrű ring, Érd észak, M3 M5 M6 BUD",
+                            "maneuver": {
+                                "modifier": "slight left",
+                                "instruction": "Keep left toward M0 gyűrű ring.",
+                                "type": "fork",
+                                "bearing_after": 216,
+                                "bearing_before": 217,
+                                "location": [
+                                    18.897431,
+                                    47.434548
+                                ]
+                            },
+                            "name": "",
+                            "duration": 37.285,
+                            "distance": 468.0,
+                            "driving_side": "right",
+                            "weight": 38.196,
+                            "mode": "driving",
+                            "geometry": "grdnyAm`l`c@td@ng@bQfR~`@na@z]f^vs@xt@bHhHpEfGvD~GnC|GjBbInA|I"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        false,
+                                        true,
+                                        true
+                                    ],
+                                    "classes": [
+                                        "motorway"
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        68,
+                                        256,
+                                        267
+                                    ],
+                                    "duration": 3.037,
+                                    "lanes": [
+                                        {
+                                            "indications": [
+                                                "slight left"
+                                            ],
+                                            "valid": false,
+                                            "active": false
+                                        },
+                                        {
+                                            "indications": [
+                                                "slight right"
+                                            ],
+                                            "valid_indication": "slight right",
+                                            "valid": true,
+                                            "active": true
+                                        }
+                                    ],
+                                    "turn_duration": 0.025,
+                                    "admin_index": 0,
+                                    "out": 2,
+                                    "weight": 3.088,
+                                    "geometry_index": 214,
+                                    "location": [
+                                        18.893657,
+                                        47.431264
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        false,
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "bearings": [
+                                        98,
+                                        295
+                                    ],
+                                    "duration": 11.109,
+                                    "admin_index": 0,
+                                    "out": 1,
+                                    "weight": 11.386,
+                                    "geometry_index": 218,
+                                    "location": [
+                                        18.893113,
+                                        47.431283
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        93,
+                                        254
+                                    ],
+                                    "duration": 6.634,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 6.8,
+                                    "geometry_index": 236,
+                                    "location": [
+                                        18.893271,
+                                        47.432682
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false,
+                                        false
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        154,
+                                        329,
+                                        339
+                                    ],
+                                    "duration": 5.279,
+                                    "turn_weight": 0.65,
+                                    "turn_duration": 0.009,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 6.051,
+                                    "geometry_index": 250,
+                                    "location": [
+                                        18.894588,
+                                        47.432059
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        152,
+                                        334
+                                    ],
+                                    "entry": [
+                                        true,
+                                        false
+                                    ],
+                                    "in": 1,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "geometry_index": 251,
+                                    "location": [
+                                        18.895178,
+                                        47.431245
+                                    ]
+                                }
+                            ],
+                            "destinations": "M0, E 60, E 71, E 75: M0 gyűrű ring, M3 Nyíregyháza, M5 Szeged, M6 Pécs, Bud",
+                            "maneuver": {
+                                "modifier": "slight right",
+                                "instruction": "Keep right to take M0/E 60/E 71/E 75 toward M0 gyűrű ring.",
+                                "type": "fork",
+                                "bearing_after": 267,
+                                "bearing_before": 248,
+                                "location": [
+                                    18.893657,
+                                    47.431264
+                                ]
+                            },
+                            "name": "",
+                            "duration": 29.35,
+                            "distance": 551.0,
+                            "driving_side": "right",
+                            "weight": 30.699,
+                            "mode": "driving",
+                            "geometry": "_e~myAqtd`c@V`I?vFQfFk@|GwAhIoAtEqAlDqAbCmBjCwBhCiClBgF~BiFzAuFViFWwFcBgF_DoFgGsCcF}B}GgBwIu@gKGqFFaDVuFZmDd@yD|@eEnAaEnAoD`BqDzAkCrAgBnCcDpDeDpIoHzq@{c@r^sW"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "entry": [
+                                        true,
+                                        true,
+                                        false
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 2,
+                                    "bearings": [
+                                        152,
+                                        158,
+                                        332
+                                    ],
+                                    "duration": 13.121,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 13.442,
+                                    "geometry_index": 252,
+                                    "location": [
+                                        18.895572,
+                                        47.430739
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        146,
+                                        325
+                                    ],
+                                    "duration": 1.954,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 2.003,
+                                    "geometry_index": 255,
+                                    "location": [
+                                        18.89732,
+                                        47.428779
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        145,
+                                        326
+                                    ],
+                                    "duration": 6.069,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 6.22,
+                                    "geometry_index": 256,
+                                    "location": [
+                                        18.897607,
+                                        47.428494
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false,
+                                        false
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 2,
+                                    "bearings": [
+                                        146,
+                                        315,
+                                        325
+                                    ],
+                                    "duration": 7.886,
+                                    "turn_weight": 0.65,
+                                    "turn_duration": 0.007,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 8.725,
+                                    "geometry_index": 258,
+                                    "location": [
+                                        18.898498,
+                                        47.427624
+                                    ]
+                                },
+                                {
+                                    "entry": [
+                                        true,
+                                        false
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "bearings": [
+                                        143,
+                                        324
+                                    ],
+                                    "duration": 11.211,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "weight": 11.492,
+                                    "geometry_index": 262,
+                                    "location": [
+                                        18.899627,
+                                        47.426503
+                                    ]
+                                },
+                                {
+                                    "bearings": [
+                                        140,
+                                        304,
+                                        322
+                                    ],
+                                    "entry": [
+                                        true,
+                                        false,
+                                        false
+                                    ],
+                                    "classes": [
+                                        "toll"
+                                    ],
+                                    "in": 1,
+                                    "turn_weight": 26.7,
+                                    "turn_duration": 15.019,
+                                    "admin_index": 0,
+                                    "out": 0,
+                                    "geometry_index": 270,
+                                    "location": [
+                                        18.901529,
+                                        47.425047
+                                    ]
+                                }
+                            ],
+                            "maneuver": {
+                                "modifier": "slight left",
+                                "instruction": "Keep left to take M0/E 60/E 71/E 75.",
+                                "type": "fork",
+                                "bearing_after": 152,
+                                "bearing_before": 152,
+                                "location": [
+                                    18.895572,
+                                    47.430739
+                                ]
+                            },
+                            "name": "",
+                            "duration": 88.067,
+                            "distance": 1600.176,
+                            "driving_side": "right",
+                            "weight": 102.21,
+                            "mode": "driving",
+                            "ref": "M0; E 60; E 71; E 75",
+                            "geometry": "ed}myAglh`c@p{@{m@~IiI|q@as@xP}PhTaU``@s`@`PyObN_NpNeNhUqVpSaVtFkHdMkQxLgPfHwJtMsQrEcGdCiK`HgJnRqVpNaSlNuSpR_[jQyZjOgY~McYhH_P`HuPxFsNbGyOdFgOhFuOvJy[|GeW|GiXdMol@~DgTjDmS|DcXvDoXtGes@"
+                        },
+                        {
+                            "intersections": [
+                                {
+                                    "bearings": [
+                                        284
+                                    ],
+                                    "entry": [
+                                        true
+                                    ],
+                                    "in": 0,
+                                    "admin_index": 0,
+                                    "geometry_index": 293,
+                                    "location": [
+                                        18.910363,
+                                        47.420995
+                                    ]
+                                }
+                            ],
+                            "maneuver": {
+                                "modifier": "right",
+                                "instruction": "Your destination is on the right.",
+                                "type": "arrive",
+                                "bearing_after": 0,
+                                "bearing_before": 104,
+                                "location": [
+                                    18.910363,
+                                    47.420995
+                                ]
+                            },
+                            "name": "",
+                            "duration": 0.0,
+                            "distance": 0.0,
+                            "driving_side": "right",
+                            "weight": 0.0,
+                            "mode": "driving",
+                            "ref": "M0; E 60; E 71; E 75",
+                            "geometry": "ecjmyAuheac@??"
+                        }
+                    ],
+                    "distance": 15117.257,
+                    "summary": "M1, M7"
+                }
+            ],
+            "geometry": "keqpyA_tvhc@oRzGm_Ap[bAbI|R}Gbc@eOpU_I`Cy@`EuAT~EJhC\\pG`Djl@dAt[zC`m@|Cbi@dEfw@hCze@pGdjAp@hK@tI]zEy@nGwPvbAu@pEqJlk@qLfs@wBxL}AdDaApDUz@y@zAgAdAeEdAkEbAcBr@iDrMIpD[jFg@fDyDvS]vCa@bEBlDf@jEpAvDlC|D|r@rb@pI`EtHbEdN|GfWrMjL`HnIdGzGjGnNjPxOfRpFrGxEfFlMtLnAbA`gAz|@rVlSpMlKv[bWhQhNrJnGhOhH|H`FhJ~GbPnMbNnL~H`H`KnJ|KpL|ClDdD~DhJ|KfJzLpJ`NzJpOzKtRfK~SlDhHrDzHnH|PlHnQZv@~Wzq@tLz[dP~f@hAhD`T|q@vFpRhCzIbIj[jI`^pFjVpKjg@pFbZbIbc@bGh]rGj`@jCfQl^piCnDl[bNjiAr@dHlE|b@~Efj@lIz~@hEnd@vDza@jFjk@tAhO~MpyA~\\~{Dze@nhFlLroAbFte@vPdpAdUf|AtQldA|d@~aCjq@jcDr[j|AfSdaAbXpsAbk@psCre@vlC`WxgBdN|kAzKvdAfFdo@vIrkAhHzlAtCjj@vGx`BfBdaAdDffBdCxkFVflBJndFdBliD`AzeFt@|gEVv~@XrbBRnk@dBnnKMjs@{AdgAsCr~@eFdeAaDto@cItwBS|eACdW\\fc@~@d]|@xZjAtVzAfW`CdZ|CvX`F|[pC|OvEbWfH|Y|GpVdIhWzH~SzIjTrIrRfKvS~IrOlLdQhBpCrEdGpCvDtO~QvPbSxhAtoAziAhmAhs@fs@pAnApFzFdzAnyAru@xw@vt@ju@xaFvdF`_Az_A|DbEtq@ds@zKpLbDtDhAlArnAxmAnDbGxDhGpHlKrXvZzM~NlX`[td@ng@bQfR~`@na@z]f^vs@xt@bHhHpEfGvD~GnC|GjBbInA|IV`I?vFQfFk@|GwAhIoAtEqAlDqAbCmBjCwBhCiClBgF~BiFzAuFViFWwFcBgF_DoFgGsCcF}B}GgBwIu@gKGqFFaDVuFZmDd@yD|@eEnAaEnAoD`BqDzAkCrAgBnCcDpDeDpIoHzq@{c@r^sWp{@{m@~IiI|q@as@xP}PhTaU``@s`@`PyObN_NpNeNhUqVpSaVtFkHdMkQxLgPfHwJtMsQrEcGdCiK`HgJnRqVpNaSlNuSpR_[jQyZjOgY~McYhH_P`HuPxFsNbGyOdFgOhFuOvJy[|GeW|GiXdMol@~DgTjDmS|DcXvDoXtGes@"
+        }
+    ],
+    "waypoints": [
+        {
+            "distance": 12.882,
+            "name": "Karolina út",
+            "location": [
+                19.033936,
+                47.473766
+            ]
+        },
+        {
+            "distance": 114.053,
+            "name": "M0",
+            "location": [
+                18.910363,
+                47.420995
+            ]
+        }
+    ],
+    "code": "Ok"
+}

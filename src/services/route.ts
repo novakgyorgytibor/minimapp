@@ -59,38 +59,55 @@ export function buildRoute(coords: LngLat[], durationS: number, rawSteps: Omit<S
   };
 }
 
-interface ValhallaManeuver {
-  type: number;
-  instruction: string;
-  street_names?: string[];
-  roundabout_exit_count?: number;
-  begin_shape_index: number;
+interface OsrmLane {
+  indications: string[];
+  valid: boolean;
+  valid_indication?: string;
 }
 
-interface ValhallaResponse {
-  trip: {
-    summary: { time: number };
-    legs: { shape: string; maneuvers: ValhallaManeuver[] }[];
-  };
+interface OsrmStep {
+  geometry: string;
+  name?: string;
+  ref?: string;
+  destinations?: string;
+  exits?: string;
+  maneuver: { type: string; modifier?: string; instruction?: string; exit?: number; location: [number, number] };
+  intersections?: { lanes?: OsrmLane[] }[];
 }
 
-export function parseValhalla(json: unknown): Route {
-  const trip = (json as ValhallaResponse)?.trip;
-  const leg = trip?.legs?.[0];
-  if (!leg) throw new RouteError('no-route');
-  const coords = decodePolyline(leg.shape, 6);
+interface OsrmResponse {
+  routes?: { duration: number; legs: { steps: OsrmStep[] }[] }[];
+}
+
+/** Valhalla OSRM-formátumú válasza → Route. A geometria a lépések geometriáinak összefűzése. */
+export function parseOsrm(json: unknown): Route {
+  const route = (json as OsrmResponse)?.routes?.[0];
+  const steps = route?.legs?.[0]?.steps;
+  if (!route || !steps?.length) throw new RouteError('no-route');
+
+  const coords: LngLat[] = [];
+  const rawSteps: Omit<Step, 'beginDistM'>[] = steps.map((st) => {
+    const pts = decodePolyline(st.geometry, 6);
+    const last = coords[coords.length - 1];
+    const joins = last && pts.length > 0 && last[0] === pts[0][0] && last[1] === pts[0][1];
+    const beginIndex = joins ? coords.length - 1 : coords.length;
+    coords.push(...(joins ? pts.slice(1) : pts));
+    const lanes = st.intersections?.[0]?.lanes;
+    return {
+      kind: st.maneuver.type,
+      modifier: st.maneuver.modifier,
+      instruction: st.maneuver.instruction ?? '',
+      streetNames: st.name ? [st.name] : [],
+      ref: st.ref || undefined,
+      destinations: st.destinations || undefined,
+      exitNumber: st.exits || undefined,
+      roundaboutExit: st.maneuver.exit,
+      lanes: lanes?.map((l) => ({ indications: l.indications.length ? l.indications : ['straight'], valid: !!l.valid })),
+      beginIndex,
+    };
+  });
   if (coords.length < 2) throw new RouteError('no-route');
-  return buildRoute(
-    coords,
-    trip.summary.time,
-    leg.maneuvers.map((m) => ({
-      type: m.type,
-      instruction: m.instruction,
-      streetNames: m.street_names ?? [],
-      roundaboutExitCount: m.roundabout_exit_count,
-      beginIndex: m.begin_shape_index,
-    })),
-  );
+  return buildRoute(coords, route.duration, rawSteps);
 }
 
 export async function getRoute(
@@ -108,6 +125,7 @@ export async function getRoute(
     costing: mode,
     language: 'en-US',
     units: 'kilometers',
+    format: 'osrm',
   };
   try {
     const json = await fetchJson<unknown>(
@@ -120,7 +138,7 @@ export async function getRoute(
       },
       deps,
     );
-    return parseValhalla(json);
+    return parseOsrm(json);
   } catch (e) {
     if (isAbortError(e) || e instanceof RouteError) throw e;
     if (e instanceof HttpError) {

@@ -5,8 +5,8 @@ import { initialNavState, navReducer, type NavEvent, type NavState } from './nav
 const M_PER_DEG_LAT = 111_195;
 const coords: LngLat[] = Array.from({ length: 10 }, (_, i) => [19 + i * 0.001, 47.5]);
 const route = buildRoute(coords, 600, [
-  { type: 1, instruction: 'Indulás', streetNames: [], beginIndex: 0 },
-  { type: 4, instruction: 'Megérkezett', streetNames: [], beginIndex: 9 },
+  { kind: 'depart', instruction: 'Start', streetNames: [], beginIndex: 0 },
+  { kind: 'arrive', instruction: 'Arrive', streetNames: [], beginIndex: 9 },
 ]);
 const dest: LngLat = [19.009, 47.5];
 const off = (m: number): LngLat => [19.003, 47.5 + m / M_PER_DEG_LAT];

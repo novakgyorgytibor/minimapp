@@ -3,12 +3,30 @@ export type LngLat = [number, number];
 export type Mode = 'auto' | 'bicycle' | 'pedestrian';
 export const MODES: Mode[] = ['auto', 'bicycle', 'pedestrian'];
 
+export interface Lane {
+  /** OSRM lane indications, pl. ['straight', 'slight right']. */
+  indications: string[];
+  /** Ez a sáv jó az útvonalhoz. */
+  valid: boolean;
+}
+
 export interface Step {
-  /** Valhalla maneuver type (https://valhalla.github.io/valhalla/api/turn-by-turn/api-reference/) */
-  type: number;
+  /** OSRM maneuver type: depart, turn, new name, continue, merge, on ramp, off ramp, fork,
+   * end of road, roundabout, rotary, exit roundabout, exit rotary, notification, arrive. */
+  kind: string;
+  /** uturn, sharp right, right, slight right, straight, slight left, left, sharp left */
+  modifier?: string;
   instruction: string;
   streetNames: string[];
-  roundaboutExitCount?: number;
+  /** Útszám(ok), pl. "M7" vagy "M0; E 60". */
+  ref?: string;
+  /** Táblaszöveg, pl. "M7, M1: Győr, Bécs-Wien". */
+  destinations?: string;
+  exitNumber?: string;
+  /** Körforgalom: hányadik kijárat. */
+  roundaboutExit?: number;
+  /** Sávok a manőverpontnál (ha fel van térképezve). */
+  lanes?: Lane[];
   /** Index a Route.coords tömbben, ahol a manőver kezdődik. */
   beginIndex: number;
   /** Távolság az útvonal elejétől a manőverig (m). */
