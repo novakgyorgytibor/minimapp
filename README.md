@@ -4,7 +4,7 @@ Minimalista, fekete-fehér navigáció. Csak ingyenes, nyílt forrású szolgál
 
 - Térkép: [OpenFreeMap](https://openfreemap.org) (OpenMapTiles, © OpenStreetMap)
 - Útvonal: [Valhalla](https://github.com/valhalla/valhalla) – FOSSGIS nyilvános szerver
-- Keresés: [Nominatim](https://nominatim.org) (max 1 kérés/s)
+- Keresés: [Photon](https://photon.komoot.io) (komoot, OSM-alapú, gépelés közben is talál), tartaléknak [Nominatim](https://nominatim.org) (max 1 kérés/s)
 
 A végpontok a `src/config.ts`-ben állíthatók (pl. saját Valhalla/Nominatim szerverre).
 

@@ -7,11 +7,13 @@ export const config = {
   tileJsonUrl: 'https://tiles.openfreemap.org/planet',
   valhallaUrl: 'https://valhalla1.openstreetmap.de/route',
   nominatimUrl: 'https://nominatim.openstreetmap.org/search',
+  photonUrl: 'https://photon.komoot.io/api/',
   userAgent: 'minimap/0.1 (personal open-source navigation app)',
 
   httpTimeoutMs: 10_000,
   httpRetries: 3,
   nominatimMinIntervalMs: 1_000,
+  photonMinIntervalMs: 500,
   searchDebounceMs: 400,
   searchMinChars: 3,
 
