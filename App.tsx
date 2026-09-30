@@ -44,8 +44,10 @@ export default function App() {
 
 function Main() {
   const { lang, t } = useLang();
-  const loc = useLocation();
   const [s, dispatch] = useReducer(navReducer, undefined, () => initialNavState());
+  const navigatingish = s.phase === 'navigating' || s.phase === 'rerouting' || s.phase === 'arrived';
+  // Akkukímélés: nagy GPS-pontosság csak navigáció közben
+  const loc = useLocation(navigatingish);
   const [follow, setFollow] = useState(true);
   const posRef = useRef<LngLat | null>(null);
   posRef.current = loc.pos;
@@ -83,7 +85,6 @@ function Main() {
   }, [s.phase]);
 
   // Képernyő ébren tartása navigáció közben
-  const navigatingish = s.phase === 'navigating' || s.phase === 'rerouting' || s.phase === 'arrived';
   useEffect(() => {
     if (!navigatingish) return;
     activateKeepAwakeAsync('nav');
@@ -175,7 +176,14 @@ function Main() {
     else setNorthNonce((n) => n + 1);
   };
 
-  const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow, northUp, focusMe });
+  // Akkukímélés: alapnézetben a kamera csak érdemi (>5 m) elmozdulásnál mozdul, így nem rajzol folyton újra
+  const [idleCameraPos, setIdleCameraPos] = useState<LngLat | null>(null);
+  useEffect(() => {
+    setIdleCameraPos((prev) => nextAnchor(prev, loc.pos, config.idleCameraStepM));
+  }, [loc.pos]);
+  const cameraPos = navigatingish ? loc.pos : idleCameraPos;
+
+  const camera = cameraFor({ phase: s.phase, pos: cameraPos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow, northUp, focusMe });
 
   if (loc.status === 'denied') return <PermissionScreen onRequest={loc.request} />;
 

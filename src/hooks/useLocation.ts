@@ -1,17 +1,27 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { angleDiff, pickHeading } from '../nav/heading';
+import { locationOptions } from '../nav/power';
 import type { LngLat } from '../types';
 
 type Status = 'pending' | 'granted' | 'denied';
 
-export function useLocation() {
+const ACCURACY = {
+  navigation: Location.Accuracy.BestForNavigation,
+  balanced: Location.Accuracy.Balanced,
+} as const;
+
+/**
+ * GPS + iránytű. Akkukímélés: navigáció közben nagy pontosság (1 s / 2 m), egyébként kiegyensúlyozott
+ * (5 s / 10 m); háttérben (vagy kikapcsolt képernyőnél) minden figyelés leáll, visszatéréskor újraindul.
+ */
+export function useLocation(navigating: boolean) {
   const [status, setStatus] = useState<Status>('pending');
   const [pos, setPos] = useState<LngLat | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
   const [speed, setSpeed] = useState<number | null>(null);
-  const sub = useRef<Location.LocationSubscription | null>(null);
-  const headingSub = useRef<Location.LocationSubscription | null>(null);
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const compass = useRef<number | null>(null);
   const course = useRef<{ deg: number | null; speed: number }>({ deg: null, speed: 0 });
 
@@ -24,49 +34,59 @@ export function useLocation() {
     });
   }, []);
 
-  const start = useCallback(async () => {
-    sub.current?.remove();
-    sub.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 1000, distanceInterval: 2 },
+  useEffect(() => {
+    const s = AppState.addEventListener('change', (state) => setAppActive(state === 'active'));
+    return () => s.remove();
+  }, []);
+
+  useEffect(() => {
+    Location.getForegroundPermissionsAsync()
+      .then(({ status: s }) => setStatus(s === 'granted' ? 'granted' : 'denied'))
+      .catch(() => setStatus('denied'));
+  }, []);
+
+  // Feliratkozás csak engedéllyel és előtérben; a beállítás a navigációs állapottól függ.
+  useEffect(() => {
+    if (status !== 'granted' || !appActive) return;
+    let cancelled = false;
+    const subs: Location.LocationSubscription[] = [];
+    const keep = (sub: Location.LocationSubscription | null) => {
+      if (!sub) return;
+      if (cancelled) sub.remove();
+      else subs.push(sub);
+    };
+    const opts = locationOptions(navigating);
+
+    Location.watchPositionAsync(
+      { accuracy: ACCURACY[opts.accuracy], timeInterval: opts.timeInterval, distanceInterval: opts.distanceInterval },
       (loc) => {
         setPos([loc.coords.longitude, loc.coords.latitude]);
         course.current = { deg: loc.coords.heading, speed: loc.coords.speed ?? 0 };
         setSpeed(loc.coords.speed ?? null);
         updateHeading();
       },
-    );
-    headingSub.current?.remove();
-    headingSub.current = await Location.watchHeadingAsync((h) => {
+    )
+      .then(keep)
+      .catch(() => {}); // kikapcsolt helymeghatározás: nincs pozíció → „Nincs GPS jel”
+
+    Location.watchHeadingAsync((h) => {
       const deg = h.trueHeading >= 0 ? h.trueHeading : h.magHeading;
       compass.current = deg >= 0 ? deg : null;
       updateHeading();
-    }).catch(() => null); // nincs iránytű (pl. szimulátor): marad a menetirány
-  }, [updateHeading]);
+    })
+      .then(keep)
+      .catch(() => {}); // nincs iránytű (pl. szimulátor): marad a menetirány
+
+    return () => {
+      cancelled = true;
+      subs.forEach((sub) => sub.remove());
+    };
+  }, [status, appActive, navigating, updateHeading]);
 
   const request = useCallback(async () => {
     const { status: s } = await Location.requestForegroundPermissionsAsync();
-    if (s === 'granted') {
-      setStatus('granted');
-      await start();
-    } else {
-      setStatus('denied');
-    }
-  }, [start]);
-
-  useEffect(() => {
-    Location.getForegroundPermissionsAsync().then(({ status: s }) => {
-      if (s === 'granted') {
-        setStatus('granted');
-        start();
-      } else {
-        setStatus('denied');
-      }
-    });
-    return () => {
-      sub.current?.remove();
-      headingSub.current?.remove();
-    };
-  }, [start]);
+    setStatus(s === 'granted' ? 'granted' : 'denied');
+  }, []);
 
   return { status, pos, heading, speed, request };
 }

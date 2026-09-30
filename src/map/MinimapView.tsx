@@ -156,6 +156,7 @@ export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camer
       compass={false}
       scaleBar={false}
       touchPitch={false}
+      preferredFramesPerSecond={config.mapFps}
       onDidFinishLoadingMap={onMapLoaded}
       onLongPress={(e) => onLongPress(e.nativeEvent.lngLat)}
       onRegionWillChange={(e) => {

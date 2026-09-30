@@ -25,6 +25,12 @@ export const config = {
   arrivalM: 20,
   arrivedResetMs: 5_000,
 
+  // Akkukímélés
+  gpsNavigating: { accuracy: 'navigation', timeInterval: 1000, distanceInterval: 2 } as const,
+  gpsIdle: { accuracy: 'balanced', timeInterval: 5000, distanceInterval: 10 } as const,
+  mapFps: 30,
+  idleCameraStepM: 5,
+
   idleZoom: 18,
   navZoom: 18.5,
   courseMinSpeedMps: 2,
