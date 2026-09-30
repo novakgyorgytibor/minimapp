@@ -20,7 +20,7 @@ const en = {
   permText: 'Navigation needs your location.',
   permAllow: 'Allow',
   permSettings: 'Settings',
-  toll: 'toll road',
+  toll: 'tolls',
 };
 
 export type StringKey = keyof typeof en;
@@ -44,7 +44,7 @@ const hu: Record<StringKey, string> = {
   permText: 'A navigációhoz szükség van a pozíciódra.',
   permAllow: 'Engedélyezés',
   permSettings: 'Beállítások',
-  toll: 'útdíjas',
+  toll: 'útdíjak',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, hu };
