@@ -49,15 +49,33 @@ function slice(route: Route, from: number, to: number): LngLat[] {
   return out;
 }
 
-/** Szakaszok a valódi manőverek körül (beforeM-rel előtte, afterM-rel utána), a vastagabb kijelöléshez. */
+function segmentFor(route: Route, st: Step, beforeM: number, afterM: number) {
+  const from = Math.max(0, st.beginDistM - beforeM);
+  const to = Math.min(route.distanceM, st.beginDistM + afterM);
+  const line = slice(route, from, to);
+  return line.length > 1
+    ? [{ type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: line } }]
+    : [];
+}
+
+/** Szakaszok az összes valódi manőver körül (beforeM-rel előtte, afterM-rel utána). */
 export function maneuverSegments(route: Route, beforeM: number, afterM: number): FeatureCollection<LineString> {
-  const features = route.steps.filter(isRealManeuver).flatMap((st) => {
-    const from = Math.max(0, st.beginDistM - beforeM);
-    const to = Math.min(route.distanceM, st.beginDistM + afterM);
-    const line = slice(route, from, to);
-    return line.length > 1
-      ? [{ type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: line } }]
-      : [];
-  });
-  return { type: 'FeatureCollection', features };
+  return {
+    type: 'FeatureCollection',
+    features: route.steps.filter(isRealManeuver).flatMap((st) => segmentFor(route, st, beforeM, afterM)),
+  };
+}
+
+/** Csak a következő manőver kiemelése (navigáció közben); ha az nem valódi manőver, üres. */
+export function nextManeuverSegment(
+  route: Route,
+  stepIndex: number,
+  beforeM: number,
+  afterM: number,
+): FeatureCollection<LineString> {
+  const st = route.steps[stepIndex];
+  return {
+    type: 'FeatureCollection',
+    features: st && isRealManeuver(st) ? segmentFor(route, st, beforeM, afterM) : [],
+  };
 }

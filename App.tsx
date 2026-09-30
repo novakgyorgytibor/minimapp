@@ -10,7 +10,7 @@ import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
-import { maneuverSegments } from './src/nav/maneuverSegments';
+import { nextManeuverSegment } from './src/nav/maneuverSegments';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -148,8 +148,12 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [view],
   );
-  // Vastagabb kijelölés a valódi manőverek körül (±30 m)
-  const maneuvers = useMemo(() => (s.route ? maneuverSegments(s.route, 30, 30) : null), [s.route]);
+  // Vastagabb kijelölés csak navigáció közben, és csak a következő manővernél (±30 m)
+  const nextIdx = s.progress?.nextStepIndex ?? 1;
+  const maneuvers = useMemo(
+    () => (s.route && (s.phase === 'navigating' || s.phase === 'rerouting') ? nextManeuverSegment(s.route, nextIdx, 30, 30) : null),
+    [s.route, s.phase, nextIdx],
+  );
 
   // Útvonal követésekor folyosó; elhúzott térképnél (vagy útvonal nélkül) kör a képernyő közepén; nézet nélkül fekete
   const mode = maskMode({ hasRoute: !!s.route, follow, hasView: !!view });
