@@ -42,3 +42,9 @@ test('beyond the end clamps to the last step and zero remaining', () => {
   expect(p.remainingM).toBeCloseTo(0, 0);
   expect(p.distToManeuverM).toBeCloseTo(0, 0);
 });
+
+test('snappedPos is the nearest point on the route', () => {
+  const p = snap([19.002, 47.5 + 30 / M_PER_DEG_LAT], route);
+  expect(p.snappedPos[0]).toBeCloseTo(19.002, 6);
+  expect(p.snappedPos[1]).toBeCloseTo(47.5, 6);
+});

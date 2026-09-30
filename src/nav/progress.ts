@@ -9,6 +9,8 @@ export interface Progress {
   distToManeuverM: number;
   remainingM: number;
   remainingS: number;
+  /** A pozíció az útvonalra illesztve (a jelölő megjelenítéséhez). */
+  snappedPos: LngLat;
 }
 
 export function snap(pos: LngLat, route: Route): Progress {
@@ -28,5 +30,6 @@ export function snap(pos: LngLat, route: Route): Progress {
   const remainingM = Math.max(0, route.distanceM - distAlongM);
   const remainingS = route.distanceM > 0 ? route.durationS * (remainingM / route.distanceM) : 0;
 
-  return { distAlongM, distFromRouteM, nextStepIndex, distToManeuverM, remainingM, remainingS };
+  const snappedPos = nearest.geometry.coordinates as LngLat;
+  return { distAlongM, distFromRouteM, nextStepIndex, distToManeuverM, remainingM, remainingS, snappedPos };
 }

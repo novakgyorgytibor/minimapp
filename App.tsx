@@ -181,7 +181,10 @@ function Main() {
   useEffect(() => {
     setIdleCameraPos((prev) => nextAnchor(prev, loc.pos, config.idleCameraStepM));
   }, [loc.pos]);
-  const cameraPos = navigatingish ? loc.pos : idleCameraPos;
+  // Navigáció közben a jelölő az útvonalra illeszkedik, amíg nem tértünk le róla (nincs oldalirányú ugrálás)
+  const onRoute = navigatingish && s.progress !== null && s.progress.distFromRouteM <= config.offRouteM[s.mode];
+  const markerPos = onRoute && s.progress ? s.progress.snappedPos : loc.pos;
+  const cameraPos = navigatingish ? markerPos : idleCameraPos;
 
   const camera = cameraFor({ phase: s.phase, pos: cameraPos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow, northUp, focusMe });
 
@@ -193,7 +196,7 @@ function Main() {
         masks={masks}
         route={s.route?.coords ?? null}
         maneuvers={maneuvers}
-        pos={loc.pos}
+        pos={markerPos}
         heading={loc.heading}
         dest={s.dest}
         camera={camera}

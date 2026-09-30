@@ -1,12 +1,12 @@
 import { config } from '../config';
 
 export interface LocationOptions {
-  accuracy: 'navigation' | 'balanced';
+  accuracy: 'navigation' | 'high';
   timeInterval: number;
   distanceInterval: number;
 }
 
-/** Akkukímélés: legnagyobb GPS-pontosság csak navigáció közben, egyébként kiegyensúlyozott és ritkább. */
+/** Akkukímélés: legnagyobb GPS-pontosság és sűrű mérés csak navigáció közben, egyébként ritkább. */
 export function locationOptions(navigating: boolean): LocationOptions {
   return navigating ? config.gpsNavigating : config.gpsIdle;
 }

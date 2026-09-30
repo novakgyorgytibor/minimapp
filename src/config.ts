@@ -27,7 +27,8 @@ export const config = {
 
   // Akkukímélés
   gpsNavigating: { accuracy: 'navigation', timeInterval: 1000, distanceInterval: 2 } as const,
-  gpsIdle: { accuracy: 'balanced', timeInterval: 5000, distanceInterval: 10 } as const,
+  // Androidon a 'balanced' Wi-Fi/cella alapú és több tíz métert ugrál → alapnézetben is GPS, csak ritkábban
+  gpsIdle: { accuracy: 'high', timeInterval: 5000, distanceInterval: 10 } as const,
   mapFps: 30,
   idleCameraStepM: 5,
 

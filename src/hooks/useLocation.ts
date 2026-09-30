@@ -3,13 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { angleDiff, pickHeading } from '../nav/heading';
 import { effectiveSpeed, locationOptions, SPEED_STALE_MS } from '../nav/power';
+import { smoothFix, type Smoothed } from '../nav/smoothing';
 import type { LngLat } from '../types';
 
 type Status = 'pending' | 'granted' | 'denied';
 
 const ACCURACY = {
   navigation: Location.Accuracy.BestForNavigation,
-  balanced: Location.Accuracy.Balanced,
+  high: Location.Accuracy.High,
 } as const;
 
 /**
@@ -26,6 +27,7 @@ export function useLocation(navigating: boolean) {
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const compass = useRef<number | null>(null);
   const course = useRef<{ deg: number | null; speed: number }>({ deg: null, speed: 0 });
+  const smoothed = useRef<Smoothed | null>(null);
 
   // Csak >3° változásnál renderelünk újra (az iránytű másodpercenként sokszor jelez)
   const updateHeading = useCallback(() => {
@@ -62,7 +64,17 @@ export function useLocation(navigating: boolean) {
     Location.watchPositionAsync(
       { accuracy: ACCURACY[opts.accuracy], timeInterval: opts.timeInterval, distanceInterval: opts.distanceInterval },
       (loc) => {
-        setPos([loc.coords.longitude, loc.coords.latitude]);
+        // Simítás a jelölő ugrálása ellen; változatlan becslésnél nincs új pozíció (nincs újrarenderelés)
+        const next = smoothFix(smoothed.current, {
+          pos: [loc.coords.longitude, loc.coords.latitude],
+          accuracyM: loc.coords.accuracy,
+          speedMps: loc.coords.speed,
+          t: loc.timestamp,
+        });
+        if (next !== smoothed.current) {
+          smoothed.current = next;
+          setPos(next.pos);
+        }
         course.current = { deg: loc.coords.heading, speed: loc.coords.speed ?? 0 };
         setRawSpeed(loc.coords.speed ?? null);
         setLastFixAt(Date.now());
