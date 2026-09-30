@@ -104,3 +104,12 @@ test('fullMasks blacks out everything (no position yet)', () => {
   expect(masks.map((m) => m.properties.radiusM)).toEqual(RADII);
   expect(inside(masks, [19.0, 47.5])).toEqual([true, true, true, true, true, true]);
 });
+
+test('multi-line corridor (selected + alternative route) keeps both unmasked', () => {
+  const other: LngLat[] = [[19.0, 47.51], [19.005, 47.51], [19.01, 47.51]]; // ~1.1 km északra
+  const masks = buildMasks({ type: 'MultiLineString', lines: [line, other] }, RADII);
+  expect(inside(masks, [19.005, 47.5])).toEqual([false, false, false, false, false, false]);
+  expect(inside(masks, [19.005, 47.51])).toEqual([false, false, false, false, false, false]);
+  // a kettő között (≈550 m-re mindkettőtől) minden maszk takar
+  expect(inside(masks, [19.005, 47.505])).toEqual([true, true, true, true, true, true]);
+});

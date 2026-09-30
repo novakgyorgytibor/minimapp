@@ -8,7 +8,7 @@ import { useLocation } from './src/hooks/useLocation';
 import { cameraFor, maskMode } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
-import { buildMasks, fullMasks } from './src/nav/corridor';
+import { buildMasks, fullMasks, type MaskGeometry } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
 import { nextManeuverSegment } from './src/nav/maneuverSegments';
 import { doneBucketM, splitRoute } from './src/nav/routeSplit';
@@ -156,9 +156,14 @@ function Main() {
     // A képernyő átlója (forgatás, döntés miatt bőven) + a legnagyobb sugár
     const half = (Math.hypot(screenW, screenH) / screenW) * widthM + radii[radii.length - 1];
     const clip = clipCenter ? viewBbox(clipCenter, half) : undefined;
-    return buildMasks({ type: 'LineString', coords: s.route.coords }, radii, { clip });
+    // Előnézetben a másik útvonal körül is nyitott a folyosó
+    const altCoords = s.phase === 'preview' ? s.alt?.coords : undefined;
+    const geom: MaskGeometry = altCoords
+      ? { type: 'MultiLineString', lines: [s.route.coords, altCoords] }
+      : { type: 'LineString', coords: s.route.coords };
+    return buildMasks(geom, radii, { clip });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s.route, zoomB, clipCenter]);
+  }, [s.route, s.alt, s.phase, zoomB, clipCenter]);
   // Útvonal nélkül: kör a képernyő közepe körül (húzáskor vele mozog)
   const idleMasks = useMemo(
     () =>

@@ -209,11 +209,12 @@ export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuve
       <PathStyle mode={mode} />
       <RouteLayer coords={route} />
       <DoneLayer coords={routeDone} />
-      <AltLayer coords={alt} onPress={onSelectAlt} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />
       ))}
+      {/* A maszkok UTÁN kerül fel (beforeId=route): a maszkok fölött, a kiválasztott útvonal alatt – nem takarja semmi */}
+      <AltLayer coords={alt} onPress={onSelectAlt} />
       <PointLayer id="dest" coord={dest} paint={DEST_PAINT} />
       <MeLayer coord={pos} heading={heading} />
     </Map>

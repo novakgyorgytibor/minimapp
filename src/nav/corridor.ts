@@ -1,12 +1,15 @@
 import bboxClip from '@turf/bbox-clip';
 import buffer from '@turf/buffer';
-import { lineString, point } from '@turf/helpers';
+import { lineString, multiLineString, point } from '@turf/helpers';
 import rewind from '@turf/rewind';
 import simplify from '@turf/simplify';
 import type { Feature, LineString, MultiLineString, MultiPolygon, Point, Position } from 'geojson';
 import type { LngLat } from '../types';
 
-export type MaskGeometry = { type: 'LineString'; coords: LngLat[] } | { type: 'Point'; coord: LngLat };
+export type MaskGeometry =
+  | { type: 'LineString'; coords: LngLat[] }
+  | { type: 'MultiLineString'; lines: LngLat[][] }
+  | { type: 'Point'; coord: LngLat };
 export type MaskFeature = Feature<MultiPolygon, { radiusM: number }>;
 
 const WORLD: Position[] = [[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]];
@@ -22,7 +25,8 @@ export function maskBase(
   { toleranceM, clip }: MaskOptions & { toleranceM: number },
 ): Feature<LineString | MultiLineString | Point> {
   if (geom.type === 'Point') return point(geom.coord);
-  let line: Feature<LineString | MultiLineString> = lineString(geom.coords);
+  let line: Feature<LineString | MultiLineString> =
+    geom.type === 'MultiLineString' ? multiLineString(geom.lines.filter((l) => l.length > 1)) : lineString(geom.coords);
   if (clip) line = bboxClip(line, clip) as Feature<LineString | MultiLineString>;
   if (pointsOf(line) <= 2) return line;
   return simplify(line, { tolerance: toleranceM / M_PER_DEG, highQuality: false });
