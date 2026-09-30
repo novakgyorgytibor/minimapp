@@ -23,8 +23,8 @@ import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 export interface MinimapViewProps {
   masks: MaskFeature[];
   route: LngLat[] | null;
-  /** Navigáció közben a megtett arány (0..1, line-progress szerint): addig halványabb a vonal. */
-  routeProgress: number | null;
+  /** Navigáció közben a megtett rész (halványszürkén takarja a fehér vonalat): ritkán frissülő durva rész + pontos vége. */
+  routeDone: { coarse: LngLat[] | null; tail: LngLat[] | null };
   /** Előnézetben a másik útvonal (halványan, koppintható). */
   alt: LngLat[] | null;
   onSelectAlt: () => void;
@@ -60,25 +60,28 @@ const DEST_PAINT = { 'circle-radius': 7, 'circle-color': theme.bg, 'circle-strok
 
 // Memoizált rétegek: a nagy GeoJSON csak akkor megy át a natív oldalra, ha tényleg változott
 // (nem minden GPS-frissítéskor).
-const DONE_COLOR = 'rgba(255,255,255,0.35)';
+// A megtett rész: tömör halványszürke (≈ 35% fehér feketén), kicsit szélesebb, hogy a fehér vonal széle se látsszon ki.
+// Az előttünk álló rész így átmenet nélkül, tisztán fehér marad.
+const DONE_PAINT: LineLayerSpecification['paint'] = {
+  'line-color': '#595959',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 7.5, 19, 11.5],
+};
+const DONE_LAYOUT: LineLayerSpecification['layout'] = { 'line-cap': 'butt', 'line-join': 'round' };
 
-// Egyetlen vonal; navigáció közben a line-gradient pontosan a megtett aránynál vált halványból fényesbe
-// (a geometria nem változik, csak ez az egy szám – nincs újraküldés minden GPS-méréskor).
-const RouteLayer = memo(function RouteLayer({ coords, progress }: { coords: LngLat[] | null; progress: number | null }) {
+const RouteLayer = memo(function RouteLayer({ coords }: { coords: LngLat[] | null }) {
   const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
-  const paint = useMemo<LineLayerSpecification['paint']>(
-    () =>
-      progress === null || progress <= 0
-        ? ROUTE_PAINT
-        : {
-            'line-width': ROUTE_PAINT!['line-width'],
-            'line-gradient': ['step', ['line-progress'], DONE_COLOR, Math.min(progress, 1), theme.fg],
-          },
-    [progress],
-  );
   return (
-    <GeoJSONSource id="route" data={data} lineMetrics>
-      <Layer type="line" id="route" source="route" layout={ROUTE_LAYOUT} paint={paint} />
+    <GeoJSONSource id="route" data={data}>
+      <Layer type="line" id="route" source="route" layout={ROUTE_LAYOUT} paint={ROUTE_PAINT} />
+    </GeoJSONSource>
+  );
+});
+
+const DoneLayer = memo(function DoneLayer({ id, coords }: { id: string; coords: LngLat[] | null }) {
+  const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
+  return (
+    <GeoJSONSource id={id} data={data}>
+      <Layer type="line" id={id} source={id} layout={DONE_LAYOUT} paint={DONE_PAINT} />
     </GeoJSONSource>
   );
 });
@@ -176,7 +179,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, routeProgress, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
+export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -222,7 +225,9 @@ export function MinimapView({ masks, route, routeProgress, alt, onSelectAlt, man
       <Camera ref={cameraRef} />
       <Images images={ARROW_IMAGES} />
       <PathStyle mode={mode} />
-      <RouteLayer coords={route} progress={routeProgress} />
+      <RouteLayer coords={route} />
+      <DoneLayer id="route-done-coarse" coords={routeDone.coarse} />
+      <DoneLayer id="route-done-tail" coords={routeDone.tail} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />

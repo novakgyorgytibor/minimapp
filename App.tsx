@@ -13,8 +13,8 @@ import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as Ma
 import { buildMasks, fullMasks, type MaskGeometry } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
 import { parseDevLink } from './src/nav/devLink';
-import { nextManeuverSegment } from './src/nav/maneuverSegments';
-import { lineProgressAt, mercatorCumulative } from './src/nav/lineProgress';
+import { nextManeuverSegment, routeSlice } from './src/nav/maneuverSegments';
+import { doneGeometry } from './src/nav/doneGeometry';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -35,6 +35,7 @@ import { StatusLine } from './src/ui/StatusLine';
 import { TripFooter } from './src/ui/TripFooter';
 
 const NO_POSITION_MASKS = fullMasks(config.maskFractions);
+const DONE_STEP_M = 200;
 
 export default function App() {
   return (
@@ -201,10 +202,14 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [view],
   );
-  // A megtett útszakasz halványabb: a vonal megtett aránya (Mercator-hosszban, ahogy a line-progress mér)
-  const merc = useMemo(() => (s.route ? mercatorCumulative(s.route.coords) : null), [s.route]);
-  const routeProgress =
-    navigatingish && s.route && merc && s.progress ? lineProgressAt(s.route, merc, s.progress.distAlongM) : null;
+  // A megtett útszakasz halványszürke: a durva rész csak 200 m-enként, a nyílig tartó vége minden méréskor frissül
+  const doneM = navigatingish && s.route && s.progress ? s.progress.distAlongM : 0;
+  const doneGrid = Math.floor(doneM / DONE_STEP_M) * DONE_STEP_M;
+  const doneCoarse = useMemo(
+    () => (s.route && doneGrid > 0 ? doneGeometry(s.route, doneGrid, DONE_STEP_M).coarse : null),
+    [s.route, doneGrid],
+  );
+  const doneTail = s.route && doneM > doneGrid ? routeSlice(s.route, doneGrid, doneM) : null;
 
   // Vastagabb kijelölés csak navigáció közben, és csak a következő manővernél (±30 m)
   const nextIdx = s.progress?.nextStepIndex ?? 1;
@@ -252,7 +257,7 @@ function Main() {
       <MinimapView
         masks={masks}
         route={s.route?.coords ?? null}
-        routeProgress={routeProgress}
+        routeDone={{ coarse: doneCoarse, tail: doneTail }}
         alt={s.phase === 'preview' ? (s.alt?.coords ?? null) : null}
         onSelectAlt={onSelectAlt}
         maneuvers={maneuvers}
