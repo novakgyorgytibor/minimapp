@@ -7,7 +7,7 @@ import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
 import { cameraFor } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
-import { buildMasks } from './src/nav/corridor';
+import { buildMasks, fullMasks } from './src/nav/corridor';
 import { haversineM } from './src/nav/geo';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -21,6 +21,8 @@ import { PermissionScreen } from './src/ui/PermissionScreen';
 import { SearchBar } from './src/ui/SearchBar';
 import { StatusLine } from './src/ui/StatusLine';
 import { TripFooter } from './src/ui/TripFooter';
+
+const NO_POSITION_MASKS = fullMasks(config.maskRadiiM);
 
 export default function App() {
   return (
@@ -99,7 +101,8 @@ function Main() {
     () => (idleAnchor ? buildMasks({ type: 'Point', coord: idleAnchor }, config.maskRadiiM) : []),
     [idleAnchor],
   );
-  const masks = s.route ? routeMasks : idleMasks;
+  // Pozíció nélkül minden fekete (ne látszódjon a teljes úthálózat az első GPS fix előtt)
+  const masks = s.route ? routeMasks : idleAnchor ? idleMasks : NO_POSITION_MASKS;
 
   const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading, bbox: s.route?.bbox ?? null, follow });
 

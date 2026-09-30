@@ -1,4 +1,4 @@
-import type { CameraStop } from '@maplibre/maplibre-react-native';
+import type { CameraRef, CameraStop } from '@maplibre/maplibre-react-native';
 import type { Phase } from '../nav/navMachine';
 import type { LngLat } from '../types';
 
@@ -28,4 +28,17 @@ export function cameraFor({ phase, pos, heading, bbox, follow }: CameraInput): C
     };
   }
   return { center: pos, zoom: 15, bearing: 0, pitch: 0, duration: 800 };
+}
+
+/**
+ * Imperatívan alkalmazza a stopot. (A deklaratív Camera propok üresre váltásakor – pl. amikor a
+ * felhasználó elhúzza a térképet – a natív oldal ugratná a nézetet.)
+ */
+export function applyCameraStop(ref: Pick<CameraRef, 'easeTo' | 'fitBounds'>, stop: CameraStop): void {
+  if ('bounds' in stop && stop.bounds) {
+    const { bounds, ...options } = stop;
+    ref.fitBounds(bounds, options);
+  } else if ('center' in stop && stop.center) {
+    ref.easeTo(stop);
+  }
 }

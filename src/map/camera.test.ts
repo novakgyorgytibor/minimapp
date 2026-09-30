@@ -1,4 +1,4 @@
-import { cameraFor } from './camera';
+import { applyCameraStop, cameraFor } from './camera';
 
 const pos: [number, number] = [19.04, 47.5];
 const bbox: [number, number, number, number] = [19.0, 47.4, 19.1, 47.6];
@@ -28,4 +28,24 @@ test('navigating: heading-up, tilted, zoomed in', () => {
     center: pos, zoom: 17, bearing: 123, pitch: 45,
   });
   expect(cameraFor({ phase: 'rerouting', pos, heading: 5, bbox, follow: true })).toMatchObject({ bearing: 5 });
+});
+
+describe('applyCameraStop', () => {
+  const fakeRef = () => ({ easeTo: jest.fn(), fitBounds: jest.fn() });
+
+  test('bounds stop → fitBounds with the rest as options', () => {
+    const ref = fakeRef();
+    const stop = cameraFor({ phase: 'preview', pos, heading: 0, bbox, follow: true })!;
+    applyCameraStop(ref, stop);
+    expect(ref.fitBounds).toHaveBeenCalledWith(bbox, expect.objectContaining({ duration: 800, padding: expect.any(Object) }));
+    expect(ref.easeTo).not.toHaveBeenCalled();
+  });
+
+  test('center stop → easeTo', () => {
+    const ref = fakeRef();
+    const stop = cameraFor({ phase: 'navigating', pos, heading: 42, bbox, follow: true })!;
+    applyCameraStop(ref, stop);
+    expect(ref.easeTo).toHaveBeenCalledWith(expect.objectContaining({ center: pos, bearing: 42, zoom: 17 }));
+    expect(ref.fitBounds).not.toHaveBeenCalled();
+  });
 });

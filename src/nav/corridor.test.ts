@@ -1,5 +1,5 @@
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
-import { buildMasks } from './corridor';
+import { buildMasks, fullMasks, maskBase } from './corridor';
 import type { LngLat } from '../types';
 
 const RADII = [50, 100, 150, 200, 250, 300];
@@ -54,4 +54,32 @@ test('long routes (20k points, ~300 km) build fast enough', () => {
   const masks = buildMasks({ type: 'LineString', coords }, RADII);
   expect(masks).toHaveLength(6);
   expect(Date.now() - t0).toBeLessThan(3000);
+});
+
+test('long jagged routes are simplified hard enough to buffer quickly', () => {
+  // 20k pontos véletlen bolyongás (~300 km), mint egy valós úthálózaton futó shape
+  let seed = 42;
+  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const coords: LngLat[] = [[16, 47]];
+  for (let i = 1; i < 20_000; i++) {
+    const [lng, lat] = coords[i - 1];
+    coords.push([lng + 0.0002 + (rand() - 0.5) * 0.0002, lat + (rand() - 0.5) * 0.0003]);
+  }
+  const base = maskBase({ type: 'LineString', coords });
+  expect(base.geometry.type).toBe('LineString');
+  expect((base.geometry as GeoJSON.LineString).coordinates.length).toBeLessThan(1500);
+});
+
+test('short routes keep ~3 m precision', () => {
+  const coords: LngLat[] = [[19, 47.5], [19.001, 47.50002], [19.002, 47.5]]; // ~2 m kitérés
+  const base = maskBase({ type: 'LineString', coords });
+  expect((base.geometry as GeoJSON.LineString).coordinates.length).toBe(2);
+  const coords2: LngLat[] = [[19, 47.5], [19.001, 47.5001], [19.002, 47.5]]; // ~11 m kitérés
+  expect((maskBase({ type: 'LineString', coords: coords2 }).geometry as GeoJSON.LineString).coordinates.length).toBe(3);
+});
+
+test('fullMasks blacks out everything (no position yet)', () => {
+  const masks = fullMasks(RADII);
+  expect(masks.map((m) => m.properties.radiusM)).toEqual(RADII);
+  expect(inside(masks, [19.0, 47.5])).toEqual([true, true, true, true, true, true]);
 });
