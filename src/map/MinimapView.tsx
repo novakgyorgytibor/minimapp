@@ -80,7 +80,7 @@ const DoneLayer = memo(function DoneLayer({ coords }: { coords: LngLat[] | null 
   );
 });
 
-const PULSE_MS = 1600;
+const PULSE_MS = 2600;
 const PULSE_TICK_MS = 66; // ~15 fps elég a lassú pulzáláshoz
 // Nagyobb érintési terület a vékony vonal körül
 const ALT_HITBOX = { top: 22, right: 22, bottom: 22, left: 22 };
