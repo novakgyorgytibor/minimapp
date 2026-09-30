@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
-import { cameraFor } from './src/map/camera';
+import { cameraFor, maskMode } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks } from './src/nav/corridor';
@@ -132,10 +132,19 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [view],
   );
-  // Nézet nélkül (induláskor) minden fekete
-  const masks = s.route ? routeMasks : view ? idleMasks : NO_POSITION_MASKS;
+  // Útvonal követésekor folyosó; elhúzott térképnél (vagy útvonal nélkül) kör a képernyő közepén; nézet nélkül fekete
+  const mode = maskMode({ hasRoute: !!s.route, follow, hasView: !!view });
+  const masks = mode === 'route' ? routeMasks : mode === 'center' ? idleMasks : NO_POSITION_MASKS;
 
-  const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow });
+  // Tájoló: navigáció követése közben észak-fent / menetirány-fent váltás, egyébként egyszeri északra fordítás
+  const [northUp, setNorthUp] = useState(false);
+  const [northNonce, setNorthNonce] = useState(0);
+  const onCompassPress = () => {
+    if (navigatingish && follow) setNorthUp((v) => !v);
+    else setNorthNonce((n) => n + 1);
+  };
+
+  const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow, northUp });
 
   if (loc.status === 'denied') return <PermissionScreen onRequest={loc.request} />;
 
@@ -151,6 +160,7 @@ function Main() {
         onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: 'Dropped pin' })}
         onUserPan={() => setFollow(false)}
         onViewChange={onViewChange}
+        northNonce={northNonce}
       />
       <Attribution />
 
@@ -185,8 +195,8 @@ function Main() {
                 <CloseButton onPress={() => dispatch({ type: 'CANCEL' })} />
               </View>
             )}
-            <View style={styles.compassRow} pointerEvents="none">
-              <Compass bearing={mapBearing} />
+            <View style={styles.compassRow} pointerEvents="box-none">
+              <Compass bearing={mapBearing} onPress={onCompassPress} />
             </View>
           </View>
         )}

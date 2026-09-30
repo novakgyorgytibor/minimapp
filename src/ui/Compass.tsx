@@ -1,13 +1,15 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { theme } from '../theme';
 
 /** Két egymással szembe fordított háromszög: fehér = észak, szürke = dél. A térképpel együtt forog. */
-export function Compass({ bearing }: { bearing: number }) {
+export function Compass({ bearing, onPress }: { bearing: number; onPress: () => void }) {
   return (
-    <View style={[styles.wrap, { transform: [{ rotate: `${-bearing}deg` }] }]} pointerEvents="none">
-      <View style={[styles.tri, styles.north]} />
-      <View style={[styles.tri, styles.south]} />
-    </View>
+    <Pressable onPress={onPress} hitSlop={16}>
+      <View style={[styles.wrap, { transform: [{ rotate: `${-bearing}deg` }] }]}>
+        <View style={[styles.tri, styles.north]} />
+        <View style={[styles.tri, styles.south]} />
+      </View>
+    </Pressable>
   );
 }
 

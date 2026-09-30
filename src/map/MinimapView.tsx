@@ -31,6 +31,8 @@ export interface MinimapViewProps {
   onUserPan: () => void;
   /** A képernyő közepe, a zoom és a térkép forgatása (húzás / zoomolás közben is folyamatosan). */
   onViewChange: (center: LngLat, zoom: number, bearing: number) => void;
+  /** Minden növelésre a térkép (a mostani középponttal) északra fordul. */
+  northNonce: number;
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -104,7 +106,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange }: MinimapViewProps) {
+export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -113,6 +115,16 @@ export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPr
     if (camera && cameraRef.current) applyCameraStop(cameraRef.current, camera);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraKey]);
+  const lastCenter = useRef<LngLat | null>(null);
+  useEffect(() => {
+    if (northNonce > 0 && lastCenter.current) {
+      cameraRef.current?.easeTo({ center: lastCenter.current, bearing: 0, duration: 300 });
+    }
+  }, [northNonce]);
+  const onRegion = (center: LngLat, zoom: number, bearing: number) => {
+    lastCenter.current = center;
+    onViewChange(center, zoom, bearing);
+  };
   // A térkép betöltése előtt kiadott parancs elveszhet → betöltéskor újra alkalmazzuk.
   const onMapLoaded = () => {
     if (latestCamera.current && cameraRef.current) applyCameraStop(cameraRef.current, latestCamera.current);
@@ -132,8 +144,8 @@ export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPr
       onRegionWillChange={(e) => {
         if (e.nativeEvent.userInteraction) onUserPan();
       }}
-      onRegionIsChanging={(e) => onViewChange(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
-      onRegionDidChange={(e) => onViewChange(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
+      onRegionIsChanging={(e) => onRegion(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
+      onRegionDidChange={(e) => onRegion(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
     >
       <Camera ref={cameraRef} />
       <Images images={ARROW_IMAGES} />

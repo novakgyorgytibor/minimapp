@@ -9,9 +9,11 @@ export interface CameraInput {
   heading: number;
   bbox: [number, number, number, number] | null;
   follow: boolean;
+  /** Navigáció közben is észak legyen felül (a tájolóra koppintva kapcsolható). */
+  northUp: boolean;
 }
 
-export function cameraFor({ phase, pos, heading, bbox, follow }: CameraInput): CameraStop | null {
+export function cameraFor({ phase, pos, heading, bbox, follow, northUp }: CameraInput): CameraStop | null {
   if (!follow) return null;
   if (phase === 'preview' && bbox) {
     return { bounds: bbox, padding: { top: 140, bottom: 260, left: 48, right: 48 }, bearing: 0, pitch: 0, duration: 800 };
@@ -21,7 +23,7 @@ export function cameraFor({ phase, pos, heading, bbox, follow }: CameraInput): C
     return {
       center: pos,
       zoom: config.navZoom,
-      bearing: heading,
+      bearing: northUp ? 0 : heading,
       pitch: 45,
       padding: { top: 320, bottom: 0, left: 0, right: 0 },
       duration: 1000,
@@ -42,4 +44,15 @@ export function applyCameraStop(ref: Pick<CameraRef, 'easeTo' | 'fitBounds'>, st
   } else if ('center' in stop && stop.center) {
     ref.easeTo(stop);
   }
+}
+
+export type MaskMode = 'route' | 'center' | 'none';
+
+/**
+ * Útvonal követése közben a folyosó; ha a felhasználó elhúzta a térképet (vagy nincs útvonal),
+ * a képernyő közepe körüli kör; nézet nélkül minden fekete.
+ */
+export function maskMode({ hasRoute, follow, hasView }: { hasRoute: boolean; follow: boolean; hasView: boolean }): MaskMode {
+  if (hasRoute && follow) return 'route';
+  return hasView ? 'center' : 'none';
 }
