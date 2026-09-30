@@ -12,9 +12,12 @@ export const config = {
   searchDebounceMs: 400,
   searchMinChars: 3,
 
-  maskRadiiM: [50, 100, 150, 200, 250, 300],
+  // Halványítás a képernyőhöz mérten: a maszk-sugarak = arányok × külső sugár,
+  // külső sugár = képernyőszélesség × az alábbi arány (így bármelyik zoomon ugyanúgy néz ki).
+  maskFractions: [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1],
   maskOpacities: [0.2, 0.2, 0.2, 0.2, 0.2, 1],
-  idleMaskMoveM: 10,
+  idleFadeScreenFraction: 0.5,
+  corridorFadeScreenFraction: 0.3,
 
   offRouteM: { auto: 40, bicycle: 40, pedestrian: 25 } as Record<Mode, number>,
   offRouteSamples: 3,

@@ -56,8 +56,8 @@ test('long routes (20k points, ~300 km) build fast enough', () => {
   expect(Date.now() - t0).toBeLessThan(3000);
 });
 
-test('long jagged routes are simplified hard enough to buffer quickly', () => {
-  // 20k pontos véletlen bolyongás (~300 km), mint egy valós úthálózaton futó shape
+// 20k pontos véletlen bolyongás (~300 km), mint egy valós úthálózaton futó shape
+function jaggedRoute(): LngLat[] {
   let seed = 42;
   const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const coords: LngLat[] = [[16, 47]];
@@ -65,17 +65,38 @@ test('long jagged routes are simplified hard enough to buffer quickly', () => {
     const [lng, lat] = coords[i - 1];
     coords.push([lng + 0.0002 + (rand() - 0.5) * 0.0002, lat + (rand() - 0.5) * 0.0003]);
   }
-  const base = maskBase({ type: 'LineString', coords });
-  expect(base.geometry.type).toBe('LineString');
-  expect((base.geometry as GeoJSON.LineString).coordinates.length).toBeLessThan(1500);
+  return coords;
+}
+const pointCount = (f: ReturnType<typeof maskBase>) =>
+  f.geometry.type === 'LineString'
+    ? f.geometry.coordinates.length
+    : f.geometry.type === 'MultiLineString'
+      ? f.geometry.coordinates.reduce((n, l) => n + l.length, 0)
+      : 1;
+
+test('clipping a long route to the view keeps only the visible part', () => {
+  const coords = jaggedRoute();
+  const mid = coords[10_000];
+  const d = 0.003; // ~ 300 m-es ablak
+  const base = maskBase({ type: 'LineString', coords }, { toleranceM: 1, clip: [mid[0] - d, mid[1] - d, mid[0] + d, mid[1] + d] });
+  expect(pointCount(base)).toBeGreaterThan(1);
+  expect(pointCount(base)).toBeLessThan(200);
 });
 
-test('short routes keep ~3 m precision', () => {
-  const coords: LngLat[] = [[19, 47.5], [19.001, 47.50002], [19.002, 47.5]]; // ~2 m kitérés
-  const base = maskBase({ type: 'LineString', coords });
-  expect((base.geometry as GeoJSON.LineString).coordinates.length).toBe(2);
-  const coords2: LngLat[] = [[19, 47.5], [19.001, 47.5001], [19.002, 47.5]]; // ~11 m kitérés
-  expect((maskBase({ type: 'LineString', coords: coords2 }).geometry as GeoJSON.LineString).coordinates.length).toBe(3);
+test('route completely outside the clip → everything masked', () => {
+  const masks = buildMasks({ type: 'LineString', coords: line }, RADII, { clip: [20, 48, 20.01, 48.01] });
+  expect(inside(masks, [19.005, 47.5])).toEqual([true, true, true, true, true, true]);
+});
+
+test('simplification tolerance follows the largest radius', () => {
+  const wiggle: LngLat[] = [[19, 47.5], [19.001, 47.5001], [19.002, 47.5]]; // ~11 m kitérés
+  expect(pointCount(maskBase({ type: 'LineString', coords: wiggle }, { toleranceM: 3 }))).toBe(3);
+  expect(pointCount(maskBase({ type: 'LineString', coords: wiggle }, { toleranceM: 20 }))).toBe(2);
+});
+
+test('clipped masks still keep the visible route unmasked', () => {
+  const masks = buildMasks({ type: 'LineString', coords: line }, RADII, { clip: [19.004, 47.499, 19.006, 47.501] });
+  expect(inside(masks, [19.005, 47.5])).toEqual([false, false, false, false, false, false]);
 });
 
 test('fullMasks blacks out everything (no position yet)', () => {

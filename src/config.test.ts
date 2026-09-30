@@ -1,8 +1,9 @@
 import { config } from './config';
 
-test('mask radii and opacities line up, outermost is fully black', () => {
-  expect(config.maskRadiiM).toHaveLength(config.maskOpacities.length);
-  expect([...config.maskRadiiM]).toEqual([...config.maskRadiiM].sort((a, b) => a - b));
+test('mask fractions and opacities line up, outermost is fully black at the outer radius', () => {
+  expect(config.maskFractions).toHaveLength(config.maskOpacities.length);
+  expect([...config.maskFractions]).toEqual([...config.maskFractions].sort((a, b) => a - b));
+  expect(config.maskFractions[config.maskFractions.length - 1]).toBe(1);
   expect(config.maskOpacities[config.maskOpacities.length - 1]).toBe(1);
 });
 

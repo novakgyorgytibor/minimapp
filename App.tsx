@@ -1,12 +1,13 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
 import { cameraFor } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
+import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
 import { initialNavState, navReducer } from './src/nav/navMachine';
@@ -22,7 +23,7 @@ import { SearchBar } from './src/ui/SearchBar';
 import { StatusLine } from './src/ui/StatusLine';
 import { TripFooter } from './src/ui/TripFooter';
 
-const NO_POSITION_MASKS = fullMasks(config.maskRadiiM);
+const NO_POSITION_MASKS = fullMasks(config.maskFractions);
 
 export default function App() {
   return (
@@ -85,28 +86,47 @@ function Main() {
   // Fázisváltáskor a kamera újra követ
   useEffect(() => setFollow(true), [s.phase]);
 
-  // Maszk horgony útvonal nélkül: a képernyő közepe (húzáskor vele mozog), első fixig a pozíció.
-  // nextAnchor kis elmozdulásnál ugyanazt az objektumot adja vissza → nincs újrarenderelés.
-  const [idleAnchor, setIdleAnchor] = useState<LngLat | null>(null);
-  const onCenterChange = useCallback(
-    (center: LngLat) => setIdleAnchor((prev) => nextAnchor(prev, center, config.idleMaskMoveM)),
-    [],
+  // Nézet (képernyő közepe + zoom), csak érdemi változásnál frissítve (nextView).
+  const { width: screenW, height: screenH } = useWindowDimensions();
+  const [view, setView] = useState<MapViewState | null>(null);
+  const onViewChange = useCallback(
+    (center: LngLat, zoom: number) => setView((prev) => nextView(prev, { center, zoom }, screenW)),
+    [screenW],
   );
-  useEffect(() => {
-    if (loc.pos) setIdleAnchor((prev) => prev ?? loc.pos);
-  }, [loc.pos]);
 
-  // Külön memo: a (drága) útvonal-maszk ne számolódjon újra, ha csak az idle horgony mozdul
-  const routeMasks = useMemo(
-    () => (s.route ? buildMasks({ type: 'LineString', coords: s.route.coords }, config.maskRadiiM) : []),
-    [s.route],
-  );
+  // A halványítás a képernyőhöz mérten skálázódik (bármelyik zoomon ugyanúgy néz ki).
+  const zoomB = zoomBucket(view?.zoom ?? config.idleZoom);
+  const lat = view?.center[1] ?? loc.pos?.[1] ?? 47.5;
+  const widthM = screenWidthM(zoomB, lat, screenW);
+
+  // Útvonalnál csak a látható rész (+ ráhagyás) körül számolunk; a kivágás közepe csak a
+  // képernyőszélesség negyedénél nagyobb elmozdulásnál lép.
+  const [clipCenter, setClipCenter] = useState<LngLat | null>(null);
+  useEffect(() => {
+    if (view) setClipCenter((prev) => nextAnchor(prev, view.center, widthM / 4));
+  }, [view, widthM]);
+
+  // Külön memo: a (drágább) útvonal-maszk ne számolódjon újra, ha csak az idle nézet mozdul
+  const routeMasks = useMemo(() => {
+    if (!s.route) return [];
+    const radii = radiiFor(config.corridorFadeScreenFraction * widthM, config.maskFractions);
+    // A képernyő átlója (forgatás, döntés miatt bőven) + a legnagyobb sugár
+    const half = (Math.hypot(screenW, screenH) / screenW) * widthM + radii[radii.length - 1];
+    const clip = clipCenter ? viewBbox(clipCenter, half) : undefined;
+    return buildMasks({ type: 'LineString', coords: s.route.coords }, radii, { clip });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.route, zoomB, clipCenter]);
+  // Útvonal nélkül: kör a képernyő közepe körül (húzáskor vele mozog)
   const idleMasks = useMemo(
-    () => (idleAnchor ? buildMasks({ type: 'Point', coord: idleAnchor }, config.maskRadiiM) : []),
-    [idleAnchor],
+    () =>
+      view
+        ? buildMasks({ type: 'Point', coord: view.center }, radiiFor(config.idleFadeScreenFraction * widthM, config.maskFractions))
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [view],
   );
-  // Pozíció nélkül minden fekete (ne látszódjon a teljes úthálózat az első GPS fix előtt)
-  const masks = s.route ? routeMasks : idleAnchor ? idleMasks : NO_POSITION_MASKS;
+  // Nézet nélkül (induláskor) minden fekete
+  const masks = s.route ? routeMasks : view ? idleMasks : NO_POSITION_MASKS;
 
   const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow });
 
@@ -123,7 +143,7 @@ function Main() {
         camera={camera}
         onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: 'Kijelölt pont' })}
         onUserPan={() => setFollow(false)}
-        onCenterChange={onCenterChange}
+        onViewChange={onViewChange}
       />
       <Attribution />
 
