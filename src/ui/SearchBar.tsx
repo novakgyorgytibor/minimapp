@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { config } from '../config';
 import { useLang } from '../i18n/LangContext';
 import { isAbortError } from '../services/http';
@@ -53,7 +53,13 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
           returnKeyType="search"
           autoCorrect={false}
         />
-        <Pressable onPress={onCancel} hitSlop={12}>
+        <Pressable
+          onPress={() => {
+            Keyboard.dismiss();
+            onCancel();
+          }}
+          hitSlop={12}
+        >
           <Text style={styles.cancel}>{t('cancel')}</Text>
         </Pressable>
       </View>
@@ -64,7 +70,13 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
         data={results}
         keyExtractor={(p, i) => `${p.coord.join(',')}-${i}`}
         renderItem={({ item }) => (
-          <Pressable onPress={() => onPick(item)} style={styles.item}>
+          <Pressable
+            onPress={() => {
+              Keyboard.dismiss(); // Androidon a mező eltűnésekor nem mindig záródik be magától
+              onPick(item);
+            }}
+            style={styles.item}
+          >
             <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
             {item.detail ? <Text style={styles.detail} numberOfLines={1}>{item.detail}</Text> : null}
           </Pressable>
