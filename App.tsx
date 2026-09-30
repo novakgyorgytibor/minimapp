@@ -1,6 +1,6 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
@@ -8,7 +8,7 @@ import { useLocation } from './src/hooks/useLocation';
 import { cameraFor } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
 import { buildMasks, fullMasks } from './src/nav/corridor';
-import { haversineM } from './src/nav/geo';
+import { nextAnchor } from './src/nav/anchor';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
 import { getRoute, RouteError } from './src/services/route';
@@ -85,12 +85,16 @@ function Main() {
   // Fázisváltáskor a kamera újra követ
   useEffect(() => setFollow(true), [s.phase]);
 
-  // Maszk horgony: útvonal nélkül a pozíció, csak >30 m elmozdulásnál frissítve
+  // Maszk horgony útvonal nélkül: a képernyő közepe (húzáskor vele mozog), első fixig a pozíció.
+  // nextAnchor kis elmozdulásnál ugyanazt az objektumot adja vissza → nincs újrarenderelés.
   const [idleAnchor, setIdleAnchor] = useState<LngLat | null>(null);
+  const onCenterChange = useCallback(
+    (center: LngLat) => setIdleAnchor((prev) => nextAnchor(prev, center, config.idleMaskMoveM)),
+    [],
+  );
   useEffect(() => {
-    if (!loc.pos) return;
-    if (!idleAnchor || haversineM(idleAnchor, loc.pos) > config.idleMaskMoveM) setIdleAnchor(loc.pos);
-  }, [loc.pos, idleAnchor]);
+    if (loc.pos) setIdleAnchor((prev) => prev ?? loc.pos);
+  }, [loc.pos]);
 
   // Külön memo: a (drága) útvonal-maszk ne számolódjon újra, ha csak az idle horgony mozdul
   const routeMasks = useMemo(
@@ -119,6 +123,7 @@ function Main() {
         camera={camera}
         onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: 'Kijelölt pont' })}
         onUserPan={() => setFollow(false)}
+        onCenterChange={onCenterChange}
       />
       <Attribution />
 

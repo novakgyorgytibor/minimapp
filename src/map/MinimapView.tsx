@@ -29,6 +29,8 @@ export interface MinimapViewProps {
   camera: CameraStop | null;
   onLongPress: (coord: LngLat) => void;
   onUserPan: () => void;
+  /** A képernyő közepe (húzás közben is folyamatosan). */
+  onCenterChange: (center: LngLat) => void;
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -107,7 +109,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPress, onUserPan }: MinimapViewProps) {
+export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPress, onUserPan, onCenterChange }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   useEffect(() => {
@@ -128,6 +130,8 @@ export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPr
       onRegionWillChange={(e) => {
         if (e.nativeEvent.userInteraction) onUserPan();
       }}
+      onRegionIsChanging={(e) => onCenterChange(e.nativeEvent.center)}
+      onRegionDidChange={(e) => onCenterChange(e.nativeEvent.center)}
     >
       <Camera ref={cameraRef} />
       <Images images={ARROW_IMAGES} />

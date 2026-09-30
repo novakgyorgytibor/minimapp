@@ -14,7 +14,7 @@ export const config = {
 
   maskRadiiM: [50, 100, 150, 200, 250, 300],
   maskOpacities: [0.2, 0.2, 0.2, 0.2, 0.2, 1],
-  idleMaskMoveM: 30,
+  idleMaskMoveM: 10,
 
   offRouteM: { auto: 40, bicycle: 40, pedestrian: 25 } as Record<Mode, number>,
   offRouteSamples: 3,
