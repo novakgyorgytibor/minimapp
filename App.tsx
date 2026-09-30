@@ -15,7 +15,7 @@ import { doneBucketM, splitRoute } from './src/nav/routeSplit';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
-import { getRoute, RouteError } from './src/services/route';
+import { getRoute, RouteError, sameRoute } from './src/services/route';
 import { theme } from './src/theme';
 import type { LngLat } from './src/types';
 import { LangProvider, useLang } from './src/i18n/LangContext';
@@ -68,8 +68,16 @@ function Main() {
       return;
     }
     const ctrl = new AbortController();
-    getRoute(from, s.dest, s.mode, ctrl.signal, undefined, lang)
-      .then((route) => dispatch({ type: 'ROUTE_OK', route, requestId: id }))
+    // Előnézetben a leggyorsabb és a legrövidebb párhuzamosan; újratervezésnél csak a választott típus
+    const short = s.pref === 'short';
+    const withAlt = s.phase === 'preview' || s.phase === 'searching';
+    Promise.all([
+      getRoute(from, s.dest, s.mode, ctrl.signal, undefined, lang, short),
+      withAlt ? getRoute(from, s.dest, s.mode, ctrl.signal, undefined, lang, !short).catch(() => null) : Promise.resolve(null),
+    ])
+      .then(([route, other]) =>
+        dispatch({ type: 'ROUTE_OK', route, alt: other && !sameRoute(route, other) ? other : null, requestId: id }),
+      )
       .catch((e) => {
         if (isAbortError(e)) return;
         dispatch({ type: 'ROUTE_FAIL', error: e instanceof RouteError ? e.kind : 'network', requestId: id });
@@ -93,6 +101,8 @@ function Main() {
       deactivateKeepAwake('nav');
     };
   }, [navigatingish]);
+
+  const onSelectAlt = useCallback(() => dispatch({ type: 'SELECT_ALT' }), []);
 
   // ◎: a nyíl a képernyő közepére (előnézetben is az útvonal helyett)
   const [focusMe, setFocusMe] = useState(false);
@@ -191,7 +201,15 @@ function Main() {
   const markerPos = onRoute && s.progress ? s.progress.snappedPos : loc.pos;
   const cameraPos = navigatingish ? markerPos : idleCameraPos;
 
-  const camera = cameraFor({ phase: s.phase, pos: cameraPos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow, northUp, focusMe });
+  // Előnézetben mindkét útvonal férjen a képbe
+  const previewBbox = useMemo(() => {
+    const a = s.route?.bbox;
+    const b = s.phase === 'preview' ? s.alt?.bbox : undefined;
+    if (!a || !b) return a ?? null;
+    return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])] as [number, number, number, number];
+  }, [s.route, s.alt, s.phase]);
+
+  const camera = cameraFor({ phase: s.phase, pos: cameraPos, heading: loc.heading ?? 0, bbox: previewBbox, follow, northUp, focusMe });
 
   if (loc.status === 'denied') return <PermissionScreen onRequest={loc.request} />;
 
@@ -201,6 +219,8 @@ function Main() {
         masks={masks}
         route={split ? split.ahead : (s.route?.coords ?? null)}
         routeDone={split?.done ?? null}
+        alt={s.phase === 'preview' ? (s.alt?.coords ?? null) : null}
+        onSelectAlt={onSelectAlt}
         maneuvers={maneuvers}
         pos={markerPos}
         heading={loc.heading}
@@ -268,7 +288,13 @@ function Main() {
             <StatusLine error={s.error} loading={s.loading} onRetry={() => dispatch({ type: 'RETRY' })} />
             {s.phase === 'preview' && (
               <>
-                {s.route && <TripFooter remainingM={s.route.distanceM} remainingS={s.route.durationS} />}
+                {s.route && (
+                  <TripFooter
+                    remainingM={s.route.distanceM}
+                    remainingS={s.route.durationS}
+                    label={s.alt ? t(s.pref === 'fast' ? 'routeFastest' : 'routeShortest') : undefined}
+                  />
+                )}
                 <ModeToggle mode={s.mode} onChange={(mode) => dispatch({ type: 'SET_MODE', mode })} />
                 {s.route && !s.loading && (
                   <Pressable onPress={() => dispatch({ type: 'START' })} style={styles.start}>

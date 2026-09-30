@@ -24,6 +24,9 @@ export interface MinimapViewProps {
   route: LngLat[] | null;
   /** A már megtett útvonalrész (halványabban). */
   routeDone: LngLat[] | null;
+  /** Előnézetben a másik útvonal (halványan, koppintható). */
+  alt: LngLat[] | null;
+  onSelectAlt: () => void;
   /** Vastagabb szakaszok a valódi manőverek körül. */
   maneuvers: FeatureCollection<LineString> | null;
   pos: LngLat | null;
@@ -72,6 +75,20 @@ const DoneLayer = memo(function DoneLayer({ coords }: { coords: LngLat[] | null 
   return (
     <GeoJSONSource id="route-done" data={data}>
       <Layer type="line" id="route-done" source="route-done" layout={ROUTE_LAYOUT} paint={DONE_PAINT} />
+    </GeoJSONSource>
+  );
+});
+
+const ALT_PAINT: LineLayerSpecification['paint'] = { ...ROUTE_PAINT, 'line-opacity': 0.3 };
+// Nagyobb érintési terület a vékony vonal körül
+const ALT_HITBOX = { top: 22, right: 22, bottom: 22, left: 22 };
+
+// A másik útvonal a fő útvonal ALATT (beforeId), koppintásra kiválasztható
+const AltLayer = memo(function AltLayer({ coords, onPress }: { coords: LngLat[] | null; onPress: () => void }) {
+  const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
+  return (
+    <GeoJSONSource id="route-alt" data={data} onPress={onPress} hitbox={ALT_HITBOX}>
+      <Layer type="line" id="route-alt" source="route-alt" beforeId="route" layout={ROUTE_LAYOUT} paint={ALT_PAINT} />
     </GeoJSONSource>
   );
 });
@@ -144,7 +161,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, routeDone, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
+export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -192,6 +209,7 @@ export function MinimapView({ masks, route, routeDone, maneuvers, pos, heading, 
       <PathStyle mode={mode} />
       <RouteLayer coords={route} />
       <DoneLayer coords={routeDone} />
+      <AltLayer coords={alt} onPress={onSelectAlt} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />

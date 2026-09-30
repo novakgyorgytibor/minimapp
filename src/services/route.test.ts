@@ -1,6 +1,6 @@
 import fixture from './__fixtures__/valhalla-osrm-auto.json';
 import { rejection } from '../testUtils';
-import { buildRoute, decodePolyline, getRoute, parseOsrm, RouteError } from './route';
+import { buildRoute, decodePolyline, getRoute, parseOsrm, RouteError, sameRoute } from './route';
 import { HttpError } from './http';
 
 test('decodes the reference polyline (precision 5) as [lng, lat]', () => {
@@ -102,4 +102,26 @@ test('Hungarian instructions are requested when the app language is Hungarian', 
   await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl }, 'hu');
   const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
   expect(JSON.parse(init.body as string).language).toBe('hu-HU');
+});
+
+test('shortest route is requested with costing_options', async () => {
+  const fetchImpl = jest.fn(async () => ({ ok: true, status: 200, json: async () => fixture, text: async () => '' }) as Response);
+  await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl }, 'en', true);
+  const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+  expect(JSON.parse(init.body as string).costing_options).toEqual({ auto: { shortest: true } });
+});
+
+test('fastest route has no costing_options', async () => {
+  const fetchImpl = jest.fn(async () => ({ ok: true, status: 200, json: async () => fixture, text: async () => '' }) as Response);
+  await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl });
+  const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+  expect(JSON.parse(init.body as string).costing_options).toBeUndefined();
+});
+
+test('sameRoute: equal within 1% distance and duration', () => {
+  const a = buildRoute([[19, 47.5], [19.01, 47.5]], 600, []);
+  const b = { ...a, distanceM: a.distanceM * 1.005, durationS: 603 };
+  const c = { ...a, distanceM: a.distanceM * 0.9, durationS: 700 };
+  expect(sameRoute(a, b)).toBe(true);
+  expect(sameRoute(a, c)).toBe(false);
 });

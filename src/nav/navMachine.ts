@@ -4,6 +4,8 @@ import type { LngLat, Mode, Route } from '../types';
 import { haversineM } from './geo';
 import { snap, type Progress } from './progress';
 
+export type RoutePref = 'fast' | 'short';
+
 export type Phase = 'idle' | 'searching' | 'preview' | 'navigating' | 'rerouting' | 'arrived';
 
 export interface NavState {
@@ -12,6 +14,10 @@ export interface NavState {
   dest: LngLat | null;
   destLabel: string | null;
   route: Route | null;
+  /** Előnézetben a másik (leggyorsabb ↔ legrövidebb) útvonal, ha érdemben különbözik. */
+  alt: Route | null;
+  /** Melyik típust választotta a felhasználó (újratervezésnél is ezt kérjük). */
+  pref: RoutePref;
   progress: Progress | null;
   loading: boolean;
   requestId: number;
@@ -25,7 +31,8 @@ export type NavEvent =
   | { type: 'CLOSE_SEARCH' }
   | { type: 'SET_DEST'; dest: LngLat; label: string }
   | { type: 'SET_MODE'; mode: Mode }
-  | { type: 'ROUTE_OK'; route: Route; requestId: number }
+  | { type: 'ROUTE_OK'; route: Route; alt?: Route | null; requestId: number }
+  | { type: 'SELECT_ALT' }
   | { type: 'ROUTE_FAIL'; error: RouteErrorKind; requestId: number }
   | { type: 'RETRY' }
   | { type: 'START' }
@@ -39,6 +46,8 @@ export function initialNavState(mode: Mode = 'auto'): NavState {
     dest: null,
     destLabel: null,
     route: null,
+    alt: null,
+    pref: 'fast',
     progress: null,
     loading: false,
     requestId: 0,
@@ -75,10 +84,10 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       return { ...s, phase: s.dest ? 'preview' : 'idle' };
     case 'SET_DEST':
       if (s.phase !== 'idle' && s.phase !== 'searching' && s.phase !== 'preview') return s;
-      return request({ ...s, phase: 'preview', dest: e.dest, destLabel: e.label, route: null, progress: null });
+      return request({ ...s, phase: 'preview', dest: e.dest, destLabel: e.label, route: null, alt: null, pref: 'fast', progress: null });
     case 'SET_MODE':
       if (e.mode === s.mode) return s;
-      if (s.phase === 'preview' && s.dest) return request({ ...s, mode: e.mode, route: null });
+      if (s.phase === 'preview' && s.dest) return request({ ...s, mode: e.mode, route: null, alt: null, pref: 'fast' });
       if (s.phase === 'idle' || s.phase === 'searching') return { ...s, mode: e.mode };
       return s;
     case 'ROUTE_OK':
@@ -86,7 +95,7 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       if (s.phase === 'rerouting') {
         return { ...s, phase: 'navigating', route: e.route, progress: null, loading: false, offRouteCount: 0 };
       }
-      return { ...s, route: e.route, loading: false };
+      return { ...s, route: e.route, alt: e.alt ?? null, loading: false };
     case 'ROUTE_FAIL':
       if (e.requestId !== s.requestId || !s.loading) return s;
       if (s.phase === 'rerouting') {
@@ -98,9 +107,12 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       if (s.phase === 'preview') return request(s);
       if (s.phase === 'navigating') return request({ ...s, phase: 'rerouting' });
       return s;
+    case 'SELECT_ALT':
+      if (s.phase !== 'preview' || !s.alt || !s.route || s.loading) return s;
+      return { ...s, route: s.alt, alt: s.route, pref: s.pref === 'fast' ? 'short' : 'fast' };
     case 'START':
       if (s.phase !== 'preview' || !s.route || s.loading) return s;
-      return { ...s, phase: 'navigating', progress: null, offRouteCount: 0, error: null };
+      return { ...s, phase: 'navigating', alt: null, progress: null, offRouteCount: 0, error: null };
     case 'POSITION':
       return onPosition(s, e.pos, e.now);
     case 'CANCEL':

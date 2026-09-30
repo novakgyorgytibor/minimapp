@@ -118,6 +118,8 @@ export async function getRoute(
   signal?: AbortSignal,
   deps?: FetchDeps,
   lang: Lang = 'en',
+  /** true: legrövidebb útvonal (Valhalla shortest), false: leggyorsabb. */
+  shortest = false,
 ): Promise<Route> {
   const body = {
     locations: [
@@ -128,6 +130,7 @@ export async function getRoute(
     language: VALHALLA_LANGUAGE[lang],
     units: 'kilometers',
     format: 'osrm',
+    ...(shortest ? { costing_options: { [mode]: { shortest: true } } } : {}),
   };
   try {
     const json = await fetchJson<unknown>(
@@ -149,4 +152,10 @@ export async function getRoute(
     }
     throw new RouteError('network');
   }
+}
+
+/** Két útvonal gyakorlatilag ugyanaz, ha a hossza és az ideje 1%-on belül egyezik (ekkor csak egyet mutatunk). */
+export function sameRoute(a: Route, b: Route): boolean {
+  const close = (x: number, y: number) => Math.abs(x - y) <= 0.01 * Math.max(x, y, 1);
+  return close(a.distanceM, b.distanceM) && close(a.durationS, b.durationS);
 }

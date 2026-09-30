@@ -156,3 +156,44 @@ test('CANCEL resets to idle, keeps mode, bumps requestId', () => {
   expect(c).toMatchObject({ phase: 'idle', mode: 'pedestrian', route: null, dest: null, loading: false });
   expect(c.requestId).toBe(s.requestId + 1);
 });
+
+describe('fastest vs shortest alternative', () => {
+  const alt = buildRoute([[19, 47.5], [19.004, 47.502], [19.009, 47.5]], 700, [
+    { kind: 'depart', instruction: '', streetNames: [], beginIndex: 0 },
+    { kind: 'arrive', instruction: '', streetNames: [], beginIndex: 2 },
+  ]);
+
+  function previewWithAlt(): NavState {
+    const s = run(initialNavState('auto'), { type: 'SET_DEST', dest, label: 'Cél' });
+    return run(s, { type: 'ROUTE_OK', route, alt, requestId: s.requestId });
+  }
+
+  test('preview keeps the fastest as selected and the shortest as alternative', () => {
+    const s = previewWithAlt();
+    expect(s).toMatchObject({ route, alt, pref: 'fast' });
+  });
+
+  test('SELECT_ALT swaps them and remembers the preference', () => {
+    const s = run(previewWithAlt(), { type: 'SELECT_ALT' });
+    expect(s).toMatchObject({ route: alt, alt: route, pref: 'short' });
+    expect(run(s, { type: 'SELECT_ALT' })).toMatchObject({ route, alt, pref: 'fast' });
+  });
+
+  test('START navigates the selected one and hides the alternative', () => {
+    const s = run(previewWithAlt(), { type: 'SELECT_ALT' }, { type: 'START' });
+    expect(s).toMatchObject({ phase: 'navigating', route: alt, alt: null, pref: 'short' });
+  });
+
+  test('a new destination or mode resets to fastest without alternative', () => {
+    const s = run(previewWithAlt(), { type: 'SELECT_ALT' });
+    expect(run(s, { type: 'SET_DEST', dest, label: 'X' })).toMatchObject({ alt: null, pref: 'fast' });
+    expect(run(s, { type: 'SET_MODE', mode: 'bicycle' })).toMatchObject({ alt: null, pref: 'fast' });
+  });
+
+  test('SELECT_ALT without an alternative or outside preview does nothing', () => {
+    let s = run(initialNavState('auto'), { type: 'SET_DEST', dest, label: 'Cél' });
+    s = run(s, { type: 'ROUTE_OK', route, requestId: s.requestId });
+    expect(run(s, { type: 'SELECT_ALT' })).toEqual(s);
+    expect(run(navigating(), { type: 'SELECT_ALT' })).toEqual(navigating());
+  });
+});
