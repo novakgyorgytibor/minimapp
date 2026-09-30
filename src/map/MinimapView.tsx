@@ -10,13 +10,14 @@ import {
   type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native';
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
 import { config } from '../config';
 import type { MaskFeature } from '../nav/corridor';
 import { theme } from '../theme';
 import type { LngLat, Mode } from '../types';
 import { applyCameraStop } from './camera';
+import { pulseOpacity } from './pulse';
 import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 
 export interface MinimapViewProps {
@@ -79,16 +80,27 @@ const DoneLayer = memo(function DoneLayer({ coords }: { coords: LngLat[] | null 
   );
 });
 
-const ALT_PAINT: LineLayerSpecification['paint'] = { ...ROUTE_PAINT, 'line-opacity': 0.3 };
+const PULSE_MS = 1600;
+const PULSE_TICK_MS = 66; // ~15 fps elég a lassú pulzáláshoz
 // Nagyobb érintési terület a vékony vonal körül
 const ALT_HITBOX = { top: 22, right: 22, bottom: 22, left: 22 };
 
 // A másik útvonal a fő útvonal ALATT (beforeId), koppintásra kiválasztható
 const AltLayer = memo(function AltLayer({ coords, onPress }: { coords: LngLat[] | null; onPress: () => void }) {
   const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
+  // Lassú pulzálás, hogy feltűnjön és koppintásra ösztönözzön; csak ha van alternatíva
+  const [opacity, setOpacity] = useState(0.3);
+  const active = !!coords && coords.length > 1;
+  useEffect(() => {
+    if (!active) return;
+    const t0 = Date.now();
+    const id = setInterval(() => setOpacity(pulseOpacity(Date.now() - t0, PULSE_MS, 0.2, 0.55)), PULSE_TICK_MS);
+    return () => clearInterval(id);
+  }, [active]);
+  const paint = useMemo<LineLayerSpecification['paint']>(() => ({ ...ROUTE_PAINT, 'line-opacity': opacity }), [opacity]);
   return (
     <GeoJSONSource id="route-alt" data={data} onPress={onPress} hitbox={ALT_HITBOX}>
-      <Layer type="line" id="route-alt" source="route-alt" beforeId="route" layout={ROUTE_LAYOUT} paint={ALT_PAINT} />
+      <Layer type="line" id="route-alt" source="route-alt" beforeId="route" layout={ROUTE_LAYOUT} paint={paint} />
     </GeoJSONSource>
   );
 });

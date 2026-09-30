@@ -125,3 +125,11 @@ test('sameRoute: equal within 1% distance and duration', () => {
   expect(sameRoute(a, b)).toBe(true);
   expect(sameRoute(a, c)).toBe(false);
 });
+
+test('detects toll roads from intersection classes', () => {
+  expect(parseOsrm(fixture).hasToll).toBe(true); // M7 / M0: útdíjas autópálya
+  const noToll = JSON.parse(JSON.stringify(fixture));
+  for (const st of noToll.routes[0].legs[0].steps)
+    for (const it of st.intersections ?? []) it.classes = (it.classes ?? []).filter((c: string) => c !== 'toll');
+  expect(parseOsrm(noToll).hasToll).toBe(false);
+});

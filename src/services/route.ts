@@ -73,7 +73,7 @@ interface OsrmStep {
   destinations?: string;
   exits?: string;
   maneuver: { type: string; modifier?: string; instruction?: string; exit?: number; location: [number, number] };
-  intersections?: { lanes?: OsrmLane[] }[];
+  intersections?: { lanes?: OsrmLane[]; classes?: string[] }[];
 }
 
 interface OsrmResponse {
@@ -108,7 +108,8 @@ export function parseOsrm(json: unknown): Route {
     };
   });
   if (coords.length < 2) throw new RouteError('no-route');
-  return buildRoute(coords, route.duration, rawSteps);
+  const hasToll = steps.some((st) => st.intersections?.some((it) => it.classes?.includes('toll')));
+  return { ...buildRoute(coords, route.duration, rawSteps), hasToll };
 }
 
 export async function getRoute(

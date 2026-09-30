@@ -42,6 +42,8 @@ export interface Route {
   steps: Step[];
   /** [west, south, east, north] */
   bbox: [number, number, number, number];
+  /** Érint-e útdíjas (fizetős) szakaszt. */
+  hasToll?: boolean;
 }
 
 export interface Place {

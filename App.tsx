@@ -297,7 +297,7 @@ function Main() {
                   <TripFooter
                     remainingM={s.route.distanceM}
                     remainingS={s.route.durationS}
-                    label={s.alt ? t(s.pref === 'fast' ? 'routeFastest' : 'routeShortest') : undefined}
+                    label={s.route.hasToll ? t('toll') : undefined}
                   />
                 )}
                 <ModeToggle mode={s.mode} onChange={(mode) => dispatch({ type: 'SET_MODE', mode })} />
