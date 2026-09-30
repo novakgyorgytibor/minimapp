@@ -6,6 +6,7 @@ const FADE = fadeSteps(12);
 export const config = {
   tileJsonUrl: 'https://tiles.openfreemap.org/planet',
   valhallaUrl: 'https://valhalla1.openstreetmap.de/route',
+  valhallaTraceUrl: 'https://valhalla1.openstreetmap.de/trace_attributes',
   nominatimUrl: 'https://nominatim.openstreetmap.org/search',
   photonUrl: 'https://photon.komoot.io/api/',
   userAgent: 'minimap/0.1 (personal open-source navigation app)',

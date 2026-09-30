@@ -5,6 +5,8 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
+import { useSpeedLimit } from './src/hooks/useSpeedLimit';
+import { speedLimitVisible } from './src/services/speedLimit';
 import { cameraFor, maskMode } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
@@ -27,6 +29,7 @@ import { ModeToggle } from './src/ui/ModeToggle';
 import { PermissionScreen } from './src/ui/PermissionScreen';
 import { SearchBar } from './src/ui/SearchBar';
 import { Speed } from './src/ui/Speed';
+import { SpeedLimitSign } from './src/ui/SpeedLimitSign';
 import { StatusLine } from './src/ui/StatusLine';
 import { TripFooter } from './src/ui/TripFooter';
 
@@ -49,6 +52,11 @@ function Main() {
   const navigatingish = s.phase === 'navigating' || s.phase === 'rerouting' || s.phase === 'arrived';
   // Akkukímélés: nagy GPS-pontosság csak navigáció közben
   const loc = useLocation(navigatingish);
+  // Sebességkorlát-tábla: autós módban navigáció közben, vagy 5 km/h felett útvonal nélkül is
+  const speedLimit = useSpeedLimit(
+    loc.pos,
+    speedLimitVisible({ mode: s.mode, navigating: s.phase === 'navigating' || s.phase === 'rerouting', speedMps: loc.speed }),
+  );
   const [follow, setFollow] = useState(true);
   const posRef = useRef<LngLat | null>(null);
   posRef.current = loc.pos;
@@ -278,6 +286,7 @@ function Main() {
             {/* Bal lent a tájoló, jobb lent a ◎ */}
             <View style={styles.controlsRow} pointerEvents="box-none">
               <View style={styles.leftControls} pointerEvents="box-none">
+                <SpeedLimitSign kmh={speedLimit} />
                 <Speed mps={loc.speed} />
                 <Compass bearing={mapBearing} onPress={onCompassPress} />
               </View>
