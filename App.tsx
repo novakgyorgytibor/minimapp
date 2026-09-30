@@ -97,6 +97,13 @@ function Main() {
     setFollow(true);
     setFocusMe(true);
   };
+  // ✕ / Mégse: vissza a jelenlegi pozícióra, akkor is, ha a kamera célja nem változott
+  const [recenterNonce, setRecenterNonce] = useState(0);
+  const cancelTo = (type: 'CANCEL' | 'CLOSE_SEARCH') => {
+    dispatch({ type });
+    setFollow(true);
+    setRecenterNonce((n) => n + 1);
+  };
 
   // Fázisváltáskor a kamera újra követ
   useEffect(() => {
@@ -185,6 +192,7 @@ function Main() {
         onUserPan={() => setFollow(false)}
         onViewChange={onViewChange}
         northNonce={northNonce}
+        recenterNonce={recenterNonce}
       />
       <Attribution />
 
@@ -194,7 +202,7 @@ function Main() {
           <SearchBar
             near={loc.pos}
             onPick={(p) => dispatch({ type: 'SET_DEST', dest: p.coord, label: p.name })}
-            onCancel={() => dispatch({ type: 'CLOSE_SEARCH' })}
+            onCancel={() => cancelTo('CLOSE_SEARCH')}
           />
         ) : (
           <View style={styles.top}>
@@ -209,7 +217,7 @@ function Main() {
                 <Pressable style={styles.flex} onPress={() => dispatch({ type: 'OPEN_SEARCH' })}>
                   <Text style={styles.destText} numberOfLines={1}>{s.destLabel}</Text>
                 </Pressable>
-                <CloseButton onPress={() => dispatch({ type: 'CANCEL' })} />
+                <CloseButton onPress={() => cancelTo('CANCEL')} />
               </View>
             )}
             {navigatingish && s.route && (
@@ -217,7 +225,7 @@ function Main() {
                 <View style={styles.flex}>
                   <ManeuverBar route={s.route} progress={s.progress} arrived={s.phase === 'arrived'} />
                 </View>
-                <CloseButton onPress={() => dispatch({ type: 'CANCEL' })} />
+                <CloseButton onPress={() => cancelTo('CANCEL')} />
               </View>
             )}
           </View>

@@ -35,6 +35,8 @@ export interface MinimapViewProps {
   onViewChange: (center: LngLat, zoom: number, bearing: number) => void;
   /** Minden növelésre a térkép (a mostani középponttal) északra fordul. */
   northNonce: number;
+  /** Minden növelésre a kamera akkor is újra alkalmazza a stopot, ha az nem változott (✕ / Mégse). */
+  recenterNonce: number;
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -121,7 +123,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce }: MinimapViewProps) {
+export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -129,7 +131,7 @@ export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camer
   useEffect(() => {
     if (camera && cameraRef.current) applyCameraStop(cameraRef.current, camera);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraKey]);
+  }, [cameraKey, recenterNonce]);
   const lastCenter = useRef<LngLat | null>(null);
   useEffect(() => {
     if (northNonce > 0 && lastCenter.current) {
