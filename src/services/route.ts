@@ -106,7 +106,7 @@ export async function getRoute(
       { lon: to[0], lat: to[1] },
     ],
     costing: mode,
-    language: 'hu-HU',
+    language: 'en-US',
     units: 'kilometers',
   };
   try {

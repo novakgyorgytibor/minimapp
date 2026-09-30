@@ -3,14 +3,14 @@ import type { RouteErrorKind } from '../services/route';
 import { theme } from '../theme';
 
 const MESSAGES: Record<RouteErrorKind, string> = {
-  network: 'Nincs kapcsolat · újra',
-  'rate-limited': 'A szerver túlterhelt · újra',
-  'no-route': 'Nem található útvonal',
-  'no-position': 'Nincs GPS jel · újra',
+  network: 'No connection · retry',
+  'rate-limited': 'Server busy · retry',
+  'no-route': 'No route found',
+  'no-position': 'No GPS signal · retry',
 };
 
 export function StatusLine({ error, loading, onRetry }: { error: RouteErrorKind | null; loading: boolean; onRetry: () => void }) {
-  if (loading) return <Text style={styles.text}>Útvonaltervezés…</Text>;
+  if (loading) return <Text style={styles.text}>Finding route…</Text>;
   if (!error) return null;
   const retryable = error !== 'no-route';
   return (

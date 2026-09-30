@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '../theme';
 import { MODES, type Mode } from '../types';
 
-const LABELS: Record<Mode, string> = { auto: 'autó', bicycle: 'bicikli', pedestrian: 'gyalog' };
+const LABELS: Record<Mode, string> = { auto: 'drive', bicycle: 'bike', pedestrian: 'walk' };
 
 export function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
   return (

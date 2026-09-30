@@ -46,7 +46,7 @@ export async function searchPlaces(
 ): Promise<Place[]> {
   const q = query.trim();
   if (q.length < config.searchMinChars) return [];
-  const params = new URLSearchParams({ q, format: 'jsonv2', limit: '6', 'accept-language': 'hu' });
+  const params = new URLSearchParams({ q, format: 'jsonv2', limit: '6', 'accept-language': 'en' });
   if (near) {
     const [lng, lat] = near;
     params.set('viewbox', [lng - 0.5, lat + 0.5, lng + 0.5, lat - 0.5].join(','));

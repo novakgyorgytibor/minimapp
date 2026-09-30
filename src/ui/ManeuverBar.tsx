@@ -9,7 +9,7 @@ export function ManeuverBar({ route, progress, arrived }: { route: Route; progre
   if (arrived) {
     return (
       <View style={styles.wrap}>
-        <Text style={styles.big}>Megérkeztél</Text>
+        <Text style={styles.big}>You have arrived</Text>
       </View>
     );
   }

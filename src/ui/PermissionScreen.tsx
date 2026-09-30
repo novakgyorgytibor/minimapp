@@ -4,11 +4,11 @@ import { theme } from '../theme';
 export function PermissionScreen({ onRequest }: { onRequest: () => void }) {
   return (
     <View style={styles.wrap}>
-      <Text style={styles.text}>A navigációhoz szükség van a pozíciódra.</Text>
+      <Text style={styles.text}>Navigation needs your location.</Text>
       <Pressable onPress={onRequest} style={styles.button}>
-        <Text style={styles.text}>Engedélyezés</Text>
+        <Text style={styles.text}>Allow</Text>
       </Pressable>
-      <Text style={styles.link} onPress={() => Linking.openSettings()}>Beállítások</Text>
+      <Text style={styles.link} onPress={() => Linking.openSettings()}>Settings</Text>
     </View>
   );
 }

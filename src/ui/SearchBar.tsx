@@ -44,7 +44,7 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
           autoFocus
           value={q}
           onChangeText={setQ}
-          placeholder="Hová?"
+          placeholder="Where to?"
           placeholderTextColor={theme.dim}
           selectionColor={theme.fg}
           style={styles.input}
@@ -52,11 +52,11 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
           autoCorrect={false}
         />
         <Pressable onPress={onCancel} hitSlop={12}>
-          <Text style={styles.cancel}>Mégse</Text>
+          <Text style={styles.cancel}>Cancel</Text>
         </Pressable>
       </View>
-      {status === 'empty' && <Text style={styles.note}>Nincs találat</Text>}
-      {status === 'error' && <Text style={styles.note}>Nincs kapcsolat</Text>}
+      {status === 'empty' && <Text style={styles.note}>No results</Text>}
+      {status === 'error' && <Text style={styles.note}>No connection</Text>}
       <FlatList
         keyboardShouldPersistTaps="handled"
         data={results}

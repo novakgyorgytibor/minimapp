@@ -141,7 +141,7 @@ function Main() {
         heading={loc.heading}
         dest={s.dest}
         camera={camera}
-        onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: 'Kijelölt pont' })}
+        onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: 'Dropped pin' })}
         onUserPan={() => setFollow(false)}
         onViewChange={onViewChange}
       />
@@ -159,7 +159,7 @@ function Main() {
           <View style={styles.top}>
             {s.phase === 'idle' && (
               <Pressable onPress={() => dispatch({ type: 'OPEN_SEARCH' })} style={styles.searchButton}>
-                <Text style={styles.searchText}>Hová?</Text>
+                <Text style={styles.searchText}>Where to?</Text>
               </Pressable>
             )}
             {s.phase === 'preview' && (
@@ -196,7 +196,7 @@ function Main() {
                 <ModeToggle mode={s.mode} onChange={(mode) => dispatch({ type: 'SET_MODE', mode })} />
                 {s.route && !s.loading && (
                   <Pressable onPress={() => dispatch({ type: 'START' })} style={styles.start}>
-                    <Text style={styles.startText}>Indulás</Text>
+                    <Text style={styles.startText}>Start</Text>
                   </Pressable>
                 )}
               </>

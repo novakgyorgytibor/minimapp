@@ -53,7 +53,7 @@ test('getRoute posts the Valhalla request and parses it', async () => {
   expect(body).toMatchObject({
     locations: [{ lon: 19.0402, lat: 47.4979 }, { lon: 19.046, lat: 47.507 }],
     costing: 'bicycle',
-    language: 'hu-HU',
+    language: 'en-US',
     units: 'kilometers',
   });
 });

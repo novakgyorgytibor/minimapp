@@ -45,7 +45,7 @@ test('maps Nominatim results to places', async () => {
   const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
   expect(url).toContain('https://nominatim.openstreetmap.org/search?');
   expect(url).toContain('format=jsonv2');
-  expect(url).toContain('accept-language=hu');
+  expect(url).toContain('accept-language=en');
   expect(url).toContain('q=Andr%C3%A1ssy+%C3%BAt+60');
   expect(url).toContain('viewbox=');
   expect((init.headers as Record<string, string>)['User-Agent']).toMatch(/^minimap/);

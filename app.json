@@ -12,7 +12,7 @@
       "bundleIdentifier": "hu.minimap.app",
       "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "A navigációhoz szükség van a pozíciódra."
+        "NSLocationWhenInUseUsageDescription": "Navigation needs your location."
       }
     },
     "android": {
@@ -30,7 +30,7 @@
       "@maplibre/maplibre-react-native",
       [
         "expo-location",
-        { "locationWhenInUsePermission": "A navigációhoz szükség van a pozíciódra." }
+        { "locationWhenInUsePermission": "Navigation needs your location." }
       ]
     ]
   }
