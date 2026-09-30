@@ -24,7 +24,7 @@ const STALE_MS = 30_000;
 // Álló helyzetben ennyin belül (vagy a jelzett hibahatáron belül) nem mozdítjuk a jelölőt
 const HOLD_M = 8;
 // Ez alatt állónak tekintjük (az Android álló helyzetben is jelez kis, hamis sebességet)
-const MOVING_MPS = 1.5;
+const MOVING_MPS = 4 / 3.6; // 4 km/h
 
 /**
  * Pozíciósimítás a jelölő ugrálása ellen:

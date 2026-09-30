@@ -31,7 +31,8 @@ function pointAt(route: Route, d: number, i: number): LngLat {
   return [coords[i][0] + (coords[i + 1][0] - coords[i][0]) * t, coords[i][1] + (coords[i + 1][1] - coords[i][1]) * t];
 }
 
-function slice(route: Route, from: number, to: number): LngLat[] {
+/** Az útvonal from..to (m) közötti része, a végpontokon interpolálva. */
+export function routeSlice(route: Route, from: number, to: number): LngLat[] {
   const { coords, cumDistM } = route;
   const out: LngLat[] = [];
   for (let i = 0; i < coords.length - 1; i++) {
@@ -52,7 +53,7 @@ function slice(route: Route, from: number, to: number): LngLat[] {
 function segmentFor(route: Route, st: Step, beforeM: number, afterM: number) {
   const from = Math.max(0, st.beginDistM - beforeM);
   const to = Math.min(route.distanceM, st.beginDistM + afterM);
-  const line = slice(route, from, to);
+  const line = routeSlice(route, from, to);
   return line.length > 1
     ? [{ type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: line } }]
     : [];

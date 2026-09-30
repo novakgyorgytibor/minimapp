@@ -22,6 +22,8 @@ import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 export interface MinimapViewProps {
   masks: MaskFeature[];
   route: LngLat[] | null;
+  /** A már megtett útvonalrész (halványabban). */
+  routeDone: LngLat[] | null;
   /** Vastagabb szakaszok a valódi manőverek körül. */
   maneuvers: FeatureCollection<LineString> | null;
   pos: LngLat | null;
@@ -59,6 +61,17 @@ const RouteLayer = memo(function RouteLayer({ coords }: { coords: LngLat[] | nul
   return (
     <GeoJSONSource id="route" data={data}>
       <Layer type="line" id="route" source="route" layout={ROUTE_LAYOUT} paint={ROUTE_PAINT} />
+    </GeoJSONSource>
+  );
+});
+
+const DONE_PAINT: LineLayerSpecification['paint'] = { ...ROUTE_PAINT, 'line-opacity': 0.35 };
+
+const DoneLayer = memo(function DoneLayer({ coords }: { coords: LngLat[] | null }) {
+  const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
+  return (
+    <GeoJSONSource id="route-done" data={data}>
+      <Layer type="line" id="route-done" source="route-done" layout={ROUTE_LAYOUT} paint={DONE_PAINT} />
     </GeoJSONSource>
   );
 });
@@ -131,7 +144,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
+export function MinimapView({ masks, route, routeDone, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -178,6 +191,7 @@ export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camer
       <Images images={ARROW_IMAGES} />
       <PathStyle mode={mode} />
       <RouteLayer coords={route} />
+      <DoneLayer coords={routeDone} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />

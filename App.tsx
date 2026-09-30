@@ -11,6 +11,7 @@ import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as Ma
 import { buildMasks, fullMasks } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
 import { nextManeuverSegment } from './src/nav/maneuverSegments';
+import { doneBucketM, splitRoute } from './src/nav/routeSplit';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -157,6 +158,10 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [view],
   );
+  // A megtett útszakasz halványabb; 10 m-es lépésekben számolva (nem minden GPS-méréskor)
+  const doneBucket = navigatingish && s.progress ? doneBucketM(s.progress.distAlongM) : 0;
+  const split = useMemo(() => (s.route && doneBucket > 0 ? splitRoute(s.route, doneBucket) : null), [s.route, doneBucket]);
+
   // Vastagabb kijelölés csak navigáció közben, és csak a következő manővernél (±30 m)
   const nextIdx = s.progress?.nextStepIndex ?? 1;
   const maneuvers = useMemo(
@@ -194,7 +199,8 @@ function Main() {
     <View style={styles.root}>
       <MinimapView
         masks={masks}
-        route={s.route?.coords ?? null}
+        route={split ? split.ahead : (s.route?.coords ?? null)}
+        routeDone={split?.done ?? null}
         maneuvers={maneuvers}
         pos={markerPos}
         heading={loc.heading}
