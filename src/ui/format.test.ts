@@ -27,3 +27,20 @@ test('formatClock pads minutes', () => {
   expect(formatClock(new Date(2026, 8, 30, 14, 5))).toBe('14:05');
   expect(formatClock(new Date(2026, 8, 30, 9, 30))).toBe('9:30');
 });
+
+describe('Hungarian', () => {
+  test.each([
+    [44, '40 m'],
+    [1234, '1,2 km'],
+    [12_345, '12 km'],
+  ])('formatDistance(%p, hu) = %p', (m, s) => {
+    expect(formatDistance(m, 'hu')).toBe(s);
+  });
+  test.each([
+    [30, '< 1 perc'],
+    [25 * 60 + 20, '25 perc'],
+    [3600 + 5 * 60, '1 ó 5 p'],
+  ])('formatDuration(%p, hu) = %p', (s, out) => {
+    expect(formatDuration(s, 'hu')).toBe(out);
+  });
+});

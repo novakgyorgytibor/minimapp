@@ -1,0 +1,56 @@
+export type Lang = 'en' | 'hu';
+export const LANGS: Lang[] = ['hu', 'en'];
+
+const en = {
+  whereTo: 'Where to?',
+  cancel: 'Cancel',
+  noResults: 'No results',
+  noConnection: 'No connection',
+  start: 'Start',
+  droppedPin: 'Dropped pin',
+  arrived: 'You have arrived',
+  findingRoute: 'Finding route…',
+  errNetwork: 'No connection · retry',
+  errRateLimited: 'Server busy · retry',
+  errNoRoute: 'No route found',
+  errNoPosition: 'No GPS signal · retry',
+  modeAuto: 'drive',
+  modeBicycle: 'bike',
+  modePedestrian: 'walk',
+  permText: 'Navigation needs your location.',
+  permAllow: 'Allow',
+  permSettings: 'Settings',
+};
+
+export type StringKey = keyof typeof en;
+
+const hu: Record<StringKey, string> = {
+  whereTo: 'Hová?',
+  cancel: 'Mégse',
+  noResults: 'Nincs találat',
+  noConnection: 'Nincs kapcsolat',
+  start: 'Indulás',
+  droppedPin: 'Kijelölt pont',
+  arrived: 'Megérkeztél',
+  findingRoute: 'Útvonaltervezés…',
+  errNetwork: 'Nincs kapcsolat · újra',
+  errRateLimited: 'A szerver túlterhelt · újra',
+  errNoRoute: 'Nem található útvonal',
+  errNoPosition: 'Nincs GPS jel · újra',
+  modeAuto: 'autó',
+  modeBicycle: 'bicikli',
+  modePedestrian: 'gyalog',
+  permText: 'A navigációhoz szükség van a pozíciódra.',
+  permAllow: 'Engedélyezés',
+  permSettings: 'Beállítások',
+};
+
+export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, hu };
+
+/** Első indításkor a telefon nyelve: magyar telefonon magyar, egyébként angol. */
+export function defaultLang(locale: string | undefined): Lang {
+  return locale?.toLowerCase().startsWith('hu') ? 'hu' : 'en';
+}
+
+/** Valhalla utasítás-nyelv. */
+export const VALHALLA_LANGUAGE: Record<Lang, string> = { en: 'en-US', hu: 'hu-HU' };

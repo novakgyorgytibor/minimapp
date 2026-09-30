@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { config } from '../config';
+import { useLang } from '../i18n/LangContext';
 import { isAbortError } from '../services/http';
 import { searchPlaces } from '../services/geocode';
 import { theme } from '../theme';
 import type { LngLat, Place } from '../types';
 
 export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onPick: (p: Place) => void; onCancel: () => void }) {
+  const { lang, t } = useLang();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Place[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error'>('idle');
@@ -20,7 +22,7 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
     const ctrl = new AbortController();
     const t = setTimeout(() => {
       setStatus('loading');
-      searchPlaces(q, near, ctrl.signal)
+      searchPlaces(q, near, ctrl.signal, {}, lang)
         .then((r) => {
           setResults(r);
           setStatus(r.length ? 'idle' : 'empty');
@@ -44,7 +46,7 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
           autoFocus
           value={q}
           onChangeText={setQ}
-          placeholder="Where to?"
+          placeholder={t('whereTo')}
           placeholderTextColor={theme.dim}
           selectionColor={theme.fg}
           style={styles.input}
@@ -52,11 +54,11 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
           autoCorrect={false}
         />
         <Pressable onPress={onCancel} hitSlop={12}>
-          <Text style={styles.cancel}>Cancel</Text>
+          <Text style={styles.cancel}>{t('cancel')}</Text>
         </Pressable>
       </View>
-      {status === 'empty' && <Text style={styles.note}>No results</Text>}
-      {status === 'error' && <Text style={styles.note}>No connection</Text>}
+      {status === 'empty' && <Text style={styles.note}>{t('noResults')}</Text>}
+      {status === 'error' && <Text style={styles.note}>{t('noConnection')}</Text>}
       <FlatList
         keyboardShouldPersistTaps="handled"
         data={results}

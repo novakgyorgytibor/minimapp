@@ -96,3 +96,10 @@ test('network and rate limit errors keep their kind', async () => {
   const err = await rejection<RouteError>(getRoute([0, 0], [1, 1], 'auto', undefined, { fetchImpl: rl, sleep: async () => {} }));
   expect(err.kind).toBe('rate-limited');
 });
+
+test('Hungarian instructions are requested when the app language is Hungarian', async () => {
+  const fetchImpl = jest.fn(async () => ({ ok: true, status: 200, json: async () => fixture, text: async () => '' }) as Response);
+  await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl }, 'hu');
+  const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+  expect(JSON.parse(init.body as string).language).toBe('hu-HU');
+});

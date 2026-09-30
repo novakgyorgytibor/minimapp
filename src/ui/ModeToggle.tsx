@@ -1,15 +1,18 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useLang } from '../i18n/LangContext';
+import type { StringKey } from '../i18n/strings';
 import { theme } from '../theme';
 import { MODES, type Mode } from '../types';
 
-const LABELS: Record<Mode, string> = { auto: 'drive', bicycle: 'bike', pedestrian: 'walk' };
+const LABELS: Record<Mode, StringKey> = { auto: 'modeAuto', bicycle: 'modeBicycle', pedestrian: 'modePedestrian' };
 
 export function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
+  const { t } = useLang();
   return (
     <View style={styles.row}>
       {MODES.map((m) => (
         <Pressable key={m} onPress={() => onChange(m)} hitSlop={8}>
-          <Text style={[styles.text, m === mode ? styles.active : styles.inactive]}>{LABELS[m]}</Text>
+          <Text style={[styles.text, m === mode ? styles.active : styles.inactive]}>{t(LABELS[m])}</Text>
         </Pressable>
       ))}
     </View>

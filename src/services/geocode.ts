@@ -1,4 +1,5 @@
 import { config } from '../config';
+import type { Lang } from '../i18n/strings';
 import type { LngLat, Place } from '../types';
 import { fetchJson, type FetchDeps } from './http';
 
@@ -43,10 +44,11 @@ export async function searchPlaces(
   near: LngLat | null,
   signal?: AbortSignal,
   deps: FetchDeps & { throttle?: () => Promise<void> } = {},
+  lang: Lang = 'en',
 ): Promise<Place[]> {
   const q = query.trim();
   if (q.length < config.searchMinChars) return [];
-  const params = new URLSearchParams({ q, format: 'jsonv2', limit: '6', 'accept-language': 'en' });
+  const params = new URLSearchParams({ q, format: 'jsonv2', limit: '6', 'accept-language': lang });
   if (near) {
     const [lng, lat] = near;
     params.set('viewbox', [lng - 0.5, lat + 0.5, lng + 0.5, lat - 0.5].join(','));

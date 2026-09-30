@@ -64,3 +64,9 @@ test('every search goes through the throttle', async () => {
   await searchPlaces('Budapest Keleti', null, undefined, { fetchImpl, throttle });
   expect(throttle).toHaveBeenCalledTimes(2);
 });
+
+test('search results follow the app language', async () => {
+  const fetchImpl = jest.fn(async () => ({ ok: true, status: 200, json: async () => [], text: async () => '' }) as Response);
+  await searchPlaces('Budapest', null, undefined, { fetchImpl, throttle: async () => {} }, 'hu');
+  expect((fetchImpl.mock.calls[0] as unknown as [string])[0]).toContain('accept-language=hu');
+});

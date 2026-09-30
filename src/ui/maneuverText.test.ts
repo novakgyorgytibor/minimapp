@@ -97,3 +97,18 @@ describe('signInfo', () => {
     expect(signInfo(step('turn', 'right', { ref: 'M7' }))).toBeNull();
   });
 });
+
+describe('Hungarian maneuver text', () => {
+  test.each([
+    [step('turn', 'right', { streetNames: ['Andrássy út'] }), 'Fordulj jobbra · Andrássy út'],
+    [step('turn', 'uturn'), 'Fordulj vissza'],
+    [step('fork', 'slight left', { ref: 'M7' }), 'Tarts balra · M7'],
+    [step('off ramp', 'slight right', { exitNumber: '16' }), 'Hajts le a 16. kijáraton'],
+    [step('roundabout', 'right', { roundaboutExit: 2 }), 'Körforgalom, 2. kijárat'],
+    [step('arrive'), 'Megérkezel'],
+    [step('arrive', 'left'), 'Megérkezel, bal oldalon'],
+    [step('depart'), 'Indulás'],
+  ])('%#', (st, out) => {
+    expect(maneuverText(st, 'hu')).toBe(out);
+  });
+});

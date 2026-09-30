@@ -17,7 +17,9 @@ import { isAbortError } from './src/services/http';
 import { getRoute, RouteError } from './src/services/route';
 import { theme } from './src/theme';
 import type { LngLat } from './src/types';
+import { LangProvider, useLang } from './src/i18n/LangContext';
 import { Attribution } from './src/ui/Attribution';
+import { LangToggle } from './src/ui/LangToggle';
 import { Compass } from './src/ui/Compass';
 import { ManeuverBar } from './src/ui/ManeuverBar';
 import { ModeToggle } from './src/ui/ModeToggle';
@@ -31,13 +33,16 @@ const NO_POSITION_MASKS = fullMasks(config.maskFractions);
 export default function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Main />
+      <LangProvider>
+        <StatusBar style="light" />
+        <Main />
+      </LangProvider>
     </SafeAreaProvider>
   );
 }
 
 function Main() {
+  const { lang, t } = useLang();
   const loc = useLocation();
   const [s, dispatch] = useReducer(navReducer, undefined, () => initialNavState());
   const [follow, setFollow] = useState(true);
@@ -59,7 +64,7 @@ function Main() {
       return;
     }
     const ctrl = new AbortController();
-    getRoute(from, s.dest, s.mode, ctrl.signal)
+    getRoute(from, s.dest, s.mode, ctrl.signal, undefined, lang)
       .then((route) => dispatch({ type: 'ROUTE_OK', route, requestId: id }))
       .catch((e) => {
         if (isAbortError(e)) return;
@@ -172,7 +177,7 @@ function Main() {
         heading={loc.heading}
         dest={s.dest}
         camera={camera}
-        onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: 'Dropped pin' })}
+        onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: t('droppedPin') })}
         onUserPan={() => setFollow(false)}
         onViewChange={onViewChange}
         northNonce={northNonce}
@@ -191,7 +196,8 @@ function Main() {
           <View style={styles.top}>
             {s.phase === 'idle' && (
               <Pressable onPress={() => dispatch({ type: 'OPEN_SEARCH' })} style={styles.searchButton}>
-                <Text style={styles.searchText}>Where to?</Text>
+                <Text style={styles.searchText}>{t('whereTo')}</Text>
+                <LangToggle />
               </Pressable>
             )}
             {s.phase === 'preview' && (
@@ -232,7 +238,7 @@ function Main() {
                 <ModeToggle mode={s.mode} onChange={(mode) => dispatch({ type: 'SET_MODE', mode })} />
                 {s.route && !s.loading && (
                   <Pressable onPress={() => dispatch({ type: 'START' })} style={styles.start}>
-                    <Text style={styles.startText}>Start</Text>
+                    <Text style={styles.startText}>{t('start')}</Text>
                   </Pressable>
                 )}
               </>
@@ -264,7 +270,15 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   top: { paddingTop: 8 },
   topRow: { flexDirection: 'row', alignItems: 'flex-start', paddingRight: 12 },
-  searchButton: { marginHorizontal: 20, borderBottomWidth: 1, borderBottomColor: theme.fg, paddingVertical: 8 },
+  searchButton: {
+    marginHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.fg,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   searchText: { color: theme.fg, fontSize: 22, fontWeight: '300' },
   destText: { color: theme.fg, fontSize: 20, fontWeight: '300', paddingHorizontal: 24, paddingVertical: 12 },
   close: { padding: 12 },

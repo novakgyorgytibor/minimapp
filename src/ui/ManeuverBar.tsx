@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useLang } from '../i18n/LangContext';
 import type { Progress } from '../nav/progress';
 import { theme } from '../theme';
 import type { Route } from '../types';
@@ -6,10 +7,11 @@ import { formatDistance } from './format';
 import { laneArrow, lanesToShow, maneuverArrow, maneuverText, signInfo } from './maneuverText';
 
 export function ManeuverBar({ route, progress, arrived }: { route: Route; progress: Progress | null; arrived: boolean }) {
+  const { lang, t } = useLang();
   if (arrived) {
     return (
       <View style={styles.wrap}>
-        <Text style={styles.big}>You have arrived</Text>
+        <Text style={styles.big}>{t('arrived')}</Text>
       </View>
     );
   }
@@ -23,10 +25,10 @@ export function ManeuverBar({ route, progress, arrived }: { route: Route; progre
     <View style={styles.wrap}>
       <View style={styles.row}>
         <Text style={styles.arrow}>{maneuverArrow(step)}</Text>
-        <Text style={styles.big}>{formatDistance(dist)}</Text>
+        <Text style={styles.big}>{formatDistance(dist, lang)}</Text>
       </View>
       <Text style={styles.text} numberOfLines={2}>
-        {maneuverText(step)}
+        {maneuverText(step, lang)}
       </Text>
 
       {lanes.length > 0 && (

@@ -1,4 +1,5 @@
 import { config } from '../config';
+import { VALHALLA_LANGUAGE, type Lang } from '../i18n/strings';
 import { haversineM } from '../nav/geo';
 import type { LngLat, Mode, Route, Step } from '../types';
 import { fetchJson, HttpError, isAbortError, type FetchDeps } from './http';
@@ -116,6 +117,7 @@ export async function getRoute(
   mode: Mode,
   signal?: AbortSignal,
   deps?: FetchDeps,
+  lang: Lang = 'en',
 ): Promise<Route> {
   const body = {
     locations: [
@@ -123,7 +125,7 @@ export async function getRoute(
       { lon: to[0], lat: to[1] },
     ],
     costing: mode,
-    language: 'en-US',
+    language: VALHALLA_LANGUAGE[lang],
     units: 'kilometers',
     format: 'osrm',
   };
