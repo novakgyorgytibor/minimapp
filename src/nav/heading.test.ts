@@ -1,4 +1,4 @@
-import { pickHeading } from './heading';
+import { angleDiff, pickHeading } from './heading';
 
 test('moving fast: follows the course', () => {
   expect(pickHeading({ compass: 90, course: 180, speedMps: 2.5, last: null })).toBe(180);
@@ -21,4 +21,15 @@ test('no compass (e.g. simulator): course when moving at all, else keep last', (
 test('nothing known yet → null', () => {
   expect(pickHeading({ compass: null, course: null, speedMps: 0, last: null })).toBeNull();
   expect(pickHeading({ compass: -1, course: -1, speedMps: 0, last: null })).toBeNull();
+});
+
+test.each([
+  [10, 20, 10],
+  [359, 1, 2],
+  [1, 359, 2],
+  [0, 180, 180],
+  [90, 270, 180],
+  [45, 45, 0],
+])('angleDiff(%p, %p) = %p', (a, b, d) => {
+  expect(angleDiff(a, b)).toBeCloseTo(d, 6);
 });

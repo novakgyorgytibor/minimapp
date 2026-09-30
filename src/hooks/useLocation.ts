@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { pickHeading } from '../nav/heading';
+import { angleDiff, pickHeading } from '../nav/heading';
 import type { LngLat } from '../types';
 
 type Status = 'pending' | 'granted' | 'denied';
@@ -19,8 +19,7 @@ export function useLocation() {
     setHeading((last) => {
       const next = pickHeading({ compass: compass.current, course: course.current.deg, speedMps: course.current.speed, last });
       if (next === null || last === null) return next;
-      const diff = Math.abs(((next - last + 540) % 360) - 180);
-      return diff > 3 ? next : last;
+      return angleDiff(last, next) > 3 ? next : last;
     });
   }, []);
 

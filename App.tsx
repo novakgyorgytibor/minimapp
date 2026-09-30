@@ -10,12 +10,14 @@ import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
+import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
 import { getRoute, RouteError } from './src/services/route';
 import { theme } from './src/theme';
 import type { LngLat } from './src/types';
 import { Attribution } from './src/ui/Attribution';
+import { Compass } from './src/ui/Compass';
 import { ManeuverBar } from './src/ui/ManeuverBar';
 import { ModeToggle } from './src/ui/ModeToggle';
 import { PermissionScreen } from './src/ui/PermissionScreen';
@@ -89,8 +91,13 @@ function Main() {
   // Nézet (képernyő közepe + zoom), csak érdemi változásnál frissítve (nextView).
   const { width: screenW, height: screenH } = useWindowDimensions();
   const [view, setView] = useState<MapViewState | null>(null);
+  // A térkép forgatása a tájolóhoz (csak >1° változásnál renderelünk újra)
+  const [mapBearing, setMapBearing] = useState(0);
   const onViewChange = useCallback(
-    (center: LngLat, zoom: number) => setView((prev) => nextView(prev, { center, zoom }, screenW)),
+    (center: LngLat, zoom: number, bearing: number) => {
+      setView((prev) => nextView(prev, { center, zoom }, screenW));
+      setMapBearing((prev) => (angleDiff(prev, bearing) > 1 ? bearing : prev));
+    },
     [screenW],
   );
 
@@ -178,6 +185,9 @@ function Main() {
                 <CloseButton onPress={() => dispatch({ type: 'CANCEL' })} />
               </View>
             )}
+            <View style={styles.compassRow} pointerEvents="none">
+              <Compass bearing={mapBearing} />
+            </View>
           </View>
         )}
 
@@ -232,6 +242,7 @@ const styles = StyleSheet.create({
   searchText: { color: theme.fg, fontSize: 22, fontWeight: '300' },
   destText: { color: theme.fg, fontSize: 20, fontWeight: '300', paddingHorizontal: 24, paddingVertical: 12 },
   close: { padding: 12 },
+  compassRow: { alignItems: 'flex-end', paddingRight: 24, paddingTop: 16 },
   closeText: { color: theme.fg, fontSize: 22 },
   bottom: { paddingBottom: 20, paddingHorizontal: 20, gap: 4 },
   recenter: { alignSelf: 'flex-end', padding: 8 },

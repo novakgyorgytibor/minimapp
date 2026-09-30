@@ -18,3 +18,8 @@ export function pickHeading({ compass, course, speedMps, last }: HeadingInput): 
   if (valid(course) && speedMps >= 1) return course;
   return last;
 }
+
+/** A két irány közötti legkisebb szögkülönbség fokban (0..180), körbefordulással. */
+export function angleDiff(a: number, b: number): number {
+  return Math.abs(((b - a + 540) % 360) - 180);
+}

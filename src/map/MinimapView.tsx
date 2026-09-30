@@ -29,8 +29,8 @@ export interface MinimapViewProps {
   camera: CameraStop | null;
   onLongPress: (coord: LngLat) => void;
   onUserPan: () => void;
-  /** A képernyő közepe és a zoom (húzás / zoomolás közben is folyamatosan). */
-  onViewChange: (center: LngLat, zoom: number) => void;
+  /** A képernyő közepe, a zoom és a térkép forgatása (húzás / zoomolás közben is folyamatosan). */
+  onViewChange: (center: LngLat, zoom: number, bearing: number) => void;
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -132,8 +132,8 @@ export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPr
       onRegionWillChange={(e) => {
         if (e.nativeEvent.userInteraction) onUserPan();
       }}
-      onRegionIsChanging={(e) => onViewChange(e.nativeEvent.center, e.nativeEvent.zoom)}
-      onRegionDidChange={(e) => onViewChange(e.nativeEvent.center, e.nativeEvent.zoom)}
+      onRegionIsChanging={(e) => onViewChange(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
+      onRegionDidChange={(e) => onViewChange(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
     >
       <Camera ref={cameraRef} />
       <Images images={ARROW_IMAGES} />
