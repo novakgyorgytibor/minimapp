@@ -13,7 +13,7 @@ import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as Ma
 import { buildMasks, fullMasks, type MaskGeometry } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
 import { nextManeuverSegment } from './src/nav/maneuverSegments';
-import { doneBucketM, splitRoute } from './src/nav/routeSplit';
+import { lineProgressAt, mercatorCumulative } from './src/nav/lineProgress';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -178,9 +178,10 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [view],
   );
-  // A megtett útszakasz halványabb; 10 m-es lépésekben számolva (nem minden GPS-méréskor)
-  const doneBucket = navigatingish && s.progress ? doneBucketM(s.progress.distAlongM) : 0;
-  const split = useMemo(() => (s.route && doneBucket > 0 ? splitRoute(s.route, doneBucket) : null), [s.route, doneBucket]);
+  // A megtett útszakasz halványabb: a vonal megtett aránya (Mercator-hosszban, ahogy a line-progress mér)
+  const merc = useMemo(() => (s.route ? mercatorCumulative(s.route.coords) : null), [s.route]);
+  const routeProgress =
+    navigatingish && s.route && merc && s.progress ? lineProgressAt(s.route, merc, s.progress.distAlongM) : null;
 
   // Vastagabb kijelölés csak navigáció közben, és csak a következő manővernél (±30 m)
   const nextIdx = s.progress?.nextStepIndex ?? 1;
@@ -227,8 +228,8 @@ function Main() {
     <View style={styles.root}>
       <MinimapView
         masks={masks}
-        route={split ? split.ahead : (s.route?.coords ?? null)}
-        routeDone={split?.done ?? null}
+        route={s.route?.coords ?? null}
+        routeProgress={routeProgress}
         alt={s.phase === 'preview' ? (s.alt?.coords ?? null) : null}
         onSelectAlt={onSelectAlt}
         maneuvers={maneuvers}

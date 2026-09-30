@@ -23,8 +23,8 @@ import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 export interface MinimapViewProps {
   masks: MaskFeature[];
   route: LngLat[] | null;
-  /** A már megtett útvonalrész (halványabban). */
-  routeDone: LngLat[] | null;
+  /** Navigáció közben a megtett arány (0..1, line-progress szerint): addig halványabb a vonal. */
+  routeProgress: number | null;
   /** Előnézetben a másik útvonal (halványan, koppintható). */
   alt: LngLat[] | null;
   onSelectAlt: () => void;
@@ -60,22 +60,25 @@ const DEST_PAINT = { 'circle-radius': 7, 'circle-color': theme.bg, 'circle-strok
 
 // Memoizált rétegek: a nagy GeoJSON csak akkor megy át a natív oldalra, ha tényleg változott
 // (nem minden GPS-frissítéskor).
-const RouteLayer = memo(function RouteLayer({ coords }: { coords: LngLat[] | null }) {
+const DONE_COLOR = 'rgba(255,255,255,0.35)';
+
+// Egyetlen vonal; navigáció közben a line-gradient pontosan a megtett aránynál vált halványból fényesbe
+// (a geometria nem változik, csak ez az egy szám – nincs újraküldés minden GPS-méréskor).
+const RouteLayer = memo(function RouteLayer({ coords, progress }: { coords: LngLat[] | null; progress: number | null }) {
   const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
-  return (
-    <GeoJSONSource id="route" data={data}>
-      <Layer type="line" id="route" source="route" layout={ROUTE_LAYOUT} paint={ROUTE_PAINT} />
-    </GeoJSONSource>
+  const paint = useMemo<LineLayerSpecification['paint']>(
+    () =>
+      progress === null || progress <= 0
+        ? ROUTE_PAINT
+        : {
+            'line-width': ROUTE_PAINT!['line-width'],
+            'line-gradient': ['step', ['line-progress'], DONE_COLOR, Math.min(progress, 1), theme.fg],
+          },
+    [progress],
   );
-});
-
-const DONE_PAINT: LineLayerSpecification['paint'] = { ...ROUTE_PAINT, 'line-opacity': 0.35 };
-
-const DoneLayer = memo(function DoneLayer({ coords }: { coords: LngLat[] | null }) {
-  const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
   return (
-    <GeoJSONSource id="route-done" data={data}>
-      <Layer type="line" id="route-done" source="route-done" layout={ROUTE_LAYOUT} paint={DONE_PAINT} />
+    <GeoJSONSource id="route" data={data} lineMetrics>
+      <Layer type="line" id="route" source="route" layout={ROUTE_LAYOUT} paint={paint} />
     </GeoJSONSource>
   );
 });
@@ -173,7 +176,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
+export function MinimapView({ masks, route, routeProgress, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -219,8 +222,7 @@ export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuve
       <Camera ref={cameraRef} />
       <Images images={ARROW_IMAGES} />
       <PathStyle mode={mode} />
-      <RouteLayer coords={route} />
-      <DoneLayer coords={routeDone} />
+      <RouteLayer coords={route} progress={routeProgress} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />
