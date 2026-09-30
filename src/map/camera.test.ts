@@ -4,30 +4,30 @@ const pos: [number, number] = [19.04, 47.5];
 const bbox: [number, number, number, number] = [19.0, 47.4, 19.1, 47.6];
 
 test('idle follows position north-up', () => {
-  expect(cameraFor({ phase: 'idle', pos, heading: 90, bbox: null, follow: true, northUp: false })).toMatchObject({
+  expect(cameraFor({ phase: 'idle', pos, heading: 90, bbox: null, follow: true, northUp: false, focusMe: false })).toMatchObject({
     center: pos, zoom: 18, bearing: 0, pitch: 0,
   });
 });
 
 test('not following → leave camera alone', () => {
-  expect(cameraFor({ phase: 'idle', pos, heading: 0, bbox: null, follow: false, northUp: false })).toBeNull();
-  expect(cameraFor({ phase: 'navigating', pos, heading: 0, bbox, follow: false, northUp: false })).toBeNull();
+  expect(cameraFor({ phase: 'idle', pos, heading: 0, bbox: null, follow: false, northUp: false, focusMe: false })).toBeNull();
+  expect(cameraFor({ phase: 'navigating', pos, heading: 0, bbox, follow: false, northUp: false, focusMe: false })).toBeNull();
 });
 
 test('no position → leave camera alone (except preview with bbox)', () => {
-  expect(cameraFor({ phase: 'idle', pos: null, heading: 0, bbox: null, follow: true, northUp: false })).toBeNull();
-  expect(cameraFor({ phase: 'preview', pos: null, heading: 0, bbox, follow: true, northUp: false })).toMatchObject({ bounds: bbox });
+  expect(cameraFor({ phase: 'idle', pos: null, heading: 0, bbox: null, follow: true, northUp: false, focusMe: false })).toBeNull();
+  expect(cameraFor({ phase: 'preview', pos: null, heading: 0, bbox, follow: true, northUp: false, focusMe: false })).toMatchObject({ bounds: bbox });
 });
 
 test('preview fits the route', () => {
-  expect(cameraFor({ phase: 'preview', pos, heading: 0, bbox, follow: true, northUp: false })).toMatchObject({ bounds: bbox });
+  expect(cameraFor({ phase: 'preview', pos, heading: 0, bbox, follow: true, northUp: false, focusMe: false })).toMatchObject({ bounds: bbox });
 });
 
 test('navigating: heading-up, tilted, zoomed in', () => {
-  expect(cameraFor({ phase: 'navigating', pos, heading: 123, bbox, follow: true, northUp: false })).toMatchObject({
+  expect(cameraFor({ phase: 'navigating', pos, heading: 123, bbox, follow: true, northUp: false, focusMe: false })).toMatchObject({
     center: pos, zoom: 18.5, bearing: 123, pitch: 45,
   });
-  expect(cameraFor({ phase: 'rerouting', pos, heading: 5, bbox, follow: true, northUp: false })).toMatchObject({ bearing: 5 });
+  expect(cameraFor({ phase: 'rerouting', pos, heading: 5, bbox, follow: true, northUp: false, focusMe: false })).toMatchObject({ bearing: 5 });
 });
 
 describe('applyCameraStop', () => {
@@ -35,7 +35,7 @@ describe('applyCameraStop', () => {
 
   test('bounds stop → fitBounds with the rest as options', () => {
     const ref = fakeRef();
-    const stop = cameraFor({ phase: 'preview', pos, heading: 0, bbox, follow: true, northUp: false })!;
+    const stop = cameraFor({ phase: 'preview', pos, heading: 0, bbox, follow: true, northUp: false, focusMe: false })!;
     applyCameraStop(ref, stop);
     expect(ref.fitBounds).toHaveBeenCalledWith(bbox, expect.objectContaining({ duration: 800, padding: expect.any(Object) }));
     expect(ref.easeTo).not.toHaveBeenCalled();
@@ -43,7 +43,7 @@ describe('applyCameraStop', () => {
 
   test('center stop → easeTo', () => {
     const ref = fakeRef();
-    const stop = cameraFor({ phase: 'navigating', pos, heading: 42, bbox, follow: true, northUp: false })!;
+    const stop = cameraFor({ phase: 'navigating', pos, heading: 42, bbox, follow: true, northUp: false, focusMe: false })!;
     applyCameraStop(ref, stop);
     expect(ref.easeTo).toHaveBeenCalledWith(expect.objectContaining({ center: pos, bearing: 42, zoom: 18.5 }));
     expect(ref.fitBounds).not.toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe('applyCameraStop', () => {
 });
 
 test('north-up mode keeps bearing 0 while navigating', () => {
-  expect(cameraFor({ phase: 'navigating', pos, heading: 123, bbox, follow: true, northUp: true })).toMatchObject({ bearing: 0 });
+  expect(cameraFor({ phase: 'navigating', pos, heading: 123, bbox, follow: true, northUp: true, focusMe: false })).toMatchObject({ bearing: 0 });
 });
 
 describe('maskMode', () => {
@@ -66,5 +66,24 @@ describe('maskMode', () => {
   });
   test('nothing known yet → all black', () => {
     expect(maskMode({ hasRoute: false, follow: true, hasView: false })).toBe('none');
+  });
+});
+
+test('preview after recenter (focusMe) centers on the user instead of fitting the route', () => {
+  expect(cameraFor({ phase: 'preview', pos, heading: 0, bbox, follow: true, northUp: false, focusMe: true })).toMatchObject({
+    center: pos,
+    zoom: 18,
+  });
+});
+
+test('navigation keeps the arrow in the screen center (no offset padding)', () => {
+  const stop = cameraFor({ phase: 'navigating', pos, heading: 10, bbox, follow: true, northUp: false, focusMe: false });
+  expect(stop).toMatchObject({ center: pos });
+  expect((stop as { padding?: { top: number } }).padding?.top ?? 0).toBe(0);
+});
+
+test('idle resets padding so the arrow is centred after a preview', () => {
+  expect(cameraFor({ phase: 'idle', pos, heading: 0, bbox: null, follow: true, northUp: false, focusMe: false })).toMatchObject({
+    padding: { top: 0, bottom: 0, left: 0, right: 0 },
   });
 });

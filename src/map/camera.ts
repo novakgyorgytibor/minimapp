@@ -3,6 +3,9 @@ import { config } from '../config';
 import type { Phase } from '../nav/navMachine';
 import type { LngLat } from '../types';
 
+// Kifejezetten nullázni kell: az előnézet paddingje különben megmaradna, és elcsúsztatná a középre állást.
+const NO_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
+
 export interface CameraInput {
   phase: Phase;
   pos: LngLat | null;
@@ -11,11 +14,13 @@ export interface CameraInput {
   follow: boolean;
   /** Navigáció közben is észak legyen felül (a tájolóra koppintva kapcsolható). */
   northUp: boolean;
+  /** A ◎ gombbal kért középre állás: előnézetben is a felhasználóra áll az útvonal helyett. */
+  focusMe: boolean;
 }
 
-export function cameraFor({ phase, pos, heading, bbox, follow, northUp }: CameraInput): CameraStop | null {
+export function cameraFor({ phase, pos, heading, bbox, follow, northUp, focusMe }: CameraInput): CameraStop | null {
   if (!follow) return null;
-  if (phase === 'preview' && bbox) {
+  if (phase === 'preview' && bbox && !focusMe) {
     return { bounds: bbox, padding: { top: 140, bottom: 260, left: 48, right: 48 }, bearing: 0, pitch: 0, duration: 800 };
   }
   if (!pos) return null;
@@ -25,12 +30,12 @@ export function cameraFor({ phase, pos, heading, bbox, follow, northUp }: Camera
       zoom: config.navZoom,
       bearing: northUp ? 0 : heading,
       pitch: 45,
-      padding: { top: 320, bottom: 0, left: 0, right: 0 },
+      padding: NO_PADDING,
       duration: 1000,
       easing: 'linear',
     };
   }
-  return { center: pos, zoom: config.idleZoom, bearing: 0, pitch: 0, duration: 800 };
+  return { center: pos, zoom: config.idleZoom, bearing: 0, pitch: 0, padding: NO_PADDING, duration: 800 };
 }
 
 /**

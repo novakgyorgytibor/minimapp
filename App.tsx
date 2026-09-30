@@ -85,8 +85,18 @@ function Main() {
     };
   }, [navigatingish]);
 
+  // ◎: a nyíl a képernyő közepére (előnézetben is az útvonal helyett)
+  const [focusMe, setFocusMe] = useState(false);
+  const recenter = () => {
+    setFollow(true);
+    setFocusMe(true);
+  };
+
   // Fázisváltáskor a kamera újra követ
-  useEffect(() => setFollow(true), [s.phase]);
+  useEffect(() => {
+    setFollow(true);
+    setFocusMe(false);
+  }, [s.phase]);
 
   // Nézet (képernyő közepe + zoom), csak érdemi változásnál frissítve (nextView).
   const { width: screenW, height: screenH } = useWindowDimensions();
@@ -144,7 +154,7 @@ function Main() {
     else setNorthNonce((n) => n + 1);
   };
 
-  const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow, northUp });
+  const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow, northUp, focusMe });
 
   if (loc.status === 'denied') return <PermissionScreen onRequest={loc.request} />;
 
@@ -195,20 +205,21 @@ function Main() {
                 <CloseButton onPress={() => dispatch({ type: 'CANCEL' })} />
               </View>
             )}
-            <View style={styles.compassRow} pointerEvents="box-none">
-              <Compass bearing={mapBearing} onPress={onCompassPress} />
-            </View>
           </View>
         )}
 
         {/* Alsó sáv */}
         {s.phase !== 'searching' && (
           <View style={styles.bottom} pointerEvents="box-none">
-            {!follow && (
-              <Pressable onPress={() => setFollow(true)} style={styles.recenter} hitSlop={12}>
-                <Text style={styles.recenterText}>◎</Text>
-              </Pressable>
-            )}
+            {/* Bal lent a tájoló, jobb lent a ◎ */}
+            <View style={styles.controlsRow} pointerEvents="box-none">
+              <Compass bearing={mapBearing} onPress={onCompassPress} />
+              {(!follow || (s.phase === 'preview' && !focusMe)) && (
+                <Pressable onPress={recenter} style={styles.recenter} hitSlop={12}>
+                  <Text style={styles.recenterText}>◎</Text>
+                </Pressable>
+              )}
+            </View>
             <StatusLine error={s.error} loading={s.loading} onRetry={() => dispatch({ type: 'RETRY' })} />
             {s.phase === 'preview' && (
               <>
@@ -252,10 +263,10 @@ const styles = StyleSheet.create({
   searchText: { color: theme.fg, fontSize: 22, fontWeight: '300' },
   destText: { color: theme.fg, fontSize: 20, fontWeight: '300', paddingHorizontal: 24, paddingVertical: 12 },
   close: { padding: 12 },
-  compassRow: { alignItems: 'flex-end', paddingRight: 24, paddingTop: 16 },
   closeText: { color: theme.fg, fontSize: 22 },
   bottom: { paddingBottom: 20, paddingHorizontal: 20, gap: 4 },
-  recenter: { alignSelf: 'flex-end', padding: 8 },
+  controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 8, minHeight: 44 },
+  recenter: { padding: 4 },
   recenterText: { color: theme.fg, fontSize: 28 },
   start: { alignSelf: 'center', borderWidth: 1, borderColor: theme.fg, paddingHorizontal: 40, paddingVertical: 12, marginTop: 8 },
   startText: { color: theme.fg, fontSize: 18 },
