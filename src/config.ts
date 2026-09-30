@@ -22,7 +22,7 @@ export const config = {
   arrivalM: 20,
   arrivedResetMs: 5_000,
 
-  idleZoom: 17,
-  navZoom: 18,
+  idleZoom: 18,
+  navZoom: 18.5,
   courseMinSpeedMps: 2,
 } as const;
