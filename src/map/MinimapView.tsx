@@ -1,11 +1,13 @@
 import {
   Camera,
   GeoJSONSource,
+  Images,
   Layer,
   Map,
   type CameraRef,
   type CameraStop,
   type LineLayerSpecification,
+  type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native';
 import type { Feature, LineString, Point } from 'geojson';
 import { memo, useEffect, useMemo, useRef } from 'react';
@@ -21,6 +23,8 @@ export interface MinimapViewProps {
   masks: MaskFeature[];
   route: LngLat[] | null;
   pos: LngLat | null;
+  /** Irány fokban; null = nincs → pont a háromszög helyett. */
+  heading: number | null;
   dest: LngLat | null;
   camera: CameraStop | null;
   onLongPress: (coord: LngLat) => void;
@@ -64,6 +68,36 @@ const MaskLayer = memo(function MaskLayer({ index, data }: { index: number; data
   );
 });
 
+const ARROW_IMAGES = { 'heading-arrow': require('../../assets/heading-arrow.png') };
+const ARROW_LAYOUT: SymbolLayerSpecification['layout'] = {
+  'icon-image': 'heading-arrow',
+  'icon-rotate': ['get', 'bearing'],
+  'icon-rotation-alignment': 'map',
+  'icon-pitch-alignment': 'map',
+  'icon-allow-overlap': true,
+  'icon-ignore-placement': true,
+};
+
+// A saját pozíció: háromszög az irány felé, vagy pont, ha még nincs irány.
+const MeLayer = memo(function MeLayer({ coord, heading }: { coord: LngLat | null; heading: number | null }) {
+  const data = useMemo(
+    () =>
+      coord
+        ? ({ type: 'Feature', properties: { bearing: heading ?? 0 }, geometry: { type: 'Point', coordinates: coord } } as Feature<Point>)
+        : EMPTY,
+    [coord, heading],
+  );
+  return (
+    <GeoJSONSource id="me" data={data}>
+      {heading === null ? (
+        <Layer key="me-dot" type="circle" id="me-dot" source="me" paint={ME_PAINT} />
+      ) : (
+        <Layer key="me-arrow" type="symbol" id="me-arrow" source="me" layout={ARROW_LAYOUT} />
+      )}
+    </GeoJSONSource>
+  );
+});
+
 const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; coord: LngLat | null; paint: object }) {
   const data = useMemo(() => (coord ? pointFeature(coord) : EMPTY), [coord]);
   return (
@@ -73,7 +107,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, pos, dest, camera, onLongPress, onUserPan }: MinimapViewProps) {
+export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPress, onUserPan }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   useEffect(() => {
@@ -96,12 +130,13 @@ export function MinimapView({ masks, route, pos, dest, camera, onLongPress, onUs
       }}
     >
       <Camera ref={cameraRef} />
+      <Images images={ARROW_IMAGES} />
       <RouteLayer coords={route} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />
       ))}
       <PointLayer id="dest" coord={dest} paint={DEST_PAINT} />
-      <PointLayer id="me" coord={pos} paint={ME_PAINT} />
+      <MeLayer coord={pos} heading={heading} />
     </Map>
   );
 }

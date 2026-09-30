@@ -5,7 +5,7 @@ const bbox: [number, number, number, number] = [19.0, 47.4, 19.1, 47.6];
 
 test('idle follows position north-up', () => {
   expect(cameraFor({ phase: 'idle', pos, heading: 90, bbox: null, follow: true })).toMatchObject({
-    center: pos, zoom: 15, bearing: 0, pitch: 0,
+    center: pos, zoom: 17, bearing: 0, pitch: 0,
   });
 });
 
@@ -25,7 +25,7 @@ test('preview fits the route', () => {
 
 test('navigating: heading-up, tilted, zoomed in', () => {
   expect(cameraFor({ phase: 'navigating', pos, heading: 123, bbox, follow: true })).toMatchObject({
-    center: pos, zoom: 17, bearing: 123, pitch: 45,
+    center: pos, zoom: 18, bearing: 123, pitch: 45,
   });
   expect(cameraFor({ phase: 'rerouting', pos, heading: 5, bbox, follow: true })).toMatchObject({ bearing: 5 });
 });
@@ -45,7 +45,7 @@ describe('applyCameraStop', () => {
     const ref = fakeRef();
     const stop = cameraFor({ phase: 'navigating', pos, heading: 42, bbox, follow: true })!;
     applyCameraStop(ref, stop);
-    expect(ref.easeTo).toHaveBeenCalledWith(expect.objectContaining({ center: pos, bearing: 42, zoom: 17 }));
+    expect(ref.easeTo).toHaveBeenCalledWith(expect.objectContaining({ center: pos, bearing: 42, zoom: 18 }));
     expect(ref.fitBounds).not.toHaveBeenCalled();
   });
 });

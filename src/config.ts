@@ -21,4 +21,8 @@ export const config = {
   rerouteMinIntervalMs: 10_000,
   arrivalM: 20,
   arrivedResetMs: 5_000,
+
+  idleZoom: 17,
+  navZoom: 18,
+  courseMinSpeedMps: 2,
 } as const;

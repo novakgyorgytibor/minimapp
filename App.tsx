@@ -104,7 +104,7 @@ function Main() {
   // Pozíció nélkül minden fekete (ne látszódjon a teljes úthálózat az első GPS fix előtt)
   const masks = s.route ? routeMasks : idleAnchor ? idleMasks : NO_POSITION_MASKS;
 
-  const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading, bbox: s.route?.bbox ?? null, follow });
+  const camera = cameraFor({ phase: s.phase, pos: loc.pos, heading: loc.heading ?? 0, bbox: s.route?.bbox ?? null, follow });
 
   if (loc.status === 'denied') return <PermissionScreen onRequest={loc.request} />;
 
@@ -114,6 +114,7 @@ function Main() {
         masks={masks}
         route={s.route?.coords ?? null}
         pos={loc.pos}
+        heading={loc.heading}
         dest={s.dest}
         camera={camera}
         onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: 'Kijelölt pont' })}

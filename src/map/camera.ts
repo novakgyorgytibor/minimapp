@@ -1,4 +1,5 @@
 import type { CameraRef, CameraStop } from '@maplibre/maplibre-react-native';
+import { config } from '../config';
 import type { Phase } from '../nav/navMachine';
 import type { LngLat } from '../types';
 
@@ -19,7 +20,7 @@ export function cameraFor({ phase, pos, heading, bbox, follow }: CameraInput): C
   if (phase === 'navigating' || phase === 'rerouting' || phase === 'arrived') {
     return {
       center: pos,
-      zoom: 17,
+      zoom: config.navZoom,
       bearing: heading,
       pitch: 45,
       padding: { top: 320, bottom: 0, left: 0, right: 0 },
@@ -27,7 +28,7 @@ export function cameraFor({ phase, pos, heading, bbox, follow }: CameraInput): C
       easing: 'linear',
     };
   }
-  return { center: pos, zoom: 15, bearing: 0, pitch: 0, duration: 800 };
+  return { center: pos, zoom: config.idleZoom, bearing: 0, pitch: 0, duration: 800 };
 }
 
 /**
