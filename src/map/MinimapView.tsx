@@ -9,7 +9,7 @@ import {
   type LineLayerSpecification,
   type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native';
-import type { Feature, LineString, Point } from 'geojson';
+import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { config } from '../config';
@@ -22,6 +22,8 @@ import { mapStyle } from './style';
 export interface MinimapViewProps {
   masks: MaskFeature[];
   route: LngLat[] | null;
+  /** Vastagabb szakaszok a valódi manőverek körül. */
+  maneuvers: FeatureCollection<LineString> | null;
   pos: LngLat | null;
   /** Irány fokban; null = még nincs → a háromszög észak felé mutat. */
   heading: number | null;
@@ -53,6 +55,19 @@ const RouteLayer = memo(function RouteLayer({ coords }: { coords: LngLat[] | nul
   return (
     <GeoJSONSource id="route" data={data}>
       <Layer type="line" id="route" source="route" layout={ROUTE_LAYOUT} paint={ROUTE_PAINT} />
+    </GeoJSONSource>
+  );
+});
+
+const MANEUVER_PAINT: LineLayerSpecification['paint'] = {
+  'line-color': theme.fg,
+  'line-width': ['interpolate', ['linear'], ['zoom'], 10, 5, 16, 11, 19, 18],
+};
+
+const ManeuverLayer = memo(function ManeuverLayer({ data }: { data: FeatureCollection<LineString> | null }) {
+  return (
+    <GeoJSONSource id="route-maneuvers" data={data ?? EMPTY}>
+      <Layer type="line" id="route-maneuvers" source="route-maneuvers" layout={ROUTE_LAYOUT} paint={MANEUVER_PAINT} />
     </GeoJSONSource>
   );
 });
@@ -106,7 +121,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce }: MinimapViewProps) {
+export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -150,6 +165,7 @@ export function MinimapView({ masks, route, pos, heading, dest, camera, onLongPr
       <Camera ref={cameraRef} />
       <Images images={ARROW_IMAGES} />
       <RouteLayer coords={route} />
+      <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />
       ))}

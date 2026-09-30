@@ -10,6 +10,7 @@ import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
+import { maneuverSegments } from './src/nav/maneuverSegments';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -142,6 +143,9 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [view],
   );
+  // Vastagabb kijelölés a valódi manőverek körül (±30 m)
+  const maneuvers = useMemo(() => (s.route ? maneuverSegments(s.route, 30, 30) : null), [s.route]);
+
   // Útvonal követésekor folyosó; elhúzott térképnél (vagy útvonal nélkül) kör a képernyő közepén; nézet nélkül fekete
   const mode = maskMode({ hasRoute: !!s.route, follow, hasView: !!view });
   const masks = mode === 'route' ? routeMasks : mode === 'center' ? idleMasks : NO_POSITION_MASKS;
@@ -163,6 +167,7 @@ function Main() {
       <MinimapView
         masks={masks}
         route={s.route?.coords ?? null}
+        maneuvers={maneuvers}
         pos={loc.pos}
         heading={loc.heading}
         dest={s.dest}
