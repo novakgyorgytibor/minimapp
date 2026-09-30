@@ -23,7 +23,7 @@ export interface MinimapViewProps {
   masks: MaskFeature[];
   route: LngLat[] | null;
   pos: LngLat | null;
-  /** Irány fokban; null = nincs → pont a háromszög helyett. */
+  /** Irány fokban; null = még nincs → a háromszög észak felé mutat. */
   heading: number | null;
   dest: LngLat | null;
   camera: CameraStop | null;
@@ -43,7 +43,6 @@ const ROUTE_PAINT: LineLayerSpecification['paint'] = {
   'line-width': ['interpolate', ['linear'], ['zoom'], 10, 3, 16, 6, 19, 10],
 };
 const DEST_PAINT = { 'circle-radius': 7, 'circle-color': theme.bg, 'circle-stroke-color': theme.fg, 'circle-stroke-width': 2 } as const;
-const ME_PAINT = { 'circle-radius': 7, 'circle-color': theme.fg, 'circle-stroke-color': theme.bg, 'circle-stroke-width': 2 } as const;
 
 // Memoizált rétegek: a nagy GeoJSON csak akkor megy át a natív oldalra, ha tényleg változott
 // (nem minden GPS-frissítéskor).
@@ -80,7 +79,7 @@ const ARROW_LAYOUT: SymbolLayerSpecification['layout'] = {
   'icon-ignore-placement': true,
 };
 
-// A saját pozíció: háromszög az irány felé, vagy pont, ha még nincs irány.
+// A saját pozíció: mindig háromszög; amíg nincs irány (pl. szimulátorban állva), észak felé mutat.
 const MeLayer = memo(function MeLayer({ coord, heading }: { coord: LngLat | null; heading: number | null }) {
   const data = useMemo(
     () =>
@@ -91,11 +90,7 @@ const MeLayer = memo(function MeLayer({ coord, heading }: { coord: LngLat | null
   );
   return (
     <GeoJSONSource id="me" data={data}>
-      {heading === null ? (
-        <Layer key="me-dot" type="circle" id="me-dot" source="me" paint={ME_PAINT} />
-      ) : (
-        <Layer key="me-arrow" type="symbol" id="me-arrow" source="me" layout={ARROW_LAYOUT} />
-      )}
+      <Layer type="symbol" id="me-arrow" source="me" layout={ARROW_LAYOUT} />
     </GeoJSONSource>
   );
 });
