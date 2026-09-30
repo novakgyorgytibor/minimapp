@@ -11,7 +11,7 @@ import {
 } from '@maplibre/maplibre-react-native';
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { memo, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 import { config } from '../config';
 import type { MaskFeature } from '../nav/corridor';
 import { theme } from '../theme';
@@ -158,6 +158,7 @@ export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camer
       touchPitch={false}
       preferredFramesPerSecond={config.mapFps}
       onDidFinishLoadingMap={onMapLoaded}
+      onPress={() => Keyboard.dismiss()}
       onLongPress={(e) => onLongPress(e.nativeEvent.lngLat)}
       onRegionWillChange={(e) => {
         if (e.nativeEvent.userInteraction) onUserPan();

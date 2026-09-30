@@ -40,7 +40,8 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
   }, [q]);
 
   return (
-    <View style={styles.wrap}>
+    // Háttérre koppintás: billentyűzet be (a lista elemeire és a gombokra koppintás ettől még működik)
+    <Pressable style={styles.wrap} onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.row}>
         <TextInput
           autoFocus
@@ -66,7 +67,9 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
       {status === 'empty' && <Text style={styles.note}>{t('noResults')}</Text>}
       {status === 'error' && <Text style={styles.note}>{t('noConnection')}</Text>}
       <FlatList
+        style={styles.list}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         data={results}
         keyExtractor={(p, i) => `${p.coord.join(',')}-${i}`}
         renderItem={({ item }) => (
@@ -82,12 +85,13 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
           </Pressable>
         )}
       />
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: theme.bg },
+  list: { flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, gap: 16 },
   input: { flex: 1, color: theme.fg, fontSize: 22, fontWeight: '300', borderBottomWidth: 1, borderBottomColor: theme.fg, paddingVertical: 8 },
   cancel: { color: theme.fg, fontSize: 16 },
