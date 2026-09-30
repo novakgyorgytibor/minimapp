@@ -25,6 +25,7 @@ import { ManeuverBar } from './src/ui/ManeuverBar';
 import { ModeToggle } from './src/ui/ModeToggle';
 import { PermissionScreen } from './src/ui/PermissionScreen';
 import { SearchBar } from './src/ui/SearchBar';
+import { Speed } from './src/ui/Speed';
 import { StatusLine } from './src/ui/StatusLine';
 import { TripFooter } from './src/ui/TripFooter';
 
@@ -236,7 +237,10 @@ function Main() {
           <View style={styles.bottom} pointerEvents="box-none">
             {/* Bal lent a tájoló, jobb lent a ◎ */}
             <View style={styles.controlsRow} pointerEvents="box-none">
-              <Compass bearing={mapBearing} onPress={onCompassPress} />
+              <View style={styles.leftControls} pointerEvents="box-none">
+                <Speed mps={loc.speed} />
+                <Compass bearing={mapBearing} onPress={onCompassPress} />
+              </View>
               {(!follow || (s.phase === 'preview' && !focusMe)) && (
                 <Pressable onPress={recenter} style={styles.recenter} hitSlop={12}>
                   <Text style={styles.recenterText}>◎</Text>
@@ -296,7 +300,8 @@ const styles = StyleSheet.create({
   close: { padding: 12 },
   closeText: { color: theme.fg, fontSize: 22 },
   bottom: { paddingBottom: 20, paddingHorizontal: 20, gap: 4 },
-  controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 8, minHeight: 44 },
+  leftControls: { alignItems: 'center', gap: 14 },
+  controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 8, paddingBottom: 8, minHeight: 44 },
   recenter: { padding: 4 },
   recenterText: { color: theme.fg, fontSize: 28 },
   start: { alignSelf: 'center', borderWidth: 1, borderColor: theme.fg, paddingHorizontal: 40, paddingVertical: 12, marginTop: 8 },

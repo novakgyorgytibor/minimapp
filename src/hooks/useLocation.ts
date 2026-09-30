@@ -9,6 +9,7 @@ export function useLocation() {
   const [status, setStatus] = useState<Status>('pending');
   const [pos, setPos] = useState<LngLat | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
+  const [speed, setSpeed] = useState<number | null>(null);
   const sub = useRef<Location.LocationSubscription | null>(null);
   const headingSub = useRef<Location.LocationSubscription | null>(null);
   const compass = useRef<number | null>(null);
@@ -30,6 +31,7 @@ export function useLocation() {
       (loc) => {
         setPos([loc.coords.longitude, loc.coords.latitude]);
         course.current = { deg: loc.coords.heading, speed: loc.coords.speed ?? 0 };
+        setSpeed(loc.coords.speed ?? null);
         updateHeading();
       },
     );
@@ -66,5 +68,5 @@ export function useLocation() {
     };
   }, [start]);
 
-  return { status, pos, heading, request };
+  return { status, pos, heading, speed, request };
 }

@@ -1,4 +1,4 @@
-import { formatClock, formatDistance, formatDuration } from './format';
+import { formatClock, formatDistance, formatDuration, formatSpeedKmh } from './format';
 
 test.each([
   [0, '0 m'],
@@ -42,5 +42,20 @@ describe('Hungarian', () => {
     [3600 + 5 * 60, '1 ó 5 p'],
   ])('formatDuration(%p, hu) = %p', (s, out) => {
     expect(formatDuration(s, 'hu')).toBe(out);
+  });
+});
+
+describe('formatSpeedKmh', () => {
+  test.each([
+    [0, '0'],
+    [8.3333, '30'],
+    [13.9, '50'],
+    [0.2, '1'],
+  ])('%p m/s → %p km/h', (mps, out) => {
+    expect(formatSpeedKmh(mps)).toBe(out);
+  });
+  test('unknown speed (null or negative, as iOS reports it) → null', () => {
+    expect(formatSpeedKmh(null)).toBeNull();
+    expect(formatSpeedKmh(-1)).toBeNull();
   });
 });

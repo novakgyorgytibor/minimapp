@@ -19,3 +19,9 @@ export function formatDuration(s: number, lang: Lang = 'en'): string {
 export function formatClock(date: Date): string {
   return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
+
+/** m/s → egész km/h szövegként; ismeretlen sebesség (null vagy negatív, ahogy az iOS jelzi) → null. */
+export function formatSpeedKmh(mps: number | null): string | null {
+  if (mps === null || mps < 0) return null;
+  return String(Math.round(mps * 3.6));
+}
