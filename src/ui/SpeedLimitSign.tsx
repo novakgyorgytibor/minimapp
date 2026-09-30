@@ -2,20 +2,23 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text } from 'react-native';
 import { theme } from '../theme';
 
-/** Sebességkorlát-tábla: kis fehér keretes kör a számmal; túllépésnél lassan lüktet. */
+// A korlát alatt halvány, túllépésnél teljes fényerővel lüktet
+const CALM_OPACITY = 0.4;
+
+/** Sebességkorlát-tábla: kis fehér keretes kör a számmal; a korlát alatt halvány, túllépésnél lüktet. */
 export function SpeedLimitSign({ kmh, speeding }: { kmh: number | null; speeding: boolean }) {
-  const opacity = useRef(new Animated.Value(1)).current;
+  const opacity = useRef(new Animated.Value(CALM_OPACITY)).current;
 
   useEffect(() => {
     if (!speeding) {
       opacity.stopAnimation();
-      opacity.setValue(1);
+      opacity.setValue(CALM_OPACITY);
       return;
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.25, duration: 600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.25, duration: 600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       ]),
     );
     loop.start();
