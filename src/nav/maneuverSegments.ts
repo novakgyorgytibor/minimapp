@@ -67,14 +67,19 @@ export function maneuverSegments(route: Route, beforeM: number, afterM: number):
   };
 }
 
-/** Csak a következő manőver kiemelése (navigáció közben); ha az nem valódi manőver, üres. */
+/**
+ * Csak a következő manőver kiemelése (navigáció közben); ha az nem valódi manőver, üres.
+ * `hideWithinM`: ennél közelebb a manőverhez már eltűnik (odaérve ne takarja a kanyart).
+ */
 export function nextManeuverSegment(
   route: Route,
   stepIndex: number,
   beforeM: number,
   afterM: number,
+  near?: { distToManeuverM: number; hideWithinM: number },
 ): FeatureCollection<LineString> {
   const st = route.steps[stepIndex];
+  if (near && near.distToManeuverM < near.hideWithinM) return { type: 'FeatureCollection', features: [] };
   return {
     type: 'FeatureCollection',
     features: st && isRealManeuver(st) ? segmentFor(route, st, beforeM, afterM) : [],

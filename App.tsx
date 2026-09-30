@@ -36,6 +36,7 @@ import { TripFooter } from './src/ui/TripFooter';
 
 const NO_POSITION_MASKS = fullMasks(config.maskFractions);
 const DONE_STEP_M = 200;
+const MANEUVER_HIDE_WITHIN_M = 100;
 
 export default function App() {
   return (
@@ -213,9 +214,14 @@ function Main() {
 
   // Vastagabb kijelölés csak navigáció közben, és csak a következő manővernél (±30 m)
   const nextIdx = s.progress?.nextStepIndex ?? 1;
+  // 100 m-rel a manőver előtt eltűnik (odaérve már ne takarja a kanyart)
+  const nearManeuver = (s.progress?.distToManeuverM ?? Infinity) < MANEUVER_HIDE_WITHIN_M;
   const maneuvers = useMemo(
-    () => (s.route && (s.phase === 'navigating' || s.phase === 'rerouting') ? nextManeuverSegment(s.route, nextIdx, 30, 30) : null),
-    [s.route, s.phase, nextIdx],
+    () =>
+      s.route && (s.phase === 'navigating' || s.phase === 'rerouting') && !nearManeuver
+        ? nextManeuverSegment(s.route, nextIdx, 30, 30)
+        : null,
+    [s.route, s.phase, nextIdx, nearManeuver],
   );
 
   // Útvonal követésekor folyosó; elhúzott térképnél (vagy útvonal nélkül) kör a képernyő közepén; nézet nélkül fekete

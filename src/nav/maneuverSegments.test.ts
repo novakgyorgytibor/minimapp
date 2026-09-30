@@ -53,3 +53,12 @@ describe('nextManeuverSegment', () => {
     expect(nextManeuverSegment(route, 99, 30, 30).features).toEqual([]);
   });
 });
+
+describe('highlight disappears when close to the maneuver', () => {
+  test('shown while more than 100 m away', () => {
+    expect(nextManeuverSegment(route, 2, 30, 30, { distToManeuverM: 150, hideWithinM: 100 }).features).toHaveLength(1);
+  });
+  test('hidden within 100 m', () => {
+    expect(nextManeuverSegment(route, 2, 30, 30, { distToManeuverM: 99, hideWithinM: 100 }).features).toEqual([]);
+  });
+});
