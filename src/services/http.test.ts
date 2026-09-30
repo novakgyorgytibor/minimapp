@@ -1,3 +1,4 @@
+import { rejection } from '../testUtils';
 import { fetchJson, HttpError, isAbortError } from './http';
 
 const ok = (body: unknown) =>
@@ -22,7 +23,7 @@ test('retries 429 with 1s, 2s, 4s backoff then succeeds', async () => {
 
 test('gives up after retries with rate-limited', async () => {
   const fetchImpl = jest.fn(async () => status(429));
-  const err = await fetchJson('u', {}, { fetchImpl, sleep: async () => {}, retries: 3 }).catch((e: HttpError) => e);
+  const err = await rejection<HttpError>(fetchJson('u', {}, { fetchImpl, sleep: async () => {}, retries: 3 }));
   expect(err).toBeInstanceOf(HttpError);
   expect(err.kind).toBe('rate-limited');
   expect(fetchImpl).toHaveBeenCalledTimes(4);
@@ -30,7 +31,7 @@ test('gives up after retries with rate-limited', async () => {
 
 test('non-ok status becomes http error with status', async () => {
   const fetchImpl = jest.fn(async () => status(400));
-  const err = await fetchJson('u', {}, { fetchImpl }).catch((e: HttpError) => e);
+  const err = await rejection<HttpError>(fetchJson('u', {}, { fetchImpl }));
   expect(err).toBeInstanceOf(HttpError);
   expect(err.kind).toBe('http');
   expect(err.status).toBe(400);
@@ -38,7 +39,7 @@ test('non-ok status becomes http error with status', async () => {
 
 test('fetch rejection becomes network error', async () => {
   const fetchImpl = jest.fn(async () => { throw new TypeError('Network request failed'); });
-  const err = await fetchJson('u', {}, { fetchImpl }).catch((e: HttpError) => e);
+  const err = await rejection<HttpError>(fetchJson('u', {}, { fetchImpl }));
   expect(err.kind).toBe('network');
 });
 
@@ -52,7 +53,7 @@ const hanging: typeof fetch = (_url, init) =>
   });
 
 test('timeout becomes network error', async () => {
-  const err = await fetchJson('u', {}, { fetchImpl: hanging, timeoutMs: 20 }).catch((e: HttpError) => e);
+  const err = await rejection<HttpError>(fetchJson('u', {}, { fetchImpl: hanging, timeoutMs: 20 }));
   expect(err).toBeInstanceOf(HttpError);
   expect(err.kind).toBe('network');
 });
@@ -61,7 +62,7 @@ test('external abort is rethrown as AbortError, not HttpError', async () => {
   const ctrl = new AbortController();
   const p = fetchJson('u', { signal: ctrl.signal }, { fetchImpl: hanging, timeoutMs: 10_000 });
   ctrl.abort();
-  const err = await p.catch((e: HttpError) => e);
+  const err = await rejection(p);
   expect(isAbortError(err)).toBe(true);
   expect(err).not.toBeInstanceOf(HttpError);
 });
