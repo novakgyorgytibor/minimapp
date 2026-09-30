@@ -6,7 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
 import { useSpeedLimit } from './src/hooks/useSpeedLimit';
-import { speedLimitVisible } from './src/services/speedLimit';
+import { isSpeeding, speedLimitVisible } from './src/services/speedLimit';
 import { cameraFor, maskMode } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
@@ -286,7 +286,7 @@ function Main() {
             {/* Bal lent a tájoló, jobb lent a ◎ */}
             <View style={styles.controlsRow} pointerEvents="box-none">
               <View style={styles.leftControls} pointerEvents="box-none">
-                <SpeedLimitSign kmh={speedLimit} />
+                <SpeedLimitSign kmh={speedLimit} speeding={isSpeeding(loc.speed, speedLimit)} />
                 <Speed mps={loc.speed} />
                 <Compass bearing={mapBearing} onPress={onCompassPress} />
               </View>

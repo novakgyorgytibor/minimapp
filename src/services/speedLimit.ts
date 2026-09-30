@@ -57,3 +57,9 @@ export function speedLimitVisible({ mode, navigating, speedMps }: { mode: Mode; 
   if (mode !== 'auto') return false;
   return navigating || (speedMps !== null && speedMps > ROLLING_MPS);
 }
+
+/** Túllépés: a kijelzett (kerekített) km/h nagyobb a korlátnál. */
+export function isSpeeding(speedMps: number | null, limitKmh: number | null): boolean {
+  if (speedMps === null || speedMps < 0 || limitKmh === null) return false;
+  return Math.round(speedMps * 3.6) > limitKmh;
+}

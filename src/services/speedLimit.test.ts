@@ -1,5 +1,5 @@
 import { rejection } from '../testUtils';
-import { getSpeedLimit, pushTrail, shouldQuerySpeedLimit, speedLimitVisible } from './speedLimit';
+import { getSpeedLimit, isSpeeding, pushTrail, shouldQuerySpeedLimit, speedLimitVisible } from './speedLimit';
 
 const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body, text: async () => '' }) as Response;
 const trail: [number, number][] = [[19.029913, 47.483081], [19.030375, 47.482902], [19.0313, 47.4825]];
@@ -62,5 +62,15 @@ describe('speedLimitVisible', () => {
     expect(speedLimitVisible({ mode: 'auto', navigating: false, speedMps: 4 / 3.6 })).toBe(false);
     expect(speedLimitVisible({ mode: 'bicycle', navigating: true, speedMps: 20 / 3.6 })).toBe(false);
     expect(speedLimitVisible({ mode: 'auto', navigating: false, speedMps: null })).toBe(false);
+  });
+});
+
+describe('isSpeeding', () => {
+  test('only above the limit (as the speed readout rounds it)', () => {
+    expect(isSpeeding(50 / 3.6, 50)).toBe(false);
+    expect(isSpeeding(50.6 / 3.6, 50)).toBe(true); // kijelzőn 51
+    expect(isSpeeding(50.4 / 3.6, 50)).toBe(false); // kijelzőn 50
+    expect(isSpeeding(null, 50)).toBe(false);
+    expect(isSpeeding(80 / 3.6, null)).toBe(false);
   });
 });
