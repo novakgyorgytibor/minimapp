@@ -2,7 +2,7 @@ import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { angleDiff, pickHeading } from '../nav/heading';
-import { locationOptions } from '../nav/power';
+import { effectiveSpeed, locationOptions, SPEED_STALE_MS } from '../nav/power';
 import type { LngLat } from '../types';
 
 type Status = 'pending' | 'granted' | 'denied';
@@ -20,7 +20,9 @@ export function useLocation(navigating: boolean) {
   const [status, setStatus] = useState<Status>('pending');
   const [pos, setPos] = useState<LngLat | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
-  const [speed, setSpeed] = useState<number | null>(null);
+  const [rawSpeed, setRawSpeed] = useState<number | null>(null);
+  const [lastFixAt, setLastFixAt] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const compass = useRef<number | null>(null);
   const course = useRef<{ deg: number | null; speed: number }>({ deg: null, speed: 0 });
@@ -62,7 +64,9 @@ export function useLocation(navigating: boolean) {
       (loc) => {
         setPos([loc.coords.longitude, loc.coords.latitude]);
         course.current = { deg: loc.coords.heading, speed: loc.coords.speed ?? 0 };
-        setSpeed(loc.coords.speed ?? null);
+        setRawSpeed(loc.coords.speed ?? null);
+        setLastFixAt(Date.now());
+        setNow(Date.now());
         updateHeading();
       },
     )
@@ -82,6 +86,15 @@ export function useLocation(navigating: boolean) {
       subs.forEach((sub) => sub.remove());
     };
   }, [status, appActive, navigating, updateHeading]);
+
+  // Ha nem jön új mérés, egyszer újraértékeljük a sebességet (→ 0), amikor elavul
+  useEffect(() => {
+    if (!rawSpeed) return;
+    const ms = (navigating ? SPEED_STALE_MS.navigating : SPEED_STALE_MS.idle) + 100;
+    const t = setTimeout(() => setNow(Date.now()), ms);
+    return () => clearTimeout(t);
+  }, [lastFixAt, rawSpeed, navigating]);
+  const speed = effectiveSpeed({ speed: rawSpeed, lastFixAt, now, navigating });
 
   const request = useCallback(async () => {
     const { status: s } = await Location.requestForegroundPermissionsAsync();
