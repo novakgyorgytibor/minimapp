@@ -15,9 +15,9 @@ import { Keyboard, StyleSheet } from 'react-native';
 import { config } from '../config';
 import type { MaskFeature } from '../nav/corridor';
 import { theme } from '../theme';
-import type { LngLat } from '../types';
+import type { LngLat, Mode } from '../types';
 import { applyCameraStop } from './camera';
-import { mapStyle } from './style';
+import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 
 export interface MinimapViewProps {
   masks: MaskFeature[];
@@ -37,6 +37,8 @@ export interface MinimapViewProps {
   northNonce: number;
   /** Minden növelésre a kamera akkor is újra alkalmazza a stopot, ha az nem változott (✕ / Mégse). */
   recenterNonce: number;
+  /** Közlekedési mód: autóval a járdák/gyalogutak halványabbak. */
+  mode: Mode;
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -114,6 +116,12 @@ const MeLayer = memo(function MeLayer({ coord, heading }: { coord: LngLat | null
   );
 });
 
+// A stílus meglévő 'roads-path' rétegét módosítja (azonos id → a MapLibre a meglévő réteget frissíti)
+const PathStyle = memo(function PathStyle({ mode }: { mode: Mode }) {
+  const paint = useMemo(() => ({ 'line-opacity': pathOpacity(mode) }), [mode]);
+  return <Layer type="line" id={PATH_LAYER_ID} paint={paint} />;
+});
+
 const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; coord: LngLat | null; paint: object }) {
   const data = useMemo(() => (coord ? pointFeature(coord) : EMPTY), [coord]);
   return (
@@ -123,7 +131,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce }: MinimapViewProps) {
+export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -168,6 +176,7 @@ export function MinimapView({ masks, route, maneuvers, pos, heading, dest, camer
     >
       <Camera ref={cameraRef} />
       <Images images={ARROW_IMAGES} />
+      <PathStyle mode={mode} />
       <RouteLayer coords={route} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (

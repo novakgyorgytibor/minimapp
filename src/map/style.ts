@@ -1,9 +1,18 @@
 import type { LineLayerSpecification, StyleSpecification } from '@maplibre/maplibre-react-native';
 import { config } from '../config';
 import { theme } from '../theme';
+import type { Mode } from '../types';
 
 const MAJOR = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary'];
-const MINOR = ['minor', 'service', 'track', 'path', 'busway'];
+const MINOR = ['minor', 'service', 'track', 'busway'];
+// OpenMapTiles 'path': járda, gyalogút, kerékpárút, lépcső – autós módban halványabb
+const PATH = ['path'];
+
+export const PATH_LAYER_ID = 'roads-path';
+
+export function pathOpacity(mode: Mode): number {
+  return mode === 'auto' ? 0.4 : 1;
+}
 
 const roadLayer = (id: string, classes: string[], widths: [number, number, number]): LineLayerSpecification => ({
   id,
@@ -23,6 +32,7 @@ export const mapStyle: StyleSpecification = {
   sources: { omt: { type: 'vector', url: config.tileJsonUrl } },
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': theme.bg } },
+    roadLayer(PATH_LAYER_ID, PATH, [0.3, 1, 3]),
     roadLayer('roads-minor', MINOR, [0.3, 1, 4]),
     roadLayer('roads-major', MAJOR, [0.6, 2, 8]),
   ],

@@ -205,6 +205,7 @@ function Main() {
         onViewChange={onViewChange}
         northNonce={northNonce}
         recenterNonce={recenterNonce}
+        mode={s.mode}
       />
       <Attribution />
 
