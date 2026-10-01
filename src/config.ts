@@ -10,7 +10,7 @@ export const config = {
   nominatimUrl: 'https://nominatim.openstreetmap.org/search',
   photonUrl: 'https://photon.komoot.io/api/',
   // Weboldal (website/, Vercelen; rövid címek a vercel.json-ban: /privacy, /contact, /coffee) és a kapcsolat
-  websiteUrl: 'https://minimapp.vercel.app',
+  websiteUrl: 'https://theminimapp.vercel.app',
   contactEmail: 'novak.gyorgy.tibor@gmail.com',
   revolutTag: 'gyrgyfrwj',
   userAgent: 'minimap/0.1 (personal open-source navigation app)',

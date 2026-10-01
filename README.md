@@ -24,4 +24,4 @@ a `.vercelignore` miatt az app forrása fel sem töltődik.
 
 - Telepítés: Vercelen *Add New → Project* → a GitHub repo importálása (minden beállítás maradhat alapértelmezett), vagy parancssorból `npx vercel --prod`.
 - Rövid címek: `/privacy`, `/apple`, `/google`, `/contact`, `/support`, `/coffee` → a megfelelő oldalra irányít (az áruházakba adatvédelmi URL-nek a `/privacy` jó).
-- Ha a domain nem `minimapp.vercel.app`, az appban a `src/config.ts` → `websiteUrl` értékét is át kell írni.
+- Ha a domain nem `theminimapp.vercel.app`, az appban a `src/config.ts` → `websiteUrl` értékét is át kell írni.

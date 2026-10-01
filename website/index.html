@@ -59,6 +59,8 @@
   :focus-visible { outline: 1px solid var(--fg); outline-offset: 3px; }
 
   main section { display: flex; flex-direction: column; gap: 28px; }
+  /* A display: flex felülírná a böngésző saját [hidden] stílusát → az oldalváltás ezen múlik */
+  [hidden] { display: none !important; }
   h2 { margin: 0; font-size: 30px; font-weight: 300; line-height: 1.2; text-wrap: balance; }
   h3 { margin: 0; font-size: 18px; font-weight: 500; }
   p { margin: 0; }
