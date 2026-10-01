@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 import { angleDiff, pickHeading, smoothHeading } from '../nav/heading';
 import { effectiveSpeed, locationOptions, SPEED_STALE_MS } from '../nav/power';
 import { smoothFix, type Smoothed } from '../nav/smoothing';
+import { isStill, pushFix, type RawFix } from '../nav/stillness';
 import { config } from '../config';
 import type { LngLat } from '../types';
 
@@ -31,6 +32,7 @@ export function useLocation(navigating: boolean) {
   const compass = useRef<number | null>(null);
   const course = useRef<{ deg: number | null; speed: number }>({ deg: null, speed: 0 });
   const smoothed = useRef<Smoothed | null>(null);
+  const history = useRef<RawFix[]>([]);
 
   // Csak >5° változásnál renderelünk újra (az iránytű másodpercenként sokszor, zajosan jelez)
   const updateHeading = useCallback(() => {
@@ -67,11 +69,18 @@ export function useLocation(navigating: boolean) {
     Location.watchPositionAsync(
       { accuracy: ACCURACY[opts.accuracy], timeInterval: opts.timeInterval, distanceInterval: opts.distanceInterval },
       (loc) => {
+        // Álló helyzetben a telefon hamis sebességet jelez → ha a pozíció nem mozdul érdemben, a sebesség 0
+        history.current = pushFix(history.current, {
+          pos: [loc.coords.longitude, loc.coords.latitude],
+          t: loc.timestamp,
+          accuracyM: loc.coords.accuracy,
+        });
+        const speedMps = isStill(history.current) ? 0 : loc.coords.speed;
         // Simítás a jelölő ugrálása ellen; változatlan becslésnél nincs új pozíció (nincs újrarenderelés)
         const next = smoothFix(smoothed.current, {
           pos: [loc.coords.longitude, loc.coords.latitude],
           accuracyM: loc.coords.accuracy,
-          speedMps: loc.coords.speed,
+          speedMps,
           t: loc.timestamp,
         });
         if (next !== smoothed.current) {
@@ -80,8 +89,8 @@ export function useLocation(navigating: boolean) {
         }
         const acc = loc.coords.accuracy;
         setFix({ raw: acc !== null && acc <= config.offRouteRawMaxAccuracyM ? [loc.coords.longitude, loc.coords.latitude] : null });
-        course.current = { deg: loc.coords.heading, speed: loc.coords.speed ?? 0 };
-        setRawSpeed(loc.coords.speed ?? null);
+        course.current = { deg: loc.coords.heading, speed: speedMps ?? 0 };
+        setRawSpeed(speedMps ?? null);
         setLastFixAt(Date.now());
         setNow(Date.now());
         updateHeading();
