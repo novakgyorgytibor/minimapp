@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MinimApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+  /* Layout: one narrow reading column, like the app's single top bar; the arrow sits in a soft fade, as on the map. */
+  :root {
+    --bg: #000;
+    --fg: #fff;
+    --dim: #8c8c8c;
+    --line: #2a2a2a;
+    --line-strong: #fff;
+    --font-body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+    color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 300 17px/1.6 var(--font-body);
+    padding-inline: 20px;
+    padding-block: 0 64px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+
+  header { display: flex; flex-direction: column; gap: 28px; padding-top: 40px; }
+  .brand-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand { color: var(--fg); text-decoration: none; }
+  .mark { width: 52px; height: 52px; flex: none; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .mark svg { display: block; width: 100%; height: 100%; }
+  .brand h1 { margin: 0; font-size: 22px; font-weight: 300; letter-spacing: .01em; }
+
+  .lang { display: flex; gap: 2px; font: 400 13px var(--font-mono); }
+  .lang button {
+    background: none; border: 0; color: var(--dim); font: inherit; padding: 6px 8px; cursor: pointer; letter-spacing: .06em;
+  }
+  .lang button[aria-pressed="true"] { color: var(--fg); }
+
+  nav { display: flex; flex-wrap: wrap; gap: 4px 24px; border-bottom: 1px solid var(--line-strong); padding-bottom: 10px; }
+  nav a {
+    color: var(--dim); text-decoration: none; font-size: 18px; padding: 4px 0; border-bottom: 1px solid transparent;
+  }
+  nav a:hover { color: var(--fg); }
+  nav a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--fg); }
+
+  a { color: var(--fg); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  :focus-visible { outline: 1px solid var(--fg); outline-offset: 3px; }
+
+  main section { display: flex; flex-direction: column; gap: 28px; }
+  h2 { margin: 0; font-size: 30px; font-weight: 300; line-height: 1.2; text-wrap: balance; }
+  h3 { margin: 0; font-size: 18px; font-weight: 500; }
+  p { margin: 0; }
+  .block { display: flex; flex-direction: column; gap: 10px; }
+  .meta { color: var(--dim); font: 400 12px/1.5 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+  .lead { font-size: 19px; }
+  .dim { color: var(--dim); }
+  ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+
+  .services { list-style: none; padding: 0; gap: 0; border-top: 1px solid var(--line); }
+  .services li { display: flex; flex-direction: column; gap: 4px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .services .host { font: 400 12px/1.5 var(--font-mono); color: var(--dim); overflow-wrap: anywhere; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--line); }
+  th { font: 400 11px/1.4 var(--font-mono); color: var(--dim); letter-spacing: .06em; text-transform: uppercase; }
+  td:first-child { min-width: 9em; }
+
+  .answer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .answer .q { min-width: 0; }
+  .answer .a { font: 400 13px/1.6 var(--font-mono); white-space: nowrap; }
+
+  .contact { font: 400 15px/1.6 var(--font-mono); overflow-wrap: anywhere; }
+  footer { color: var(--dim); font: 400 12px/1.6 var(--font-mono); border-top: 1px solid var(--line); padding-top: 16px; }
+
+  .shot { margin: 0; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .shot img { width: 300px; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 28px; }
+  .shot figcaption { color: var(--dim); font-size: 15px; text-align: center; max-width: 34em; }
+
+  .tag-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .tag { font: 400 26px/1.3 var(--font-mono); overflow-wrap: anywhere; }
+  .btn {
+    display: inline-block; background: none; color: var(--fg); border: 1px solid var(--fg);
+    font: 400 16px var(--font-body); padding: 10px 28px; cursor: pointer; text-decoration: none;
+  }
+  .btn:hover { background: var(--fg); color: var(--bg); }
+  .btn.quiet { border-color: var(--line); color: var(--dim); padding: 10px 18px; }
+  .btn.quiet:hover { background: none; color: var(--fg); border-color: var(--fg); }
+
+  @media (max-width: 480px) {
+    h2 { font-size: 26px; }
+    nav { gap: 2px 18px; }
+    nav a { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand-row">
+      <a class="brand" href="#home">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#000"/><rect x="494" y="512" width="36" height="512" fill="#555"/><polygon points="512,268 610,581 414,581" fill="#000"/><polygon points="512,310 590,560 434,560" fill="#fff"/></svg>
+        </div>
+        <h1>MinimApp</h1>
+      </a>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" id="lang-hu" data-lang-btn="hu">HU</button>
+        <button type="button" id="lang-en" data-lang-btn="en">EN</button>
+      </div>
+    </div>
+    <nav aria-label="Menu">
+      <a href="#privacy" data-page-link="privacy" data-t="navPrivacy"></a>
+      <a href="#apple" data-page-link="apple" data-t="navApple"></a>
+      <a href="#google" data-page-link="google" data-t="navGoogle"></a>
+      <a href="#contact" data-page-link="contact" data-t="navContact"></a>
+      <a href="#coffee" data-page-link="coffee" data-t="navCoffee"></a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ===================== MAGYAR ===================== -->
+    <section data-page="home" data-lang="hu">
+      <div class="block">
+        <h2>Minimalista navigáció</h2>
+        <p class="lead dim">Ingyenes és reklámmentes.</p>
+      </div>
+      <p>Fekete-fehér térkép, amin csak az útvonalad látszik. Autóval, biciklivel és gyalog is használható.</p>
+      <figure class="shot">
+        <img src="route-preview.png" alt="Útvonaltervezés Budapestről Érdre két opcióval" width="300">
+        <figcaption>Útvonaltervezés: a fehér a leggyorsabb útvonal, a halvány a másik lehetőség. Rákoppintva átválthatsz.</figcaption>
+      </figure>
+      <ul>
+        <li>Nem kell regisztrálni.</li>
+        <li>A térkép és az útvonalak OpenStreetMap-adatokból készülnek.</li>
+        <li>Útdíjas és útdíj nélküli opciók.</li>
+      </ul>
+    </section>
+
+    <section data-page="privacy" data-lang="hu">
+      <div class="block">
+        <p class="meta">Hatályos: 2026. október 1.</p>
+        <h2>Adatvédelmi tájékoztató</h2>
+      </div>
+      <p class="lead">A MinimApp egy minimalista navigációs alkalmazás. Nincs fiók, nincs regisztráció, nincs reklám és nincs analitika. Semmilyen személyes adatot nem gyűjtök és nem tárolok.</p>
+
+      <div class="block">
+        <h3>Helyadatok</h3>
+        <p>Az alkalmazás a pontos helyzetedet csak akkor használja, amikor meg van nyitva (előtérben), és csak a térkép, a navigáció és a sebességkorlát kijelzéséhez. A háttérben nem követ, a helyelőzményeket nem menti el.</p>
+      </div>
+
+      <div class="block">
+        <h3>Mi hagyja el a telefonodat</h3>
+        <p>Az alkalmazás nyílt, OpenStreetMap-alapú szolgáltatásokat hív meg közvetlenül a telefonodról, titkosított (HTTPS) kapcsolaton. Ezek a kérések hozzám nem jutnak el.</p>
+        <ul class="services">
+          <li>
+            <span><strong>Térképcsempék</strong> · OpenFreeMap</span>
+            <span class="dim">A megjelenített térképrészlet. A szolgáltató ebből és az IP-címedből a hozzávetőleges helyzetedet láthatja.</span>
+            <span class="host">tiles.openfreemap.org · <a href="https://openfreemap.org" target="_blank" rel="noopener">openfreemap.org</a></span>
+          </li>
+          <li>
+            <span><strong>Útvonaltervezés és sebességkorlát</strong> · FOSSGIS e.V. Valhalla-szervere</span>
+            <span class="dim">A kiindulópont és a cél koordinátái. Autós módban a sebességkorláthoz az utolsó néhány GPS-pont is, legfeljebb 10 másodpercenként.</span>
+            <span class="host">valhalla1.openstreetmap.de · <a href="https://www.fossgis.de/datenschutzerklaerung/" target="_blank" rel="noopener">adatvédelem</a></span>
+          </li>
+          <li>
+            <span><strong>Címkeresés</strong> · Photon (komoot)</span>
+            <span class="dim">A beírt keresőszöveg és a hozzávetőleges helyzeted, hogy a közeli találatok kerüljenek előre.</span>
+            <span class="host">photon.komoot.io · <a href="https://www.komoot.com/privacy" target="_blank" rel="noopener">adatvédelem</a></span>
+          </li>
+          <li>
+            <span><strong>Címkeresés, tartalék</strong> · Nominatim (OpenStreetMap Foundation)</span>
+            <span class="dim">Ugyanaz, ha a Photon nem ad találatot vagy nem érhető el.</span>
+            <span class="host">nominatim.openstreetmap.org · <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">adatvédelem</a></span>
+          </li>
+        </ul>
+        <p class="dim">Ezek a szolgáltatók a saját adatvédelmi szabályaik szerint rövid ideig naplózhatják a kéréseket (például az IP-címet) üzemeltetési és visszaélés-megelőzési célból.</p>
+      </div>
+
+      <div class="block">
+        <h3>Mit tárol az alkalmazás a telefonon</h3>
+        <p>Csak a választott nyelvet (magyar vagy angol). Keresési előzményt, úti célokat és útvonalakat nem ment el. Az alkalmazás törlésével ez is törlődik.</p>
+      </div>
+
+      <div class="block">
+        <h3>Amit nem csinálok</h3>
+        <ul>
+          <li>Nem követlek más alkalmazásokon vagy weboldalakon keresztül.</li>
+          <li>Nem adok el és nem adok át adatot hirdetési célra.</li>
+          <li>Nincs harmadik féltől származó analitika, hibakövetés vagy reklám-SDK.</li>
+        </ul>
+      </div>
+
+      <div class="block">
+        <h3>Jogalap és jogaid</h3>
+        <p>A helyadatot a te kérésedre, a navigációs szolgáltatás nyújtásához használom (GDPR 6. cikk (1) b) pont). A helymeghatározási engedélyt bármikor visszavonhatod a telefon beállításaiban. Mivel nem tárolok rólad adatot, nincs mit kiadni vagy törölni. Kérdéssel írj a Kapcsolat oldalon megadott címre. Panaszt a Nemzeti Adatvédelmi és Információszabadság Hatóságnál (<a href="https://naih.hu" target="_blank" rel="noopener">naih.hu</a>) tehetsz.</p>
+      </div>
+
+      <div class="block">
+        <h3>Gyermekek</h3>
+        <p>Az alkalmazás nem gyermekeknek készült, és tudatosan nem kezel gyermekekre vonatkozó adatot.</p>
+      </div>
+
+      <div class="block">
+        <h3>Változások</h3>
+        <p>Ha az alkalmazás adatkezelése megváltozik, ezt az oldalt frissítem, és a hatálybalépés dátumát átírom.</p>
+      </div>
+    </section>
+
+    <section data-page="apple" data-lang="hu">
+      <div class="block">
+        <p class="meta">App Store · adatvédelmi címke</p>
+        <h2>Apple adatvédelmi összefoglaló</h2>
+      </div>
+      <p>Az App Store „Adatvédelem” címkéjéhez tartozó adatok. A hozzáférés minden esetben az alkalmazás működéséhez kell, és nem kapcsolódik a személyazonosságodhoz.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Adattípus</th><th>Cél</th><th>Személyhez kötött</th><th>Követés</th></tr></thead>
+          <tbody>
+            <tr><td>Pontos hely</td><td>Az alkalmazás működése</td><td>Nem</td><td>Nem</td></tr>
+            <tr><td>Keresési előzmények</td><td>Az alkalmazás működése</td><td>Nem</td><td>Nem</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="block">
+        <h3>Engedélyek</h3>
+        <p>Helymeghatározás „Az app használata közben”. Az engedélykérés szövege: „Navigation needs your location.”</p>
+      </div>
+      <div class="block">
+        <h3>Követés (App Tracking Transparency)</h3>
+        <p>Az alkalmazás nem követ, ezért nem kér követési engedélyt.</p>
+      </div>
+    </section>
+
+    <section data-page="google" data-lang="hu">
+      <div class="block">
+        <p class="meta">Google Play · adatbiztonság</p>
+        <h2>Google Play adatbiztonsági összefoglaló</h2>
+      </div>
+      <p>A Google Play „Adatbiztonság” szakaszához tartozó válaszok.</p>
+      <div>
+        <div class="answer"><span class="q">Gyűjt vagy oszt meg az alkalmazás adatot?</span><span class="a">Gyűjt</span></div>
+        <div class="answer"><span class="q">Megoszt adatot harmadik féllel?</span><span class="a">Nem</span></div>
+        <div class="answer"><span class="q">Titkosítva továbbítja az adatokat?</span><span class="a">Igen (HTTPS)</span></div>
+        <div class="answer"><span class="q">Kérhető az adatok törlése?</span><span class="a">Nincs tárolt adat</span></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Adattípus</th><th>Cél</th><th>Kötelező</th><th>Kezelés</th></tr></thead>
+          <tbody>
+            <tr><td>Hely · pontos hely</td><td>Az alkalmazás működése</td><td>Igen</td><td>Csak a kérés idejére, nem tárolt</td></tr>
+            <tr><td>Alkalmazástevékenység · keresési előzmények az alkalmazásban</td><td>Az alkalmazás működése</td><td>Nem</td><td>Csak a kérés idejére, nem tárolt</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="block">
+        <h3>Engedélyek</h3>
+        <ul>
+          <li><span class="contact">ACCESS_FINE_LOCATION</span>: pontos helyzet a navigációhoz</li>
+          <li><span class="contact">ACCESS_COARSE_LOCATION</span>: hozzávetőleges helyzet, ha a pontos nem engedélyezett</li>
+        </ul>
+        <p class="dim">A térkép, az útvonal és a keresés szolgáltatói az alkalmazás nevében, csak a kérés kiszolgálására kapják meg az adatot. A Google Play szabályai szerint ez nem számít megosztásnak.</p>
+      </div>
+    </section>
+
+    <section data-page="contact" data-lang="hu">
+      <div class="block">
+        <p class="meta">Adatkezelő</p>
+        <h2>Kapcsolat</h2>
+      </div>
+      <div class="block">
+        <p class="contact">[Fejlesztő neve]<br>[E-mail cím]</p>
+        <p>Adatvédelmi kérdéssel, kéréssel vagy hibajelzéssel ezen a címen érsz el. Általában néhány napon belül válaszolok.</p>
+      </div>
+      <div class="block">
+        <h3>Adataid törlése</h3>
+        <p>Nem tárolok rólad semmit, így nincs mit törölni. A telefonon tárolt nyelvbeállítás az alkalmazás törlésével megszűnik. A külső szolgáltatók naplóival kapcsolatban az ő adatvédelmi oldalukon tudsz kérést benyújtani (lásd az Adatvédelem oldalon).</p>
+      </div>
+    </section>
+
+    <section data-page="coffee" data-lang="hu">
+      <div class="block">
+        <p class="meta">Buy me a Coffee</p>
+        <h2>Támogatás</h2>
+      </div>
+      <p class="lead">A MinimApp ingyenes és reklámmentes, és egyedül fejlesztem. Ha hasznosnak találod, egy kávéval támogathatod a munkámat.</p>
+      <div class="block">
+        <p class="meta">Revolut</p>
+        <div class="tag-row">
+          <span class="tag" id="tag-hu">@gyrgyfrwj</span>
+          <button type="button" class="btn quiet" id="copy-hu" data-copy="@gyrgyfrwj" data-t="copy"></button>
+        </div>
+      </div>
+      <div><a class="btn" href="https://revolut.me/gyrgyfrwj" target="_blank" rel="noopener">revolut.me/gyrgyfrwj</a></div>
+      <p class="dim">Köszönöm!</p>
+    </section>
+
+    <!-- ===================== ENGLISH ===================== -->
+    <section data-page="home" data-lang="en">
+      <div class="block">
+        <h2>Minimalist navigation</h2>
+        <p class="lead dim">Free and ad-free.</p>
+      </div>
+      <p>A black-and-white map that shows only your route. Works for driving, cycling and walking.</p>
+      <figure class="shot">
+        <img src="route-preview.png" alt="Route planning from Budapest to Érd with two options" width="300">
+        <figcaption>Route planning: the white line is the fastest route, the faint one is the other option. Tap it to switch.</figcaption>
+      </figure>
+      <ul>
+        <li>No sign-up.</li>
+        <li>Maps and routes are based on OpenStreetMap data.</li>
+        <li>Toll and toll-free options.</li>
+      </ul>
+    </section>
+
+    <section data-page="privacy" data-lang="en">
+      <div class="block">
+        <p class="meta">Effective: 1 October 2026</p>
+        <h2>Privacy policy</h2>
+      </div>
+      <p class="lead">MinimApp is a minimalist navigation app. There are no accounts, no sign-up, no ads and no analytics. I don't collect or store any personal data.</p>
+
+      <div class="block">
+        <h3>Location</h3>
+        <p>The app uses your precise location only while it is open (in the foreground), and only to show the map, navigate and display the speed limit. It does not track you in the background and does not save your location history.</p>
+      </div>
+
+      <div class="block">
+        <h3>What leaves your phone</h3>
+        <p>The app calls open, OpenStreetMap-based services directly from your phone over an encrypted (HTTPS) connection. These requests never reach me.</p>
+        <ul class="services">
+          <li>
+            <span><strong>Map tiles</strong> · OpenFreeMap</span>
+            <span class="dim">The map area on screen. From this and your IP address the provider can see your approximate location.</span>
+            <span class="host">tiles.openfreemap.org · <a href="https://openfreemap.org" target="_blank" rel="noopener">openfreemap.org</a></span>
+          </li>
+          <li>
+            <span><strong>Routing and speed limits</strong> · FOSSGIS e.V. Valhalla server</span>
+            <span class="dim">The coordinates of your start and destination. In drive mode, the last few GPS points as well, at most every 10 seconds, to look up the speed limit.</span>
+            <span class="host">valhalla1.openstreetmap.de · <a href="https://www.fossgis.de/datenschutzerklaerung/" target="_blank" rel="noopener">privacy</a></span>
+          </li>
+          <li>
+            <span><strong>Place search</strong> · Photon (komoot)</span>
+            <span class="dim">What you type into the search field, and your approximate location so that nearby results come first.</span>
+            <span class="host">photon.komoot.io · <a href="https://www.komoot.com/privacy" target="_blank" rel="noopener">privacy</a></span>
+          </li>
+          <li>
+            <span><strong>Place search, fallback</strong> · Nominatim (OpenStreetMap Foundation)</span>
+            <span class="dim">The same, when Photon finds nothing or is unavailable.</span>
+            <span class="host">nominatim.openstreetmap.org · <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">privacy</a></span>
+          </li>
+        </ul>
+        <p class="dim">Under their own privacy policies, these providers may briefly log requests (for example the IP address) to run their service and prevent abuse.</p>
+      </div>
+
+      <div class="block">
+        <h3>What the app stores on your phone</h3>
+        <p>Only your chosen language (Hungarian or English). It does not save search history, destinations or routes. Deleting the app removes this too.</p>
+      </div>
+
+      <div class="block">
+        <h3>What I don't do</h3>
+        <ul>
+          <li>I don't track you across other apps or websites.</li>
+          <li>I don't sell data or pass it on for advertising.</li>
+          <li>There is no third-party analytics, crash reporting or advertising SDK.</li>
+        </ul>
+      </div>
+
+      <div class="block">
+        <h3>Legal basis and your rights</h3>
+        <p>Your location is used at your request to provide navigation (GDPR Article 6(1)(b)). You can withdraw location permission at any time in your phone's settings. Because I store no data about you, there is nothing to export or delete. For questions, write to the address on the Contact page. You can lodge a complaint with your local data protection authority; in Hungary this is NAIH (<a href="https://naih.hu" target="_blank" rel="noopener">naih.hu</a>).</p>
+      </div>
+
+      <div class="block">
+        <h3>Children</h3>
+        <p>The app is not directed at children and does not knowingly process children's data.</p>
+      </div>
+
+      <div class="block">
+        <h3>Changes</h3>
+        <p>If the way the app handles data changes, I will update this page and its effective date.</p>
+      </div>
+    </section>
+
+    <section data-page="apple" data-lang="en">
+      <div class="block">
+        <p class="meta">App Store · privacy label</p>
+        <h2>Apple privacy summary</h2>
+      </div>
+      <p>The answers behind the App Store "App Privacy" label. In every case the data is used for app functionality and is not linked to your identity.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data type</th><th>Purpose</th><th>Linked to you</th><th>Tracking</th></tr></thead>
+          <tbody>
+            <tr><td>Precise location</td><td>App functionality</td><td>No</td><td>No</td></tr>
+            <tr><td>Search history</td><td>App functionality</td><td>No</td><td>No</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="block">
+        <h3>Permissions</h3>
+        <p>Location "While Using the App". Permission prompt text: "Navigation needs your location."</p>
+      </div>
+      <div class="block">
+        <h3>Tracking (App Tracking Transparency)</h3>
+        <p>The app does not track you, so it does not ask for tracking permission.</p>
+      </div>
+    </section>
+
+    <section data-page="google" data-lang="en">
+      <div class="block">
+        <p class="meta">Google Play · data safety</p>
+        <h2>Google Play data safety summary</h2>
+      </div>
+      <p>The answers behind the Google Play "Data safety" section.</p>
+      <div>
+        <div class="answer"><span class="q">Does the app collect or share data?</span><span class="a">Collects</span></div>
+        <div class="answer"><span class="q">Is data shared with third parties?</span><span class="a">No</span></div>
+        <div class="answer"><span class="q">Is data encrypted in transit?</span><span class="a">Yes (HTTPS)</span></div>
+        <div class="answer"><span class="q">Can you request data deletion?</span><span class="a">No data stored</span></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data type</th><th>Purpose</th><th>Required</th><th>Handling</th></tr></thead>
+          <tbody>
+            <tr><td>Location · precise location</td><td>App functionality</td><td>Yes</td><td>Processed per request, not stored</td></tr>
+            <tr><td>App activity · in-app search history</td><td>App functionality</td><td>No</td><td>Processed per request, not stored</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="block">
+        <h3>Permissions</h3>
+        <ul>
+          <li><span class="contact">ACCESS_FINE_LOCATION</span>: precise location for navigation</li>
+          <li><span class="contact">ACCESS_COARSE_LOCATION</span>: approximate location if precise location is not allowed</li>
+        </ul>
+        <p class="dim">The map, routing and search providers receive data on the app's behalf, only to serve each request. Under Google Play's rules this does not count as sharing.</p>
+      </div>
+    </section>
+
+    <section data-page="contact" data-lang="en">
+      <div class="block">
+        <p class="meta">Data controller</p>
+        <h2>Contact</h2>
+      </div>
+      <div class="block">
+        <p class="contact">[Developer name]<br>[Email address]</p>
+        <p>Use this address for privacy questions, requests or bug reports. I usually reply within a few days.</p>
+      </div>
+      <div class="block">
+        <h3>Deleting your data</h3>
+        <p>I store nothing about you, so there is nothing to delete. The language setting stored on your phone is removed when you delete the app. For the external providers' logs, you can send a request through their own privacy pages (see the Privacy page).</p>
+      </div>
+    </section>
+    <section data-page="coffee" data-lang="en">
+      <div class="block">
+        <p class="meta">Support</p>
+        <h2>Buy me a Coffee</h2>
+      </div>
+      <p class="lead">MinimApp is free and ad-free, and I build it on my own. If you find it useful, you can support my work with a coffee.</p>
+      <div class="block">
+        <p class="meta">Revolut</p>
+        <div class="tag-row">
+          <span class="tag" id="tag-en">@gyrgyfrwj</span>
+          <button type="button" class="btn quiet" id="copy-en" data-copy="@gyrgyfrwj" data-t="copy"></button>
+        </div>
+      </div>
+      <div><a class="btn" href="https://revolut.me/gyrgyfrwj" target="_blank" rel="noopener">revolut.me/gyrgyfrwj</a></div>
+      <p class="dim">Thank you!</p>
+    </section>
+  </main>
+
+  <footer data-t="footer"></footer>
+</div>
+
+<script>
+  (function () {
+    var T = {
+      hu: {
+        navPrivacy: 'Adatvédelem', navApple: 'App Store', navGoogle: 'Google Play', navContact: 'Kapcsolat', navCoffee: 'Támogatás', copy: 'Másolás', copied: 'Másolva',
+        footer: 'MinimApp · hu.minimap.app · Térképadatok © OpenStreetMap közreműködők',
+        title: 'MinimApp'
+      },
+      en: {
+        navPrivacy: 'Privacy', navApple: 'App Store', navGoogle: 'Google Play', navContact: 'Contact', navCoffee: 'Buy me a Coffee', copy: 'Copy', copied: 'Copied',
+        footer: 'MinimApp · hu.minimap.app · Map data © OpenStreetMap contributors',
+        title: 'MinimApp'
+      }
+    };
+    var PAGES = ['home', 'privacy', 'apple', 'google', 'contact', 'coffee'];
+    var KEY = 'minimapp-privacy-lang';
+
+    function initialLang() {
+      try { var s = localStorage.getItem(KEY); if (s === 'hu' || s === 'en') return s; } catch (e) {}
+      var n = (navigator.language || '').toLowerCase();
+      return n.indexOf('hu') === 0 ? 'hu' : 'en';
+    }
+    function currentPage() {
+      var h = (location.hash || '').replace('#', '');
+      return PAGES.indexOf(h) >= 0 ? h : 'home';
+    }
+
+    var lang = initialLang();
+
+    function render() {
+      var page = currentPage();
+      document.documentElement.lang = lang;
+      document.title = T[lang].title;
+      document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = T[lang][el.getAttribute('data-t')]; });
+      document.querySelectorAll('section[data-page]').forEach(function (s) {
+        s.hidden = !(s.getAttribute('data-page') === page && s.getAttribute('data-lang') === lang);
+      });
+      document.querySelectorAll('[data-page-link]').forEach(function (a) {
+        if (a.getAttribute('data-page-link') === page) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+      });
+      document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.getAttribute('data-lang-btn') === lang));
+      });
+    }
+
+    document.querySelectorAll('[data-lang-btn]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        lang = b.getAttribute('data-lang-btn');
+        try { localStorage.setItem(KEY, lang); } catch (e) {}
+        render();
+      });
+    });
+    document.querySelectorAll('[data-copy]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var text = b.getAttribute('data-copy');
+        var done = function () {
+          b.textContent = T[lang].copied;
+          setTimeout(function () { b.textContent = T[lang].copy; }, 1500);
+        };
+        var select = function () {
+          var el = b.parentNode.querySelector('.tag');
+          var r = document.createRange();
+          r.selectNodeContents(el);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(r);
+        };
+        try {
+          navigator.clipboard.writeText(text).then(done, select);
+        } catch (e) { select(); }
+      });
+    });
+    window.addEventListener('hashchange', function () { render(); window.scrollTo(0, 0); });
+    render();
+  })();
+</script>
+</body>
+</html>
