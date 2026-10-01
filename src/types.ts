@@ -1,6 +1,9 @@
 export type LngLat = [number, number];
 
 export type Mode = 'auto' | 'bicycle' | 'pedestrian';
+
+/** Útvonaltípus: leggyorsabb, legrövidebb, vagy útdíjas utak nélküli. */
+export type RoutePref = 'fast' | 'short' | 'notoll';
 export const MODES: Mode[] = ['auto', 'bicycle', 'pedestrian'];
 
 export interface Lane {

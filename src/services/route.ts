@@ -1,7 +1,7 @@
 import { config } from '../config';
 import { VALHALLA_LANGUAGE, type Lang } from '../i18n/strings';
 import { haversineM } from '../nav/geo';
-import type { LngLat, Mode, Route, Step } from '../types';
+import type { LngLat, Mode, Route, RoutePref, Step } from '../types';
 import { fetchJson, HttpError, isAbortError, type FetchDeps } from './http';
 
 export type RouteErrorKind = 'network' | 'rate-limited' | 'no-route' | 'no-position';
@@ -112,6 +112,13 @@ export function parseOsrm(json: unknown): Route {
   return { ...buildRoute(coords, route.duration, rawSteps), hasToll };
 }
 
+/** Valhalla costing_options típusonként (a use_tolls: 0 csak kerüli az útdíjat, nem tiltja). */
+const COSTING_OPTIONS: Record<RoutePref, object | null> = {
+  fast: null,
+  short: { shortest: true },
+  notoll: { use_tolls: 0 },
+};
+
 export async function getRoute(
   from: LngLat,
   to: LngLat,
@@ -119,8 +126,7 @@ export async function getRoute(
   signal?: AbortSignal,
   deps?: FetchDeps,
   lang: Lang = 'en',
-  /** true: legrövidebb útvonal (Valhalla shortest), false: leggyorsabb. */
-  shortest = false,
+  pref: RoutePref = 'fast',
 ): Promise<Route> {
   const body = {
     locations: [
@@ -131,7 +137,7 @@ export async function getRoute(
     language: VALHALLA_LANGUAGE[lang],
     units: 'kilometers',
     format: 'osrm',
-    ...(shortest ? { costing_options: { [mode]: { shortest: true } } } : {}),
+    ...(COSTING_OPTIONS[pref] ? { costing_options: { [mode]: COSTING_OPTIONS[pref] } } : {}),
   };
   try {
     const json = await fetchJson<unknown>(
@@ -159,4 +165,9 @@ export async function getRoute(
 export function sameRoute(a: Route, b: Route): boolean {
   const close = (x: number, y: number) => Math.abs(x - y) <= 0.01 * Math.max(x, y, 1);
   return close(a.distanceM, b.distanceM) && close(a.durationS, b.durationS);
+}
+
+/** Csak útdíjas találat van (a választott és az alternatíva is útdíjas, vagy nincs alternatíva): kell egy útdíj nélküli is. */
+export function needsTollFree(route: Route, alt: Route | null): boolean {
+  return !!route.hasToll && (!alt || !!alt.hasToll);
 }

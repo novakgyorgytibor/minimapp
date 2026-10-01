@@ -4,6 +4,7 @@ export const LANGS: Lang[] = ['hu', 'en'];
 const en = {
   whereTo: 'Where to?',
   cancel: 'Cancel',
+  searching: 'Searching…',
   noResults: 'No results',
   noConnection: 'No connection',
   start: 'Start',
@@ -28,6 +29,7 @@ export type StringKey = keyof typeof en;
 const hu: Record<StringKey, string> = {
   whereTo: 'Hová?',
   cancel: 'Mégse',
+  searching: 'Keresés…',
   noResults: 'Nincs találat',
   noConnection: 'Nincs kapcsolat',
   start: 'Indulás',

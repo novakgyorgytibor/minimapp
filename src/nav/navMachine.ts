@@ -1,10 +1,10 @@
 import { config } from '../config';
 import type { RouteErrorKind } from '../services/route';
-import type { LngLat, Mode, Route } from '../types';
+import type { LngLat, Mode, Route, RoutePref } from '../types';
 import { haversineM } from './geo';
 import { snap, type Progress } from './progress';
 
-export type RoutePref = 'fast' | 'short';
+export type { RoutePref };
 
 export type Phase = 'idle' | 'searching' | 'preview' | 'navigating' | 'rerouting' | 'arrived';
 
@@ -14,8 +14,10 @@ export interface NavState {
   dest: LngLat | null;
   destLabel: string | null;
   route: Route | null;
-  /** Előnézetben a másik (leggyorsabb ↔ legrövidebb) útvonal, ha érdemben különbözik. */
+  /** Előnézetben a másik (leggyorsabb ↔ legrövidebb, vagy útdíj nélküli) útvonal, ha érdemben különbözik. */
   alt: Route | null;
+  /** Az alternatíva típusa (kiválasztásakor ez lesz a pref). */
+  altPref: RoutePref | null;
   /** Melyik típust választotta a felhasználó (újratervezésnél is ezt kérjük). */
   pref: RoutePref;
   progress: Progress | null;
@@ -31,7 +33,7 @@ export type NavEvent =
   | { type: 'CLOSE_SEARCH' }
   | { type: 'SET_DEST'; dest: LngLat; label: string }
   | { type: 'SET_MODE'; mode: Mode }
-  | { type: 'ROUTE_OK'; route: Route; alt?: Route | null; requestId: number }
+  | { type: 'ROUTE_OK'; route: Route; alt?: Route | null; altPref?: RoutePref; requestId: number }
   | { type: 'SELECT_ALT' }
   | { type: 'ROUTE_FAIL'; error: RouteErrorKind; requestId: number }
   | { type: 'RETRY' }
@@ -47,6 +49,7 @@ export function initialNavState(mode: Mode = 'auto'): NavState {
     destLabel: null,
     route: null,
     alt: null,
+    altPref: null,
     pref: 'fast',
     progress: null,
     loading: false,
@@ -55,6 +58,11 @@ export function initialNavState(mode: Mode = 'auto'): NavState {
     offRouteCount: 0,
     lastRerouteAt: -Infinity,
   };
+}
+
+/** Előnézetben a választott mellé ezt kérjük alternatívának. */
+export function otherPref(p: RoutePref): RoutePref {
+  return p === 'fast' ? 'short' : 'fast';
 }
 
 const request = (s: NavState): NavState => ({ ...s, loading: true, error: null, requestId: s.requestId + 1 });
@@ -84,10 +92,10 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       return { ...s, phase: s.dest ? 'preview' : 'idle' };
     case 'SET_DEST':
       if (s.phase !== 'idle' && s.phase !== 'searching' && s.phase !== 'preview') return s;
-      return request({ ...s, phase: 'preview', dest: e.dest, destLabel: e.label, route: null, alt: null, pref: 'fast', progress: null });
+      return request({ ...s, phase: 'preview', dest: e.dest, destLabel: e.label, route: null, alt: null, altPref: null, pref: 'fast', progress: null });
     case 'SET_MODE':
       if (e.mode === s.mode) return s;
-      if (s.phase === 'preview' && s.dest) return request({ ...s, mode: e.mode, route: null, alt: null, pref: 'fast' });
+      if (s.phase === 'preview' && s.dest) return request({ ...s, mode: e.mode, route: null, alt: null, altPref: null, pref: 'fast' });
       if (s.phase === 'idle' || s.phase === 'searching') return { ...s, mode: e.mode };
       return s;
     case 'ROUTE_OK':
@@ -95,7 +103,8 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       if (s.phase === 'rerouting') {
         return { ...s, phase: 'navigating', route: e.route, progress: null, loading: false, offRouteCount: 0 };
       }
-      return { ...s, route: e.route, alt: e.alt ?? null, loading: false };
+      if (!e.alt) return { ...s, route: e.route, alt: null, altPref: null, loading: false };
+      return { ...s, route: e.route, alt: e.alt, altPref: e.altPref ?? otherPref(s.pref), loading: false };
     case 'ROUTE_FAIL':
       if (e.requestId !== s.requestId || !s.loading) return s;
       if (s.phase === 'rerouting') {
@@ -109,10 +118,10 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       return s;
     case 'SELECT_ALT':
       if (s.phase !== 'preview' || !s.alt || !s.route || s.loading) return s;
-      return { ...s, route: s.alt, alt: s.route, pref: s.pref === 'fast' ? 'short' : 'fast' };
+      return { ...s, route: s.alt, alt: s.route, pref: s.altPref ?? otherPref(s.pref), altPref: s.pref };
     case 'START':
       if (s.phase !== 'preview' || !s.route || s.loading) return s;
-      return { ...s, phase: 'navigating', alt: null, progress: null, offRouteCount: 0, error: null };
+      return { ...s, phase: 'navigating', alt: null, altPref: null, progress: null, offRouteCount: 0, error: null };
     case 'POSITION':
       return onPosition(s, e.pos, e.now);
     case 'CANCEL':

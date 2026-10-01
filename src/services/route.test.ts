@@ -1,6 +1,6 @@
 import fixture from './__fixtures__/valhalla-osrm-auto.json';
 import { rejection } from '../testUtils';
-import { buildRoute, decodePolyline, getRoute, parseOsrm, RouteError, sameRoute } from './route';
+import { buildRoute, decodePolyline, getRoute, needsTollFree, parseOsrm, RouteError, sameRoute } from './route';
 import { HttpError } from './http';
 
 test('decodes the reference polyline (precision 5) as [lng, lat]', () => {
@@ -106,9 +106,26 @@ test('Hungarian instructions are requested when the app language is Hungarian', 
 
 test('shortest route is requested with costing_options', async () => {
   const fetchImpl = jest.fn(async () => ({ ok: true, status: 200, json: async () => fixture, text: async () => '' }) as Response);
-  await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl }, 'en', true);
+  await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl }, 'en', 'short');
   const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
   expect(JSON.parse(init.body as string).costing_options).toEqual({ auto: { shortest: true } });
+});
+
+test('toll-free route is requested with use_tolls: 0', async () => {
+  const fetchImpl = jest.fn(async () => ({ ok: true, status: 200, json: async () => fixture, text: async () => '' }) as Response);
+  await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl }, 'en', 'notoll');
+  const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+  expect(JSON.parse(init.body as string).costing_options).toEqual({ auto: { use_tolls: 0 } });
+});
+
+test('needsTollFree: only when no toll-free option is offered', () => {
+  const free = buildRoute([[19, 47.5], [19.01, 47.5]], 600, []);
+  const toll = { ...free, hasToll: true };
+  expect(needsTollFree(toll, null)).toBe(true);
+  expect(needsTollFree(toll, toll)).toBe(true);
+  expect(needsTollFree(toll, free)).toBe(false);
+  expect(needsTollFree(free, toll)).toBe(false);
+  expect(needsTollFree(free, null)).toBe(false);
 });
 
 test('fastest route has no costing_options', async () => {

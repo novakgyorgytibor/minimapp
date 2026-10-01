@@ -64,6 +64,7 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
           <Text style={styles.cancel}>{t('cancel')}</Text>
         </Pressable>
       </View>
+      {status === 'loading' && results.length === 0 && <Text style={styles.note}>{t('searching')}</Text>}
       {status === 'empty' && <Text style={styles.note}>{t('noResults')}</Text>}
       {status === 'error' && <Text style={styles.note}>{t('noConnection')}</Text>}
       <FlatList

@@ -16,11 +16,11 @@ import { parseDevLink } from './src/nav/devLink';
 import { nextManeuverSegment, routeSlice } from './src/nav/maneuverSegments';
 import { doneGeometry } from './src/nav/doneGeometry';
 import { angleDiff } from './src/nav/heading';
-import { initialNavState, navReducer } from './src/nav/navMachine';
+import { initialNavState, navReducer, otherPref } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
-import { getRoute, RouteError, sameRoute } from './src/services/route';
+import { getRoute, needsTollFree, RouteError, sameRoute } from './src/services/route';
 import { theme } from './src/theme';
-import type { LngLat } from './src/types';
+import type { LngLat, RoutePref } from './src/types';
 import { LangProvider, useLang } from './src/i18n/LangContext';
 import { Attribution } from './src/ui/Attribution';
 import { LangToggle } from './src/ui/LangToggle';
@@ -79,16 +79,28 @@ function Main() {
       return;
     }
     const ctrl = new AbortController();
+    const dest = s.dest;
     // Előnézetben a leggyorsabb és a legrövidebb párhuzamosan; újratervezésnél csak a választott típus
-    const short = s.pref === 'short';
     const withAlt = s.phase === 'preview' || s.phase === 'searching';
-    Promise.all([
-      getRoute(from, s.dest, s.mode, ctrl.signal, undefined, lang, short),
-      withAlt ? getRoute(from, s.dest, s.mode, ctrl.signal, undefined, lang, !short).catch(() => null) : Promise.resolve(null),
-    ])
-      .then(([route, other]) =>
-        dispatch({ type: 'ROUTE_OK', route, alt: other && !sameRoute(route, other) ? other : null, requestId: id }),
-      )
+    const get = (pref: RoutePref) => getRoute(from, dest, s.mode, ctrl.signal, undefined, lang, pref);
+    const altPref = otherPref(s.pref);
+    Promise.all([get(s.pref), withAlt ? get(altPref).catch(() => null) : Promise.resolve(null)])
+      .then(async ([route, other]) => {
+        let alt = other && !sameRoute(route, other) ? other : null;
+        let pref = altPref;
+        // Ha csak útdíjas találat van, alternatívának egy útdíj nélkülit kérünk (ha van ilyen)
+        if (withAlt && s.mode === 'auto' && needsTollFree(route, alt)) {
+          const free = await get('notoll').catch((e) => {
+            if (isAbortError(e)) throw e;
+            return null;
+          });
+          if (free && !free.hasToll) {
+            alt = free;
+            pref = 'notoll';
+          }
+        }
+        dispatch({ type: 'ROUTE_OK', route, alt, altPref: pref, requestId: id });
+      })
       .catch((e) => {
         if (isAbortError(e)) return;
         dispatch({ type: 'ROUTE_FAIL', error: e instanceof RouteError ? e.kind : 'network', requestId: id });

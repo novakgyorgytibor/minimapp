@@ -190,6 +190,15 @@ describe('fastest vs shortest alternative', () => {
     expect(run(s, { type: 'SET_MODE', mode: 'bicycle' })).toMatchObject({ alt: null, pref: 'fast' });
   });
 
+  test('a toll-free alternative is remembered as notoll and swaps back to fast', () => {
+    let s = run(initialNavState('auto'), { type: 'SET_DEST', dest, label: 'Cél' });
+    s = run(s, { type: 'ROUTE_OK', route, alt, altPref: 'notoll', requestId: s.requestId });
+    expect(s).toMatchObject({ pref: 'fast', altPref: 'notoll' });
+    s = run(s, { type: 'SELECT_ALT' });
+    expect(s).toMatchObject({ route: alt, alt: route, pref: 'notoll', altPref: 'fast' });
+    expect(run(s, { type: 'SELECT_ALT' })).toMatchObject({ route, alt, pref: 'fast', altPref: 'notoll' });
+  });
+
   test('SELECT_ALT without an alternative or outside preview does nothing', () => {
     let s = run(initialNavState('auto'), { type: 'SET_DEST', dest, label: 'Cél' });
     s = run(s, { type: 'ROUTE_OK', route, requestId: s.requestId });
