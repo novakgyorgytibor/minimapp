@@ -16,7 +16,8 @@ import { config } from '../config';
 import type { MaskFeature } from '../nav/corridor';
 import { theme } from '../theme';
 import type { LngLat, Mode } from '../types';
-import { applyCameraStop } from './camera';
+import { applyCameraStop, NAV_CAMERA_MS } from './camera';
+import { lerpPose, shouldGlide, type MarkerPose } from './markerAnim';
 import { pulseOpacity } from './pulse';
 import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 
@@ -148,14 +149,40 @@ const ARROW_LAYOUT: SymbolLayerSpecification['layout'] = {
   'icon-ignore-placement': true,
 };
 
+const MARKER_TICK_MS = 1000 / config.mapFps;
+
 // A saját pozíció: mindig háromszög; amíg nincs irány (pl. szimulátorban állva), észak felé mutat.
+// Új mérésnél nem ugrik, hanem a kamerával együtt (ugyanannyi idő alatt, egyenletesen) csúszik oda,
+// így követés közben a képernyőn egy helyben marad. Csak a csúszás alatt fut az időzítő.
 const MeLayer = memo(function MeLayer({ coord, heading }: { coord: LngLat | null; heading: number | null }) {
+  const [pose, setPose] = useState<MarkerPose | null>(coord ? { pos: coord, bearing: heading ?? 0 } : null);
+  const shown = useRef(pose);
+  shown.current = pose;
+  useEffect(() => {
+    if (!coord) {
+      setPose(null);
+      return;
+    }
+    const to: MarkerPose = { pos: coord, bearing: heading ?? 0 };
+    const from = shown.current;
+    if (!from || !shouldGlide(from.pos, to.pos)) {
+      setPose(to);
+      return;
+    }
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const f = (Date.now() - t0) / NAV_CAMERA_MS;
+      setPose(lerpPose(from, to, f));
+      if (f >= 1) clearInterval(id);
+    }, MARKER_TICK_MS);
+    return () => clearInterval(id);
+  }, [coord, heading]);
   const data = useMemo(
     () =>
-      coord
-        ? ({ type: 'Feature', properties: { bearing: heading ?? 0 }, geometry: { type: 'Point', coordinates: coord } } as Feature<Point>)
+      pose
+        ? ({ type: 'Feature', properties: { bearing: pose.bearing }, geometry: { type: 'Point', coordinates: pose.pos } } as Feature<Point>)
         : EMPTY,
-    [coord, heading],
+    [pose],
   );
   return (
     <GeoJSONSource id="me" data={data}>

@@ -6,6 +6,10 @@ import type { LngLat } from '../types';
 // Kifejezetten nullázni kell: az előnézet paddingje különben megmaradna, és elcsúsztatná a középre állást.
 const NO_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
 
+/** Navigáció közben a kamera ennyi idő alatt csúszik az új pozícióra (a jelölő is ugyanígy). */
+export const NAV_CAMERA_MS = 1000;
+const IDLE_CAMERA_MS = 800;
+
 export interface CameraInput {
   phase: Phase;
   pos: LngLat | null;
@@ -30,11 +34,11 @@ export function cameraFor({ phase, pos, heading, bbox, follow, northUp }: Camera
       bearing: northUp ? 0 : heading,
       pitch: 45,
       padding: NO_PADDING,
-      duration: 1000,
+      duration: NAV_CAMERA_MS,
       easing: 'linear',
     };
   }
-  return { center: pos, zoom: config.idleZoom, bearing: 0, pitch: 0, padding: NO_PADDING, duration: 800 };
+  return { center: pos, zoom: config.idleZoom, bearing: 0, pitch: 0, padding: NO_PADDING, duration: IDLE_CAMERA_MS };
 }
 
 /**
