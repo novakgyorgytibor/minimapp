@@ -16,15 +16,16 @@
       "bundleIdentifier": "hu.minimap.app",
       "supportsTablet": false,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Navigation needs your location."
+        "NSLocationWhenInUseUsageDescription": "Navigation needs your location.",
+        "ITSAppUsesNonExemptEncryption": false
       },
       "buildNumber": "22"
     },
     "android": {
       "package": "hu.minimap.app",
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#000000",
@@ -43,6 +44,12 @@
           "locationWhenInUsePermission": "Navigation needs your location."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9e340f88-174a-41f1-ad40-aae82edd43ef"
+      }
+    },
+    "owner": "novakgyorgytibor"
   }
 }
