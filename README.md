@@ -15,3 +15,13 @@ A végpontok a `src/config.ts`-ben állíthatók (pl. saját Valhalla/Nominatim 
     npm test
 
 Az Expo Go nem támogatott (natív MapLibre modul), dev build kell.
+
+## Weboldal (Vercel)
+
+A `website/` mappa egy statikus oldal (adatvédelem, App Store / Google Play összefoglalók, kapcsolat, támogatás), build nélkül.
+A gyökérben lévő `vercel.json` miatt a Vercel nem telepít npm-csomagokat és nem buildel, csak a `website/` tartalmát szolgálja ki;
+a `.vercelignore` miatt az app forrása fel sem töltődik.
+
+- Telepítés: Vercelen *Add New → Project* → a GitHub repo importálása (minden beállítás maradhat alapértelmezett), vagy parancssorból `npx vercel --prod`.
+- Rövid címek: `/privacy`, `/apple`, `/google`, `/contact`, `/support`, `/coffee` → a megfelelő oldalra irányít (az áruházakba adatvédelmi URL-nek a `/privacy` jó).
+- Ha a domain nem `minimapp.vercel.app`, az appban a `src/config.ts` → `websiteUrl` értékét is át kell írni.

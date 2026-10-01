@@ -1,0 +1,4 @@
+# Vercelre csak a weboldal kell (website/), az app forrása és a natív mappák nem
+/*
+!/website
+!/vercel.json
