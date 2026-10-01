@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { config } from '../config';
+import { useFavorites } from '../favorites/FavoritesContext';
 import { useLang } from '../i18n/LangContext';
 import { isAbortError } from '../services/http';
 import { searchPlaces } from '../services/geocode';
@@ -12,6 +13,9 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Place[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error'>('idle');
+  const { favorites } = useFavorites();
+  // Amíg nem gépel, a kedvencek látszanak
+  const showFavorites = q.trim().length === 0 && favorites.length > 0;
 
   useEffect(() => {
     if (q.trim().length < config.searchMinChars) {
@@ -71,7 +75,7 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
         style={styles.list}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        data={results}
+        data={showFavorites ? favorites : results}
         keyExtractor={(p, i) => `${p.coord.join(',')}-${i}`}
         renderItem={({ item }) => (
           <Pressable
@@ -81,7 +85,10 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
             }}
             style={styles.item}
           >
-            <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+            <Text style={styles.name} numberOfLines={1}>
+              {showFavorites && <Text style={styles.heart}>{'♥\uFE0E  '}</Text>}
+              {item.name}
+            </Text>
             {item.detail ? <Text style={styles.detail} numberOfLines={1}>{item.detail}</Text> : null}
           </Pressable>
         )}
@@ -100,4 +107,5 @@ const styles = StyleSheet.create({
   item: { paddingHorizontal: 20, paddingVertical: 14 },
   name: { color: theme.fg, fontSize: 18 },
   detail: { color: theme.dim, fontSize: 14, marginTop: 2 },
+  heart: { color: theme.dim },
 });

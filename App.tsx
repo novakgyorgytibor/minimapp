@@ -23,6 +23,8 @@ import { getRoute, needsTollFree, RouteError, sameRoute } from './src/services/r
 import { theme } from './src/theme';
 import type { LngLat, RoutePref } from './src/types';
 import { LangProvider, useLang } from './src/i18n/LangContext';
+import { FavoritesProvider, useFavorites } from './src/favorites/FavoritesContext';
+import { findFavorite } from './src/favorites/favorites';
 import { Attribution } from './src/ui/Attribution';
 import { InfoButton } from './src/ui/InfoModal';
 import { LangToggle } from './src/ui/LangToggle';
@@ -44,8 +46,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <LangProvider>
-        <StatusBar style="light" />
-        <Main />
+        <FavoritesProvider>
+          <StatusBar style="light" />
+          <Main />
+        </FavoritesProvider>
       </LangProvider>
     </SafeAreaProvider>
   );
@@ -63,6 +67,9 @@ function Main() {
     speedLimitVisible({ mode: s.mode, navigating: s.phase === 'navigating' || s.phase === 'rerouting', speedMps: loc.speed }),
   );
   const [follow, setFollow] = useState(true);
+  const { favorites, toggle: toggleFavorite } = useFavorites();
+  // A kiválasztott hely második sora (város, utca) – kedvencnek jelöléskor ezt is elmentjük
+  const [destDetail, setDestDetail] = useState('');
   const posRef = useRef<LngLat | null>(null);
   posRef.current = loc.pos;
 
@@ -121,6 +128,7 @@ function Main() {
       if (!link) return;
       pendingStart.current = link.start;
       dispatch({ type: 'CANCEL' });
+      setDestDetail('');
       dispatch({ type: 'SET_DEST', dest: link.dest, label: link.label });
     };
     Linking.getInitialURL().then(handle).catch(() => {});
@@ -298,7 +306,10 @@ function Main() {
         heading={loc.heading}
         dest={s.dest}
         camera={camera}
-        onLongPress={(coord) => dispatch({ type: 'SET_DEST', dest: coord, label: t('droppedPin') })}
+        onLongPress={(coord) => {
+          setDestDetail('');
+          dispatch({ type: 'SET_DEST', dest: coord, label: t('droppedPin') });
+        }}
         onUserPan={() => setFollow(false)}
         onViewChange={onViewChange}
         northNonce={northNonce}
@@ -312,7 +323,10 @@ function Main() {
         {s.phase === 'searching' ? (
           <SearchBar
             near={loc.pos}
-            onPick={(p) => dispatch({ type: 'SET_DEST', dest: p.coord, label: p.name })}
+            onPick={(p) => {
+              setDestDetail(p.detail);
+              dispatch({ type: 'SET_DEST', dest: p.coord, label: p.name });
+            }}
             onCancel={() => cancelTo('CLOSE_SEARCH')}
           />
         ) : (
@@ -331,7 +345,15 @@ function Main() {
                 <Pressable style={styles.flex} onPress={() => dispatch({ type: 'OPEN_SEARCH' })}>
                   <Text style={styles.destText} numberOfLines={1}>{s.destLabel}</Text>
                 </Pressable>
-                <CloseButton onPress={() => cancelTo('CANCEL')} />
+                <View style={styles.sideButtons}>
+                  <CloseButton onPress={() => cancelTo('CANCEL')} />
+                  {s.dest && (
+                    <FavoriteButton
+                      on={!!findFavorite(favorites, s.dest)}
+                      onPress={() => s.dest && toggleFavorite({ name: s.destLabel ?? t('droppedPin'), detail: destDetail, coord: s.dest })}
+                    />
+                  )}
+                </View>
               </View>
             )}
             {navigatingish && s.route && (
@@ -392,6 +414,15 @@ function Main() {
   );
 }
 
+/** ♥ = kedvenc, ♡ = nem; koppintásra a telefonon tárolt kedvencek közé kerül / kikerül. */
+function FavoriteButton({ on, onPress }: { on: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} hitSlop={16} style={styles.close}>
+      <Text style={styles.closeText}>{on ? '♥\uFE0E' : '♡'}</Text>
+    </Pressable>
+  );
+}
+
 function CloseButton({ onPress }: { onPress: () => void }) {
   return (
     <Pressable onPress={onPress} hitSlop={16} style={styles.close}>
@@ -417,6 +448,7 @@ const styles = StyleSheet.create({
   },
   searchText: { color: theme.fg, fontSize: 22, fontWeight: '300' },
   destText: { color: theme.fg, fontSize: 20, fontWeight: '300', paddingHorizontal: 24, paddingVertical: 12 },
+  sideButtons: { alignItems: 'center' },
   close: { padding: 12 },
   closeText: { color: theme.fg, fontSize: 22 },
   bottom: { paddingBottom: 20, paddingHorizontal: 20, gap: 4 },
