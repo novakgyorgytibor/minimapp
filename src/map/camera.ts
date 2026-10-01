@@ -6,8 +6,11 @@ import type { LngLat } from '../types';
 // Kifejezetten nullázni kell: az előnézet paddingje különben megmaradna, és elcsúsztatná a középre állást.
 const NO_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
 
-/** Navigáció közben a kamera ennyi idő alatt csúszik az új pozícióra (a jelölő is ugyanígy). */
-export const NAV_CAMERA_MS = 1000;
+/**
+ * Navigáció közben a kamera ennyi idő alatt csúszik az új (előrebecsült) pozícióra, a jelölő is ugyanígy.
+ * Kicsit hosszabb, mint a GPS 1 s-os üteme: a következő mérés még menet közben érkezik, így nincs megállás.
+ */
+export const NAV_CAMERA_MS = 1200;
 const IDLE_CAMERA_MS = 800;
 
 export interface CameraInput {

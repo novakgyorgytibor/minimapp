@@ -7,7 +7,7 @@ import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
 import { useSpeedLimit } from './src/hooks/useSpeedLimit';
 import { isSpeeding, speedLimitVisible } from './src/services/speedLimit';
-import { cameraFor, maskMode } from './src/map/camera';
+import { cameraFor, maskMode, NAV_CAMERA_MS } from './src/map/camera';
 import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks, type MaskGeometry } from './src/nav/corridor';
@@ -15,6 +15,7 @@ import { nextAnchor } from './src/nav/anchor';
 import { parseDevLink } from './src/nav/devLink';
 import { nextManeuverSegment, routeSlice } from './src/nav/maneuverSegments';
 import { doneGeometry } from './src/nav/doneGeometry';
+import { predictPos } from './src/nav/predict';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer, otherPref } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -255,7 +256,19 @@ function Main() {
   }, [loc.pos]);
   // Navigáció közben a jelölő az útvonalra illeszkedik, amíg nem tértünk le róla (nincs oldalirányú ugrálás)
   const onRoute = navigatingish && s.progress !== null && s.progress.distFromRouteM <= config.offRouteM[s.mode];
-  const markerPos = onRoute && s.progress ? s.progress.snappedPos : loc.pos;
+  // Előrebecslés: oda csúszik a jelölő (és a kamera), ahol a csúszás végére leszünk → folyamatos mozgás
+  const markerPos = useMemo(() => {
+    const p = onRoute && s.progress ? s.progress.snappedPos : loc.pos;
+    if (!p || s.phase === 'arrived' || !navigatingish) return p;
+    return predictPos({
+      pos: p,
+      speedMps: loc.speed,
+      heading: loc.heading,
+      onRoute: onRoute && s.route && s.progress ? { route: s.route, distAlongM: s.progress.distAlongM } : null,
+      leadS: NAV_CAMERA_MS / 1000,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loc.pos, s.progress, s.route, s.phase, onRoute, navigatingish, loc.speed, loc.heading]);
   const cameraPos = navigatingish ? markerPos : idleCameraPos;
 
   // Előnézetben mindkét útvonal férjen a képbe
