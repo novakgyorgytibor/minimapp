@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 import { angleDiff, pickHeading, smoothHeading } from '../nav/heading';
 import { effectiveSpeed, locationOptions, SPEED_STALE_MS } from '../nav/power';
 import { smoothFix, type Smoothed } from '../nav/smoothing';
+import { config } from '../config';
 import type { LngLat } from '../types';
 
 type Status = 'pending' | 'granted' | 'denied';
@@ -20,6 +21,8 @@ const ACCURACY = {
 export function useLocation(navigating: boolean) {
   const [status, setStatus] = useState<Status>('pending');
   const [pos, setPos] = useState<LngLat | null>(null);
+  // Minden mérés (simítás nélkül); null, ha pontatlan – a letérés gyors észleléséhez
+  const [fix, setFix] = useState<{ raw: LngLat | null } | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
   const [rawSpeed, setRawSpeed] = useState<number | null>(null);
   const [lastFixAt, setLastFixAt] = useState(0);
@@ -75,6 +78,8 @@ export function useLocation(navigating: boolean) {
           smoothed.current = next;
           setPos(next.pos);
         }
+        const acc = loc.coords.accuracy;
+        setFix({ raw: acc !== null && acc <= config.offRouteRawMaxAccuracyM ? [loc.coords.longitude, loc.coords.latitude] : null });
         course.current = { deg: loc.coords.heading, speed: loc.coords.speed ?? 0 };
         setRawSpeed(loc.coords.speed ?? null);
         setLastFixAt(Date.now());
@@ -114,5 +119,5 @@ export function useLocation(navigating: boolean) {
     setStatus(s === 'granted' ? 'granted' : 'denied');
   }, []);
 
-  return { status, pos, heading, speed, request };
+  return { status, pos, fix, heading, speed, request };
 }

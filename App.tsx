@@ -24,6 +24,7 @@ import { theme } from './src/theme';
 import type { LngLat, RoutePref } from './src/types';
 import { LangProvider, useLang } from './src/i18n/LangContext';
 import { Attribution } from './src/ui/Attribution';
+import { InfoButton } from './src/ui/InfoModal';
 import { LangToggle } from './src/ui/LangToggle';
 import { Compass } from './src/ui/Compass';
 import { ManeuverBar } from './src/ui/ManeuverBar';
@@ -65,10 +66,11 @@ function Main() {
   const posRef = useRef<LngLat | null>(null);
   posRef.current = loc.pos;
 
-  // GPS → állapotgép
+  // GPS → állapotgép: minden mérésre (a simított pozíció nem mindig változik, a nyers igen)
   useEffect(() => {
-    if (loc.pos) dispatch({ type: 'POSITION', pos: loc.pos, now: Date.now() });
-  }, [loc.pos]);
+    if (loc.pos) dispatch({ type: 'POSITION', pos: loc.pos, raw: loc.fix?.raw, now: Date.now() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loc.fix]);
 
   // Útvonalkérés: minden új requestId-ra, ha loading
   useEffect(() => {
@@ -316,10 +318,13 @@ function Main() {
         ) : (
           <View style={styles.top}>
             {s.phase === 'idle' && (
-              <Pressable onPress={() => dispatch({ type: 'OPEN_SEARCH' })} style={styles.searchButton}>
-                <Text style={styles.searchText}>{t('whereTo')}</Text>
-                <LangToggle />
-              </Pressable>
+              <>
+                <Pressable onPress={() => dispatch({ type: 'OPEN_SEARCH' })} style={styles.searchButton}>
+                  <Text style={styles.searchText}>{t('whereTo')}</Text>
+                  <LangToggle />
+                </Pressable>
+                <InfoButton />
+              </>
             )}
             {s.phase === 'preview' && (
               <View style={styles.topRow}>

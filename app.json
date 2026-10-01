@@ -2,7 +2,7 @@
   "expo": {
     "name": "MinimApp",
     "slug": "minimap",
-    "version": "0.1.18",
+    "version": "0.1.21",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -18,7 +18,7 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Navigation needs your location."
       },
-      "buildNumber": "18"
+      "buildNumber": "21"
     },
     "android": {
       "package": "hu.minimap.app",
@@ -33,7 +33,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 18
+      "versionCode": 21
     },
     "plugins": [
       "@maplibre/maplibre-react-native",

@@ -9,6 +9,10 @@ export const config = {
   valhallaTraceUrl: 'https://valhalla1.openstreetmap.de/trace_attributes',
   nominatimUrl: 'https://nominatim.openstreetmap.org/search',
   photonUrl: 'https://photon.komoot.io/api/',
+  // Weboldal (website/, Vercelen; rövid címek a vercel.json-ban: /privacy, /contact, /coffee) és a kapcsolat
+  websiteUrl: 'https://minimapp.vercel.app',
+  contactEmail: 'novak.gyorgy.tibor@gmail.com',
+  revolutTag: 'gyrgyfrwj',
   userAgent: 'minimap/0.1 (personal open-source navigation app)',
 
   httpTimeoutMs: 10_000,
@@ -26,9 +30,12 @@ export const config = {
   idleFadeScreenFraction: 0.5,
   corridorFadeScreenFraction: 0.3,
 
-  offRouteM: { auto: 40, bicycle: 40, pedestrian: 25 } as Record<Mode, number>,
-  offRouteSamples: 3,
-  rerouteMinIntervalMs: 10_000,
+  // Gyalog lassú a haladás, és egy rossz utca/oldal is gyorsan számít → kisebb küszöb, kevesebb minta, gyakoribb újratervezés
+  offRouteM: { auto: 40, bicycle: 40, pedestrian: 15 } as Record<Mode, number>,
+  offRouteSamples: { auto: 3, bicycle: 3, pedestrian: 2 } as Record<Mode, number>,
+  rerouteMinIntervalMs: { auto: 10_000, bicycle: 10_000, pedestrian: 5_000 } as Record<Mode, number>,
+  // A letérést a nyers GPS-ből nézzük (a simított pozíció gyalogtempónál késik); ennél pontatlanabb mérésnél a simítottból
+  offRouteRawMaxAccuracyM: 25,
   arrivalM: 20,
   arrivedResetMs: 5_000,
 

@@ -22,6 +22,12 @@ const en = {
   permAllow: 'Allow',
   permSettings: 'Settings',
   toll: 'tolls',
+  infoPrivacy: 'Privacy',
+  infoContact: 'Contact',
+  infoWebsite: 'Website',
+  infoCoffee: 'Support me',
+  infoCoffeeText: 'MinimApp is free and ad-free. If you find it useful, you can support it with a coffee.',
+  close: 'Close',
 };
 
 export type StringKey = keyof typeof en;
@@ -47,6 +53,12 @@ const hu: Record<StringKey, string> = {
   permAllow: 'Engedélyezés',
   permSettings: 'Beállítások',
   toll: 'útdíjak',
+  infoPrivacy: 'Adatvédelem',
+  infoContact: 'Kapcsolat',
+  infoWebsite: 'Weboldal',
+  infoCoffee: 'Támogass',
+  infoCoffeeText: 'A MinimApp ingyenes és reklámmentes. Ha hasznosnak találod, egy kávéval támogathatod.',
+  close: 'Bezárás',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, hu };

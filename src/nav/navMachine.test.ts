@@ -107,13 +107,38 @@ test('a single good fix resets the off-route counter (GPS jitter)', () => {
   expect(s.offRouteCount).toBe(1);
 });
 
-test('pedestrian threshold is 25 m', () => {
+test('pedestrian: 15 m threshold, 2 samples', () => {
   let s = navigating('pedestrian');
-  s = run(s, ...[1, 2, 3].map((i): NavEvent => ({ type: 'POSITION', pos: off(30), now: 100_000 + i * 1000 })));
+  s = run(s, ...[1, 2].map((i): NavEvent => ({ type: 'POSITION', pos: off(20), now: 100_000 + i * 1000 })));
   expect(s.phase).toBe('rerouting');
   let b = navigating('bicycle');
   b = run(b, ...[1, 2, 3].map((i): NavEvent => ({ type: 'POSITION', pos: off(30), now: 100_000 + i * 1000 })));
   expect(b.phase).toBe('navigating');
+});
+
+test('pedestrian: min 5 s between reroutes', () => {
+  let s = navigating('pedestrian');
+  s = run(s, ...[1, 2].map((i): NavEvent => ({ type: 'POSITION', pos: off(20), now: 100_000 + i * 1000 })));
+  const id = s.requestId;
+  s = run(s, { type: 'ROUTE_OK', route, requestId: id });
+  s = run(s, ...[3, 4].map((i): NavEvent => ({ type: 'POSITION', pos: off(20), now: 100_000 + i * 1000 })));
+  expect(s.phase).toBe('navigating');
+  s = run(s, { type: 'POSITION', pos: off(20), now: 107_000 });
+  expect(s.phase).toBe('rerouting');
+});
+
+test('off-route is judged on the raw fix when given (the smoothed position lags)', () => {
+  let s = navigating('pedestrian');
+  s = run(s, ...[1, 2].map((i): NavEvent => ({ type: 'POSITION', pos: off(5), raw: off(20), now: 100_000 + i * 1000 })));
+  expect(s.phase).toBe('rerouting');
+  // haladás továbbra is a simítottból
+  let n = navigating('pedestrian');
+  n = run(n, { type: 'POSITION', pos: off(5), raw: off(20), now: 100_000 });
+  expect(n.progress?.distFromRouteM).toBeCloseTo(5, -1);
+  // pontatlan mérésnél (raw = null) a simított számít
+  let q = navigating('pedestrian');
+  q = run(q, ...[1, 2].map((i): NavEvent => ({ type: 'POSITION', pos: off(5), raw: null, now: 100_000 + i * 1000 })));
+  expect(q.phase).toBe('navigating');
 });
 
 test('no second reroute while rerouting, and min 10 s between reroutes', () => {

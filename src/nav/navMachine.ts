@@ -38,7 +38,8 @@ export type NavEvent =
   | { type: 'ROUTE_FAIL'; error: RouteErrorKind; requestId: number }
   | { type: 'RETRY' }
   | { type: 'START' }
-  | { type: 'POSITION'; pos: LngLat; now: number }
+  /** pos: simított (megjelenítés, haladás); raw: a nyers mérés, ha elég pontos (a letérés gyorsabb észleléséhez). */
+  | { type: 'POSITION'; pos: LngLat; raw?: LngLat | null; now: number }
   | { type: 'CANCEL' };
 
 export function initialNavState(mode: Mode = 'auto'): NavState {
@@ -67,7 +68,7 @@ export function otherPref(p: RoutePref): RoutePref {
 
 const request = (s: NavState): NavState => ({ ...s, loading: true, error: null, requestId: s.requestId + 1 });
 
-function onPosition(s: NavState, pos: LngLat, now: number): NavState {
+function onPosition(s: NavState, pos: LngLat, raw: LngLat | null, now: number): NavState {
   if ((s.phase !== 'navigating' && s.phase !== 'rerouting') || !s.route) return s;
   const route = s.route;
   const progress = snap(pos, route);
@@ -76,8 +77,9 @@ function onPosition(s: NavState, pos: LngLat, now: number): NavState {
   }
   if (s.phase === 'rerouting') return { ...s, progress };
 
-  const offRouteCount = progress.distFromRouteM > config.offRouteM[s.mode] ? s.offRouteCount + 1 : 0;
-  if (offRouteCount >= config.offRouteSamples && now - s.lastRerouteAt >= config.rerouteMinIntervalMs) {
+  const distFromRouteM = raw ? snap(raw, route).distFromRouteM : progress.distFromRouteM;
+  const offRouteCount = distFromRouteM > config.offRouteM[s.mode] ? s.offRouteCount + 1 : 0;
+  if (offRouteCount >= config.offRouteSamples[s.mode] && now - s.lastRerouteAt >= config.rerouteMinIntervalMs[s.mode]) {
     return request({ ...s, phase: 'rerouting', progress, offRouteCount: 0, lastRerouteAt: now });
   }
   return { ...s, progress, offRouteCount };
@@ -123,7 +125,7 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       if (s.phase !== 'preview' || !s.route || s.loading) return s;
       return { ...s, phase: 'navigating', alt: null, altPref: null, progress: null, offRouteCount: 0, error: null };
     case 'POSITION':
-      return onPosition(s, e.pos, e.now);
+      return onPosition(s, e.pos, e.raw ?? null, e.now);
     case 'CANCEL':
       return { ...initialNavState(s.mode), requestId: s.requestId + 1 };
   }

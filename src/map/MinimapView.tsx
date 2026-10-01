@@ -68,6 +68,11 @@ const DONE_PAINT: LineLayerSpecification['paint'] = {
   'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 16, 7.5, 19, 11.5],
 };
 const DONE_LAYOUT: LineLayerSpecification['layout'] = { 'line-cap': 'butt', 'line-join': 'round' };
+// Az útvonal kerek kezdő vége kilógna a szürke (butt végű) megtett rész mögül → szürke kupak rá (sugár = a szürke vonal fele)
+const DONE_CAP_PAINT = {
+  'circle-color': '#595959',
+  'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 2, 16, 3.75, 19, 5.75],
+} as const;
 
 const RouteLayer = memo(function RouteLayer({ coords }: { coords: LngLat[] | null }) {
   const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
@@ -207,6 +212,8 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
 });
 
 export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
+  // Az útvonal első pontja (stabil hivatkozás), amint van megtett rész
+  const doneStart = route && (routeDone.coarse?.length || routeDone.tail?.length) ? route[0] : null;
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -255,6 +262,7 @@ export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuve
       <RouteLayer coords={route} />
       <DoneLayer id="route-done-coarse" coords={routeDone.coarse} />
       <DoneLayer id="route-done-tail" coords={routeDone.tail} />
+      <PointLayer id="route-done-cap" coord={doneStart} paint={DONE_CAP_PAINT} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />
