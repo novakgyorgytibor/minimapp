@@ -15,6 +15,7 @@ import { nextAnchor } from './src/nav/anchor';
 import { parseDevLink } from './src/nav/devLink';
 import { nextManeuverSegment } from './src/nav/maneuverSegments';
 import { predictAlongM, predictPos } from './src/nav/predict';
+import { rollingAwakeUntil } from './src/nav/power';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer, otherPref } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -148,14 +149,29 @@ function Main() {
     return () => clearTimeout(t);
   }, [s.phase]);
 
-  // Képernyő ébren tartása navigáció közben
+  // Útvonal nélkül is ébren marad a képernyő, ha 5 km/h felett haladunk (a telefon ki van rakva az autóban);
+  // megállás után még ROLLING_KEEP_AWAKE_MS-ig (piros lámpa, dugó), utána a rendszer elsötétítheti.
+  const rollingUntil = useRef(0);
+  const [rollingAwake, setRollingAwake] = useState(false);
   useEffect(() => {
-    if (!navigatingish) return;
+    const now = Date.now();
+    rollingUntil.current = rollingAwakeUntil(rollingUntil.current, loc.speed, now);
+    const left = rollingUntil.current - now;
+    setRollingAwake(left > 0);
+    if (left <= 0) return;
+    const t = setTimeout(() => setRollingAwake(false), left);
+    return () => clearTimeout(t);
+  }, [loc.speed, loc.fix]);
+
+  // Képernyő ébren tartása navigáció közben, vagy útvonal nélkül haladás közben
+  const keepAwake = navigatingish || rollingAwake;
+  useEffect(() => {
+    if (!keepAwake) return;
     activateKeepAwakeAsync('nav');
     return () => {
       deactivateKeepAwake('nav');
     };
-  }, [navigatingish]);
+  }, [keepAwake]);
 
   const onSelectAlt = useCallback(() => dispatch({ type: 'SELECT_ALT' }), []);
 

@@ -1,3 +1,4 @@
+import { ROLLING_MPS } from '../nav/power';
 import { config } from '../config';
 import { haversineM } from '../nav/geo';
 import type { LngLat, Mode } from '../types';
@@ -7,7 +8,6 @@ const TRAIL_MIN_STEP_M = 10;
 const TRAIL_MAX = 6;
 const QUERY_EVERY_MS = 10_000;
 const QUERY_EVERY_M = 150;
-const ROLLING_MPS = 5 / 3.6;
 
 interface TraceAttributesResponse {
   edges?: { speed_limit?: number }[];
