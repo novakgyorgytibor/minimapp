@@ -19,7 +19,7 @@
         "NSLocationWhenInUseUsageDescription": "Navigation needs your location.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "23"
+      "buildNumber": "24"
     },
     "android": {
       "package": "hu.minimapp.app",
@@ -34,7 +34,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "versionCode": 23
+      "versionCode": 24
     },
     "plugins": [
       "@maplibre/maplibre-react-native",
