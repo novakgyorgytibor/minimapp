@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { config } from '../config';
 import { useFavorites } from '../favorites/FavoritesContext';
 import { useLang } from '../i18n/LangContext';
@@ -7,6 +7,8 @@ import { isAbortError } from '../services/http';
 import { searchPlaces } from '../services/geocode';
 import { theme } from '../theme';
 import type { LngLat, Place } from '../types';
+
+const HEART = require('../../assets/heart.png');
 
 export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onPick: (p: Place) => void; onCancel: () => void }) {
   const { lang, t } = useLang();
@@ -85,10 +87,12 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
             }}
             style={styles.item}
           >
-            <Text style={styles.name} numberOfLines={1}>
-              {showFavorites && <Text style={styles.heart}>{'♥\uFE0E  '}</Text>}
-              {item.name}
-            </Text>
+            <View style={styles.nameRow}>
+              {showFavorites && <Image source={HEART} style={styles.heart} />}
+              <Text style={styles.name} numberOfLines={1}>
+                {item.name}
+              </Text>
+            </View>
             {item.detail ? <Text style={styles.detail} numberOfLines={1}>{item.detail}</Text> : null}
           </Pressable>
         )}
@@ -105,7 +109,8 @@ const styles = StyleSheet.create({
   cancel: { color: theme.fg, fontSize: 16 },
   note: { color: theme.dim, fontSize: 15, paddingHorizontal: 20, paddingTop: 16 },
   item: { paddingHorizontal: 20, paddingVertical: 14 },
-  name: { color: theme.fg, fontSize: 18 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  name: { flexShrink: 1, color: theme.fg, fontSize: 18 },
   detail: { color: theme.dim, fontSize: 14, marginTop: 2 },
-  heart: { color: theme.dim },
+  heart: { width: 16, height: 16, tintColor: theme.dim },
 });

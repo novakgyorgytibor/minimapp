@@ -1,7 +1,7 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
 import { useLocation } from './src/hooks/useLocation';
@@ -414,11 +414,14 @@ function Main() {
   );
 }
 
-/** ♥ = kedvenc, ♡ = nem; koppintásra a telefonon tárolt kedvencek közé kerül / kikerül. */
+const HEART = require('./assets/heart.png');
+const HEART_OUTLINE = require('./assets/heart-outline.png');
+
+/** Teli szív = kedvenc, körvonalas = nem; koppintásra a telefonon tárolt kedvencek közé kerül / kikerül. */
 function FavoriteButton({ on, onPress }: { on: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} hitSlop={16} style={styles.close}>
-      <Text style={styles.closeText}>{on ? '♥\uFE0E' : '♡'}</Text>
+      <Image source={on ? HEART : HEART_OUTLINE} style={styles.heart} />
     </Pressable>
   );
 }
@@ -451,6 +454,7 @@ const styles = StyleSheet.create({
   sideButtons: { alignItems: 'center' },
   close: { padding: 12 },
   closeText: { color: theme.fg, fontSize: 22 },
+  heart: { width: 24, height: 24, tintColor: theme.fg },
   bottom: { paddingBottom: 20, paddingHorizontal: 20, gap: 4 },
   leftControls: { alignItems: 'center', gap: 14 },
   controlsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 8, paddingBottom: 8, minHeight: 44 },
