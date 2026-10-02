@@ -45,8 +45,14 @@ export interface PredictInput {
 export function predictPos({ pos, speedMps, heading, onRoute, leadS }: PredictInput): LngLat {
   const v = speedMps ?? 0;
   if (v < config.courseMinSpeedMps) return pos;
-  const ahead = v * leadS;
-  if (onRoute) return pointAlong(onRoute.route, Math.min(onRoute.distAlongM + ahead, onRoute.route.distanceM));
+  if (onRoute) return pointAlong(onRoute.route, predictAlongM(onRoute.route, onRoute.distAlongM, speedMps, leadS));
   if (heading === null) return pos;
-  return offsetPoint(pos, heading, ahead);
+  return offsetPoint(pos, heading, v * leadS);
+}
+
+/** Az útvonalon előrebecsült megtett táv (m) – ugyanaz, ahová a jelölő csúszik (a célon nem fut túl). */
+export function predictAlongM(route: Route, distAlongM: number, speedMps: number | null, leadS: number): number {
+  const v = speedMps ?? 0;
+  if (v < config.courseMinSpeedMps) return distAlongM;
+  return Math.min(distAlongM + v * leadS, route.distanceM);
 }

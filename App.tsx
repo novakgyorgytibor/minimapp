@@ -13,9 +13,8 @@ import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as Ma
 import { buildMasks, fullMasks, type MaskGeometry } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
 import { parseDevLink } from './src/nav/devLink';
-import { nextManeuverSegment, routeSlice } from './src/nav/maneuverSegments';
-import { doneGeometry } from './src/nav/doneGeometry';
-import { predictPos } from './src/nav/predict';
+import { nextManeuverSegment } from './src/nav/maneuverSegments';
+import { predictAlongM, predictPos } from './src/nav/predict';
 import { angleDiff } from './src/nav/heading';
 import { initialNavState, navReducer, otherPref } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
@@ -39,7 +38,6 @@ import { StatusLine } from './src/ui/StatusLine';
 import { TripFooter } from './src/ui/TripFooter';
 
 const NO_POSITION_MASKS = fullMasks(config.maskFractions);
-const DONE_STEP_M = 200;
 const MANEUVER_HIDE_WITHIN_M = 100;
 
 export default function App() {
@@ -226,15 +224,6 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [view],
   );
-  // A megtett útszakasz halványszürke: a durva rész csak 200 m-enként, a nyílig tartó vége minden méréskor frissül
-  const doneM = navigatingish && s.route && s.progress ? s.progress.distAlongM : 0;
-  const doneGrid = Math.floor(doneM / DONE_STEP_M) * DONE_STEP_M;
-  const doneCoarse = useMemo(
-    () => (s.route && doneGrid > 0 ? doneGeometry(s.route, doneGrid, DONE_STEP_M).coarse : null),
-    [s.route, doneGrid],
-  );
-  const doneTail = s.route && doneM > doneGrid ? routeSlice(s.route, doneGrid, doneM) : null;
-
   // Vastagabb kijelölés csak navigáció közben, és csak a következő manővernél (±30 m)
   const nextIdx = s.progress?.nextStepIndex ?? 1;
   // 100 m-rel a manőver előtt eltűnik (odaérve már ne takarja a kanyart)
@@ -280,6 +269,13 @@ function Main() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc.pos, s.progress, s.route, s.phase, onRoute, navigatingish, loc.speed, loc.heading]);
   const cameraPos = navigatingish ? markerPos : idleCameraPos;
+  // A megtett útszakasz (halványszürke) ugyanoda tart, ahová a jelölő csúszik → mögötte nem marad fehér sáv
+  const doneToM =
+    navigatingish && s.route && s.progress
+      ? onRoute && s.phase !== 'arrived'
+        ? predictAlongM(s.route, s.progress.distAlongM, loc.speed, NAV_CAMERA_MS / 1000)
+        : s.progress.distAlongM
+      : 0;
 
   // Előnézetben mindkét útvonal férjen a képbe
   const previewBbox = useMemo(() => {
@@ -298,7 +294,8 @@ function Main() {
       <MinimapView
         masks={masks}
         route={s.route?.coords ?? null}
-        routeDone={{ coarse: doneCoarse, tail: doneTail }}
+        doneRoute={navigatingish ? s.route : null}
+        doneToM={doneToM}
         alt={s.phase === 'preview' ? (s.alt?.coords ?? null) : null}
         onSelectAlt={onSelectAlt}
         maneuvers={maneuvers}

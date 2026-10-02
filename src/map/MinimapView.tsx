@@ -15,17 +15,21 @@ import { Keyboard, StyleSheet } from 'react-native';
 import { config } from '../config';
 import type { MaskFeature } from '../nav/corridor';
 import { theme } from '../theme';
-import type { LngLat, Mode } from '../types';
+import { doneGeometry } from '../nav/doneGeometry';
+import { routeSlice } from '../nav/maneuverSegments';
+import type { LngLat, Mode, Route } from '../types';
 import { applyCameraStop, NAV_CAMERA_MS } from './camera';
-import { lerpPose, shouldGlide, type MarkerPose } from './markerAnim';
+import { lerpPose, MARKER_MAX_GLIDE_M, shouldGlide, type MarkerPose } from './markerAnim';
 import { pulseOpacity } from './pulse';
 import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 
 export interface MinimapViewProps {
   masks: MaskFeature[];
   route: LngLat[] | null;
-  /** Navigáció közben a megtett rész (halványszürkén takarja a fehér vonalat): ritkán frissülő durva rész + pontos vége. */
-  routeDone: { coarse: LngLat[] | null; tail: LngLat[] | null };
+  /** Navigáció közben az útvonal, amelyen a megtett rész (halványszürkén takarja a fehér vonalat) kirajzolódik. */
+  doneRoute: Route | null;
+  /** A megtett rész vége (m): ugyanaz az előrebecsült pont, ahová a jelölő csúszik; a jelölővel együtt animálva. */
+  doneToM: number;
   /** Előnézetben a másik útvonal (halványan, koppintható). */
   alt: LngLat[] | null;
   onSelectAlt: () => void;
@@ -89,6 +93,45 @@ const DoneLayer = memo(function DoneLayer({ id, coords }: { id: string; coords: 
     <GeoJSONSource id={id} data={data}>
       <Layer type="line" id={id} source={id} layout={DONE_LAYOUT} paint={DONE_PAINT} />
     </GeoJSONSource>
+  );
+});
+
+const DONE_STEP_M = 200;
+
+// A megtett rész vége a jelölővel együtt (ugyanannyi idő alatt, egyenletesen) csúszik az új célpontra, így a
+// szürke mindig a nyílig ér. A durva rész csak 200 m-enként változik, csak a rövid vége frissül minden képkockán.
+const DoneLayers = memo(function DoneLayers({ route, toM }: { route: Route | null; toM: number }) {
+  const [shownM, setShownM] = useState(toM);
+  const shown = useRef({ route, m: shownM });
+  shown.current.m = shownM;
+  useEffect(() => {
+    const from = shown.current;
+    shown.current = { route, m: from.m };
+    // Új útvonalon (újratervezés) vagy nagy ugrásnál nincs csúsztatás
+    if (!route || from.route !== route || Math.abs(toM - from.m) > MARKER_MAX_GLIDE_M) {
+      setShownM(toM);
+      return;
+    }
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const f = Math.min((Date.now() - t0) / NAV_CAMERA_MS, 1);
+      setShownM(from.m + f * (toM - from.m));
+      if (f >= 1) clearInterval(id);
+    }, MARKER_TICK_MS);
+    return () => clearInterval(id);
+  }, [route, toM]);
+  const d = route ? Math.min(Math.max(shownM, 0), route.distanceM) : 0;
+  const grid = Math.floor(d / DONE_STEP_M) * DONE_STEP_M;
+  const coarse = useMemo(() => (route && grid > 0 ? doneGeometry(route, grid, DONE_STEP_M).coarse : null), [route, grid]);
+  const tail = useMemo(() => (route && d > grid ? routeSlice(route, grid, d) : null), [route, grid, d]);
+  // Az útvonal kerek kezdő vége kilógna a szürke mögül → szürke kupak az első pontra
+  const start = route && d > 0 ? route.coords[0] : null;
+  return (
+    <>
+      <DoneLayer id="route-done-coarse" coords={coarse} />
+      <DoneLayer id="route-done-tail" coords={tail} />
+      <PointLayer id="route-done-cap" coord={start} paint={DONE_CAP_PAINT} />
+    </>
   );
 });
 
@@ -211,9 +254,7 @@ const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; 
   );
 });
 
-export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
-  // Az útvonal első pontja (stabil hivatkozás), amint van megtett rész
-  const doneStart = route && (routeDone.coarse?.length || routeDone.tail?.length) ? route[0] : null;
+export function MinimapView({ masks, route, doneRoute, doneToM, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
@@ -260,9 +301,7 @@ export function MinimapView({ masks, route, routeDone, alt, onSelectAlt, maneuve
       <Images images={ARROW_IMAGES} />
       <PathStyle mode={mode} />
       <RouteLayer coords={route} />
-      <DoneLayer id="route-done-coarse" coords={routeDone.coarse} />
-      <DoneLayer id="route-done-tail" coords={routeDone.tail} />
-      <PointLayer id="route-done-cap" coord={doneStart} paint={DONE_CAP_PAINT} />
+      <DoneLayers route={doneRoute} toM={doneToM} />
       <ManeuverLayer data={maneuvers} />
       {masks.map((m, i) => (
         <MaskLayer key={`mask-${i}`} index={i} data={m} />

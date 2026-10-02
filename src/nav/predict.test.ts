@@ -1,6 +1,6 @@
 import { buildRoute } from '../services/route';
 import { haversineM } from './geo';
-import { offsetPoint, pointAlong, predictPos } from './predict';
+import { offsetPoint, pointAlong, predictAlongM, predictPos } from './predict';
 
 // Kelet felé, majd észak felé forduló útvonal
 const route = buildRoute([[19, 47.5], [19.01, 47.5], [19.01, 47.51]], 600, []);
@@ -43,4 +43,11 @@ test('no prediction when slow or without heading', () => {
   expect(predictPos({ pos: [19, 47.5], speedMps: 1, heading: 90, onRoute: null, leadS: 1 })).toEqual([19, 47.5]);
   expect(predictPos({ pos: [19, 47.5], speedMps: null, heading: 90, onRoute: null, leadS: 1 })).toEqual([19, 47.5]);
   expect(predictPos({ pos: [19, 47.5], speedMps: 20, heading: null, onRoute: null, leadS: 1 })).toEqual([19, 47.5]);
+});
+
+test('predictAlongM leads by speed × time, clamps to the destination, and does not lead when slow', () => {
+  expect(predictAlongM(route, 100, 20, 1.2)).toBeCloseTo(124, 6);
+  expect(predictAlongM(route, route.distanceM - 5, 25, 1.2)).toBe(route.distanceM);
+  expect(predictAlongM(route, 100, 0, 1.2)).toBe(100);
+  expect(predictAlongM(route, 100, null, 1.2)).toBe(100);
 });
