@@ -8,7 +8,7 @@ export interface DevLink {
 
 /**
  * Fejlesztői mélylink a szimulátoros teszthez (csak __DEV__ buildben kötjük be):
- *   hu.minimap.app://navigate?lat=47.39&lon=18.91&label=Érd&start=1
+ *   hu.minimapp.app://navigate?lat=47.39&lon=18.91&label=Érd&start=1
  */
 export function parseDevLink(url: string | null): DevLink | null {
   const m = url?.match(/^[a-z0-9.+-]+:\/\/navigate\?(.*)$/i);

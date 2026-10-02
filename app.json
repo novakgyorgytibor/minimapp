@@ -13,7 +13,7 @@
       "resizeMode": "contain"
     },
     "ios": {
-      "bundleIdentifier": "hu.minimap.app",
+      "bundleIdentifier": "hu.minimapp.app",
       "supportsTablet": false,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Navigation needs your location.",
@@ -22,7 +22,7 @@
       "buildNumber": "23"
     },
     "android": {
-      "package": "hu.minimap.app",
+      "package": "hu.minimapp.app",
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"

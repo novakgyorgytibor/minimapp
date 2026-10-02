@@ -4,7 +4,7 @@ Bemásolható szövegek az App Store Connecthez és a Google Play Console-hoz. K
 
 ## Közös adatok
 
-- Bundle ID / package: `hu.minimap.app`
+- Bundle ID / package: `hu.minimapp.app`
 - Kategória: Navigáció (App Store: Navigation; Play: Maps & Navigation)
 - Ár: ingyenes, reklám és alkalmazáson belüli vásárlás nélkül
 - Adatvédelmi irányelvek URL: https://theminimapp.vercel.app/privacy
