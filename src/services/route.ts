@@ -127,10 +127,12 @@ export async function getRoute(
   deps?: FetchDeps,
   lang: Lang = 'en',
   pref: RoutePref = 'fast',
+  /** Menetirány (fok, 0 = észak): újratervezéskor így az új útvonal arra indul, amerre megyünk (nem azonnali megfordulással). */
+  fromHeading?: number | null,
 ): Promise<Route> {
   const body = {
     locations: [
-      { lon: from[0], lat: from[1] },
+      { lon: from[0], lat: from[1], ...(fromHeading != null ? { heading: Math.round(fromHeading), heading_tolerance: 45 } : {}) },
       { lon: to[0], lat: to[1] },
     ],
     costing: mode,

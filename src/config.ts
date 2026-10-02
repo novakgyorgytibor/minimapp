@@ -45,6 +45,13 @@ export const config = {
   // Gyalog lassú a haladás, és egy rossz utca/oldal is gyorsan számít → kisebb küszöb, kevesebb minta, gyakoribb újratervezés
   offRouteM: { auto: 40, bicycle: 40, pedestrian: 15 } as Record<Mode, number>,
   offRouteSamples: { auto: 3, bicycle: 3, pedestrian: 2 } as Record<Mode, number>,
+  // Visszafelé haladás (rossz helyen megfordultunk, de még az útvonalon vagyunk): ennyit mentünk vissza a legtávolabbi
+  // elért ponthoz képest, és ennyi mérésen át egyre hátrébb kerültünk → újratervezés. A GPS-zaj álló helyzetben pár méter;
+  // ha az útvonal közel halad el önmaga mellett, az illesztés egyszer visszaugorhat, de utána nem „hátrál” tovább.
+  wrongWayM: { auto: 70, bicycle: 50, pedestrian: 35 } as Record<Mode, number>,
+  wrongWaySamples: { auto: 4, bicycle: 4, pedestrian: 4 } as Record<Mode, number>,
+  // Újratervezéskor a menetirányt is elküldjük, ha ennél gyorsabban haladunk (különben a tájoló/GPS irány bizonytalan)
+  rerouteHeadingMinSpeedMps: 2,
   rerouteMinIntervalMs: { auto: 10_000, bicycle: 10_000, pedestrian: 5_000 } as Record<Mode, number>,
   // A letérést a nyers GPS-ből nézzük (a simított pozíció gyalogtempónál késik); ennél pontatlanabb mérésnél a simítottból
   offRouteRawMaxAccuracyM: 25,

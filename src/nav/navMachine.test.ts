@@ -165,6 +165,72 @@ test('failed reroute returns to navigating on the old route with the error', () 
   expect(s).toMatchObject({ phase: 'navigating', route, error: 'network', offRouteCount: 0, loading: false });
 });
 
+// Az útvonalon, a kezdőponttól m méterre (a teszt-útvonal kelet felé tart)
+const M_PER_DEG_LON = M_PER_DEG_LAT * Math.cos((47.5 * Math.PI) / 180);
+const along = (m: number): LngLat => [19 + m / M_PER_DEG_LON, 47.5];
+const fixes = (ms: number[], t0 = 100_000): NavEvent[] => ms.map((m, i) => ({ type: 'POSITION', pos: along(m), now: t0 + i * 1000 }));
+
+describe('wrong way (turned around but still on the route)', () => {
+  test('driving back along the route → reroute after 4 samples beyond 70 m, each further back', () => {
+    let s = navigating('auto');
+    s = run(s, ...fixes([100, 200, 300, 260, 220, 200, 180]));
+    // 300 → 220: 80 m vissza (1.), 200 (2.), 180 (3.)
+    expect(s.phase).toBe('navigating');
+    expect(s.maxAlongM).toBeCloseTo(300, -1);
+    expect(s.wrongWayCount).toBe(3);
+    const id = s.requestId;
+    s = run(s, ...fixes([160], 107_000));
+    expect(s).toMatchObject({ phase: 'rerouting', loading: true, requestId: id + 1, wrongWayCount: 0 });
+  });
+
+  test('a one-off jump back (route passing near itself) does not reroute', () => {
+    let s = navigating('auto');
+    // visszaugrik 150-re, aztán onnan „előre halad”, majd visszaáll a valós helyre
+    s = run(s, ...fixes([300, 320, 150, 155, 160, 165, 170, 340]));
+    expect(s.phase).toBe('navigating');
+    expect(s.wrongWayCount).toBe(0);
+  });
+
+  test('stopping while turned around keeps the count, moving on back finishes it', () => {
+    let s = navigating('auto');
+    s = run(s, ...fixes([300, 220, 200, 200, 201, 199]));
+    expect(s.phase).toBe('navigating');
+    expect(s.wrongWayCount).toBe(3);
+    s = run(s, ...fixes([180], 107_000));
+    expect(s.phase).toBe('rerouting');
+  });
+
+  test('GPS jitter / standing still does not count as going back', () => {
+    let s = navigating('auto');
+    s = run(s, ...fixes([100, 200, 300, 290, 305, 285, 295, 280, 300]));
+    expect(s.phase).toBe('navigating');
+    expect(s.wrongWayCount).toBe(0);
+  });
+
+  test('turning back forward resets the counter', () => {
+    let s = navigating('auto');
+    s = run(s, ...fixes([300, 220, 210, 200, 300, 220]));
+    expect(s.phase).toBe('navigating');
+    expect(s.wrongWayCount).toBe(1);
+  });
+
+  test('pedestrian: 35 m back is enough', () => {
+    let s = navigating('pedestrian');
+    s = run(s, ...fixes([100, 120, 150, 110, 105, 100, 95]));
+    expect(s.phase).toBe('rerouting');
+  });
+
+  test('the new route starts fresh (no instant re-trigger)', () => {
+    let s = navigating('auto');
+    s = run(s, ...fixes([300, 220, 210, 200, 190]));
+    expect(s.phase).toBe('rerouting');
+    s = run(s, { type: 'ROUTE_OK', route, requestId: s.requestId });
+    expect(s).toMatchObject({ phase: 'navigating', maxAlongM: 0, wrongWayCount: 0 });
+    s = run(s, ...fixes([100, 110, 120], 120_000));
+    expect(s.phase).toBe('navigating');
+  });
+});
+
 test('arrives within 20 m of the route end', () => {
   const s = run(navigating(), { type: 'POSITION', pos: [19.00885, 47.5], now: 1 });
   expect(s.phase).toBe('arrived');

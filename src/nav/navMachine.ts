@@ -25,6 +25,13 @@ export interface NavState {
   requestId: number;
   error: RouteErrorKind | null;
   offRouteCount: number;
+  /** A jelenlegi útvonalon eddig elért legtávolabbi pont (m) – ehhez képest nézzük, megyünk-e visszafelé. */
+  maxAlongM: number;
+  /**
+   * Hány mérésen kerültünk egyre hátrébb, miközben már wrongWayM-nél többel a legtávolabbi pont mögött vagyunk.
+   * Ha hátrébb vagyunk, de nem hátrálunk tovább (állunk, zaj), a számláló marad; ha visszaérünk, nullázódik.
+   */
+  wrongWayCount: number;
   lastRerouteAt: number;
 }
 
@@ -57,6 +64,8 @@ export function initialNavState(mode: Mode = 'auto'): NavState {
     requestId: 0,
     error: null,
     offRouteCount: 0,
+    maxAlongM: 0,
+    wrongWayCount: 0,
     lastRerouteAt: -Infinity,
   };
 }
@@ -78,11 +87,18 @@ function onPosition(s: NavState, pos: LngLat, raw: LngLat | null, now: number): 
   if (s.phase === 'rerouting') return { ...s, progress };
 
   const distFromRouteM = raw ? snap(raw, route).distFromRouteM : progress.distFromRouteM;
-  const offRouteCount = distFromRouteM > config.offRouteM[s.mode] ? s.offRouteCount + 1 : 0;
-  if (offRouteCount >= config.offRouteSamples[s.mode] && now - s.lastRerouteAt >= config.rerouteMinIntervalMs[s.mode]) {
-    return request({ ...s, phase: 'rerouting', progress, offRouteCount: 0, lastRerouteAt: now });
+  const offRoute = distFromRouteM > config.offRouteM[s.mode];
+  const offRouteCount = offRoute ? s.offRouteCount + 1 : 0;
+  // Visszafelé: az útvonalon maradunk, de egyre távolodunk a legtávolabbi elért ponttól (megfordultunk)
+  const maxAlongM = offRoute ? s.maxAlongM : Math.max(s.maxAlongM, progress.distAlongM);
+  const behind = !offRoute && maxAlongM - progress.distAlongM > config.wrongWayM[s.mode];
+  const stillReversing = s.progress !== null && progress.distAlongM < s.progress.distAlongM;
+  const wrongWayCount = !behind ? 0 : stillReversing ? s.wrongWayCount + 1 : s.wrongWayCount;
+  const shouldReroute = offRouteCount >= config.offRouteSamples[s.mode] || wrongWayCount >= config.wrongWaySamples[s.mode];
+  if (shouldReroute && now - s.lastRerouteAt >= config.rerouteMinIntervalMs[s.mode]) {
+    return request({ ...s, phase: 'rerouting', progress, offRouteCount: 0, wrongWayCount: 0, lastRerouteAt: now });
   }
-  return { ...s, progress, offRouteCount };
+  return { ...s, progress, offRouteCount, maxAlongM, wrongWayCount };
 }
 
 export function navReducer(s: NavState, e: NavEvent): NavState {
@@ -103,14 +119,14 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
     case 'ROUTE_OK':
       if (e.requestId !== s.requestId || !s.loading) return s;
       if (s.phase === 'rerouting') {
-        return { ...s, phase: 'navigating', route: e.route, progress: null, loading: false, offRouteCount: 0 };
+        return { ...s, phase: 'navigating', route: e.route, progress: null, loading: false, offRouteCount: 0, maxAlongM: 0, wrongWayCount: 0 };
       }
       if (!e.alt) return { ...s, route: e.route, alt: null, altPref: null, loading: false };
       return { ...s, route: e.route, alt: e.alt, altPref: e.altPref ?? otherPref(s.pref), loading: false };
     case 'ROUTE_FAIL':
       if (e.requestId !== s.requestId || !s.loading) return s;
       if (s.phase === 'rerouting') {
-        return { ...s, phase: 'navigating', loading: false, error: e.error, offRouteCount: 0 };
+        return { ...s, phase: 'navigating', loading: false, error: e.error, offRouteCount: 0, wrongWayCount: 0 };
       }
       return { ...s, loading: false, error: e.error };
     case 'RETRY':
@@ -123,7 +139,7 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       return { ...s, route: s.alt, alt: s.route, pref: s.altPref ?? otherPref(s.pref), altPref: s.pref };
     case 'START':
       if (s.phase !== 'preview' || !s.route || s.loading) return s;
-      return { ...s, phase: 'navigating', alt: null, altPref: null, progress: null, offRouteCount: 0, error: null };
+      return { ...s, phase: 'navigating', alt: null, altPref: null, progress: null, offRouteCount: 0, maxAlongM: 0, wrongWayCount: 0, error: null };
     case 'POSITION':
       return onPosition(s, e.pos, e.raw ?? null, e.now);
     case 'CANCEL':

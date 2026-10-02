@@ -3,6 +3,14 @@ import { rejection } from '../testUtils';
 import { buildRoute, decodePolyline, getRoute, needsTollFree, parseOsrm, RouteError, sameRoute } from './route';
 import { HttpError } from './http';
 
+test('reroute: the travel heading goes to Valhalla so the new route starts the way we are going', async () => {
+  const fetchImpl = jest.fn(async () => ({ ok: true, status: 200, json: async () => fixture, text: async () => '' }) as Response);
+  await getRoute([19.0402, 47.4979], [19.046, 47.507], 'auto', undefined, { fetchImpl }, 'hu', 'fast', 181.6);
+  const body = JSON.parse((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+  expect(body.locations[0]).toEqual({ lon: 19.0402, lat: 47.4979, heading: 182, heading_tolerance: 45 });
+  expect(body.locations[1]).toEqual({ lon: 19.046, lat: 47.507 });
+});
+
 test('decodes the reference polyline (precision 5) as [lng, lat]', () => {
   const pts = decodePolyline('_p~iF~ps|U_ulLnnqC_mqNvxq`@', 5);
   expect(pts).toEqual([

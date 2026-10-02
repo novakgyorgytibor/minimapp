@@ -72,6 +72,9 @@ function Main() {
   const [destDetail, setDestDetail] = useState('');
   const posRef = useRef<LngLat | null>(null);
   posRef.current = loc.pos;
+  // Újratervezéshez a menetirány (csak haladás közben megbízható)
+  const headingRef = useRef<number | null>(null);
+  headingRef.current = loc.speed !== null && loc.speed > config.rerouteHeadingMinSpeedMps ? loc.heading : null;
 
   // GPS → állapotgép: minden mérésre (a simított pozíció nem mindig változik, a nyers igen)
   useEffect(() => {
@@ -92,7 +95,8 @@ function Main() {
     const dest = s.dest;
     // Előnézetben a leggyorsabb és a legrövidebb párhuzamosan; újratervezésnél csak a választott típus
     const withAlt = s.phase === 'preview' || s.phase === 'searching';
-    const get = (pref: RoutePref) => getRoute(from, dest, s.mode, ctrl.signal, undefined, lang, pref);
+    const heading = s.phase === 'rerouting' ? headingRef.current : null;
+    const get = (pref: RoutePref) => getRoute(from, dest, s.mode, ctrl.signal, undefined, lang, pref, heading);
     const altPref = otherPref(s.pref);
     Promise.all([get(s.pref), withAlt ? get(altPref).catch(() => null) : Promise.resolve(null)])
       .then(async ([route, other]) => {
