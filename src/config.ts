@@ -11,9 +11,21 @@ export const config = {
   photonUrl: 'https://photon.komoot.io/api/',
   // Weboldal (website/, Vercelen; rövid címek a vercel.json-ban: /privacy, /contact, /coffee) és a kapcsolat
   websiteUrl: 'https://theminimapp.vercel.app',
+  // Az offline letöltéshez kell egy stílus-URL (a beépített stílus nem URL); ugyanazt a csempeforrást
+  // hivatkozza, mint a térkép, rétegek nélkül (website/offline-style.json)
+  offlineStyleUrl: 'https://theminimapp.vercel.app/offline-style.json',
   contactEmail: 'novak.gyorgy.tibor@gmail.com',
   revolutTag: 'gyrgyfrwj',
   userAgent: 'minimap/0.1 (personal open-source navigation app)',
+
+  // Navigáció indulásakor az útvonal körüli csempék letöltődnek → net nélkül is megvan a térkép.
+  // A forrás csak 14-es zoomig ad csempét, a közelebbi nézet ebből nagyít.
+  offlineMinZoom: 12,
+  offlineMaxZoom: 14,
+  offlineChunkM: 2_000,
+  offlinePadM: 500,
+  // Ennyi legutóbbi útvonal csomagjai maradnak meg (újratervezésnél a régi is kellhet még)
+  offlineKeepRoutes: 3,
 
   httpTimeoutMs: 10_000,
   httpRetries: 3,

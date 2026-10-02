@@ -12,3 +12,9 @@ test('only free open-source endpoints over https', () => {
   expect(config.valhallaUrl).toBe('https://valhalla1.openstreetmap.de/route');
   expect(config.nominatimUrl).toBe('https://nominatim.openstreetmap.org/search');
 });
+
+test('the offline download style points at the same tile source as the map', () => {
+  const style = require('../website/offline-style.json');
+  expect(Object.values(style.sources).map((src: any) => src.url)).toEqual([config.tileJsonUrl]);
+  expect(config.offlineStyleUrl).toBe(`${config.websiteUrl}/offline-style.json`);
+});

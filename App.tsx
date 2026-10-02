@@ -24,6 +24,7 @@ import type { LngLat, RoutePref } from './src/types';
 import { LangProvider, useLang } from './src/i18n/LangContext';
 import { FavoritesProvider, useFavorites } from './src/favorites/FavoritesContext';
 import { findFavorite } from './src/favorites/favorites';
+import { cacheRouteCorridor } from './src/offline/routeCache';
 import { Attribution } from './src/ui/Attribution';
 import { InfoButton } from './src/ui/InfoModal';
 import { LangToggle } from './src/ui/LangToggle';
@@ -175,6 +176,11 @@ function Main() {
   // Fázisváltáskor a kamera újra követ
   useEffect(() => setFollow(true), [s.phase]);
 
+  // Navigáció indulásakor (és újratervezés után) letöltjük az útvonal körüli térképet → net nélkül is megvan
+  const navRoute = s.phase === 'navigating' ? s.route : null;
+  useEffect(() => {
+    if (navRoute) void cacheRouteCorridor(navRoute);
+  }, [navRoute]);
   // Nézet (képernyő közepe + zoom), csak érdemi változásnál frissítve (nextView).
   const { width: screenW, height: screenH } = useWindowDimensions();
   const [view, setView] = useState<MapViewState | null>(null);
