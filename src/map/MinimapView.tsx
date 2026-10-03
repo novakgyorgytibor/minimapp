@@ -6,24 +6,28 @@ import {
   Map,
   type CameraRef,
   type CameraStop,
+  type MapRef,
+  type FilterSpecification,
   type LineLayerSpecification,
   type SymbolLayerSpecification,
 } from '@maplibre/maplibre-react-native';
 import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, StyleSheet } from 'react-native';
+import { memo, type Ref, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Keyboard, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { config } from '../config';
 import type { MaskFeature } from '../nav/corridor';
 import { theme } from '../theme';
-import { doneGeometry } from '../nav/doneGeometry';
-import { routeSlice } from '../nav/maneuverSegments';
+import { aheadGeometry, doneGeometry, progressTails } from '../nav/doneGeometry';
+import { routeSlice, type TaperedFeatures } from '../nav/maneuverSegments';
 import type { LngLat, Mode, Route } from '../types';
-import { applyCameraStop, NAV_CAMERA_MS } from './camera';
+import { alongAt, applyCameraStop, FOLLOW_EASE_MS, FOLLOW_TICK_MS, NAV_CAMERA_MS, NAV_PITCH_DEG, routeFollowStep, type AlongGlide } from './camera';
 import { lerpPose, MARKER_MAX_GLIDE_M, shouldGlide, type MarkerPose } from './markerAnim';
 import { pulseOpacity } from './pulse';
 import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
 
 export interface MinimapViewProps {
+  /** A térkép (pl. a látható utak lekérdezéséhez). */
+  mapRef?: Ref<MapRef>;
   masks: MaskFeature[];
   route: LngLat[] | null;
   /** Navigáció közben az útvonal, amelyen a megtett rész (halványszürkén takarja a fehér vonalat) kirajzolódik. */
@@ -33,8 +37,10 @@ export interface MinimapViewProps {
   /** Előnézetben a másik útvonal (halványan, koppintható). */
   alt: LngLat[] | null;
   onSelectAlt: () => void;
-  /** Vastagabb szakaszok a valódi manőverek körül. */
-  maneuvers: FeatureCollection<LineString> | null;
+  /** Vastagabb szakasz a következő valódi manőver körül (a végein elvékonyodva). */
+  maneuvers: TaperedFeatures | null;
+  /** Látszik-e a vastagítás (közel a manőverhez lágyan eltűnik). */
+  maneuversVisible: boolean;
   pos: LngLat | null;
   /** Irány fokban; null = még nincs → a háromszög észak felé mutat. */
   heading: number | null;
@@ -50,6 +56,19 @@ export interface MinimapViewProps {
   recenterNonce: number;
   /** Közlekedési mód: autóval a járdák/gyalogutak halványabbak. */
   mode: Mode;
+  /**
+   * Követő navigáció: a kamera pontosan a jelölő célpontjára csúszik, így a nyíl a képernyő közepén áll
+   * (natív animáció, nincs JS-es léptetés) – ilyenkor a térképi jelölő rejtve.
+   */
+  centerArrow: boolean;
+  /** Észak-fent nézet: a középen álló nyíl a menetirányba fordul (különben a térkép fordul, a nyíl felfelé néz). */
+  northUp: boolean;
+  /**
+   * Útvonalkövetés (autóval, az útvonalon, a nyíl középen): a kamera az útvonal mentén halad és annak irányába
+   * fordul, a `followToM` megtett távra csúszva (ugyanoda, ahová a megtett rész). null = a `camera` stop érvényes.
+   */
+  followRoute: Route | null;
+  followToM: number;
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -87,50 +106,104 @@ const RouteLayer = memo(function RouteLayer({ coords }: { coords: LngLat[] | nul
   );
 });
 
-const DoneLayer = memo(function DoneLayer({ id, coords }: { id: string; coords: LngLat[] | null }) {
-  const data = useMemo(() => (coords && coords.length > 1 ? lineFeature(coords) : EMPTY), [coords]);
+// A még előttünk álló rész fehéren a szürke FÖLÖTT (ahol az útvonal visszafelé ugyanazon az úton halad, ott is fehér)
+const AHEAD_LAYOUT: LineLayerSpecification['layout'] = { 'line-cap': 'butt', 'line-join': 'round' };
+
+/**
+ * Egy forrás, két réteg: a megtett (szürke) és az előttünk álló (fehér) darab. A `…BeforeId` a korábban
+ * felkerült réteg alá teszi az adott réteget (így a második forrás rétegei is a helyükre kerülnek).
+ */
+const ProgressLayer = memo(function ProgressLayer({
+  id,
+  done,
+  ahead,
+  doneBeforeId,
+  aheadBeforeId,
+}: {
+  id: string;
+  done: LngLat[] | null;
+  ahead: LngLat[] | null;
+  doneBeforeId?: string;
+  aheadBeforeId?: string;
+}) {
+  const data = useMemo<FeatureCollection<LineString>>(
+    () => ({
+      type: 'FeatureCollection',
+      features: [
+        ...(done && done.length > 1 ? [{ ...lineFeature(done), properties: { part: 'done' } }] : []),
+        ...(ahead && ahead.length > 1 ? [{ ...lineFeature(ahead), properties: { part: 'ahead' } }] : []),
+      ],
+    }),
+    [done, ahead],
+  );
   return (
     <GeoJSONSource id={id} data={data}>
-      <Layer type="line" id={id} source={id} layout={DONE_LAYOUT} paint={DONE_PAINT} />
+      <Layer type="line" id={`${id}-done`} source={id} filter={DONE_FILTER} beforeId={doneBeforeId} layout={DONE_LAYOUT} paint={DONE_PAINT} />
+      <Layer type="line" id={`${id}-ahead`} source={id} filter={AHEAD_FILTER} beforeId={aheadBeforeId} layout={AHEAD_LAYOUT} paint={ROUTE_PAINT} />
     </GeoJSONSource>
   );
 });
+const DONE_FILTER: FilterSpecification = ['==', ['get', 'part'], 'done'];
+const AHEAD_FILTER: FilterSpecification = ['==', ['get', 'part'], 'ahead'];
 
 const DONE_STEP_M = 200;
+/**
+ * A megtett rész vége ennyivel előrébb jár a kamera csúszásánál: az új GeoJSON a natív oldalon (csempézés, rajzolás)
+ * kb. ennyi késéssel jelenik meg, a kamera viszont késés nélkül mozog. Enélkül nagy sebességnél (100 km/h felett
+ * ~3 m) a szürke vége a nyíl mögé csúszna, és mögötte fehér villogna. A maradék ingadozást a nyíl takarja.
+ */
+const DONE_LEAD_MS = 100;
 
-// A megtett rész vége a jelölővel együtt (ugyanannyi idő alatt, egyenletesen) csúszik az új célpontra, így a
-// szürke mindig a nyílig ér. A durva rész csak 200 m-enként változik, csak a rövid vége frissül minden képkockán.
+// A megtett rész vége ugyanazzal a csúszással halad, mint a kamera (alongAt), DONE_LEAD_MS-mal előrébb, így a szürke
+// mindig a nyíl alatt végződik. A durva rész csak 200 m-enként változik, csak a rövid vége frissül minden képkockán.
 const DoneLayers = memo(function DoneLayers({ route, toM }: { route: Route | null; toM: number }) {
   const [shownM, setShownM] = useState(toM);
-  const shown = useRef({ route, m: shownM });
-  shown.current.m = shownM;
+  const glide = useRef<AlongGlide | null>(null);
   useEffect(() => {
-    const from = shown.current;
-    shown.current = { route, m: from.m };
-    // Új útvonalon (újratervezés) vagy nagy ugrásnál nincs csúsztatás
-    if (!route || from.route !== route || Math.abs(toM - from.m) > MARKER_MAX_GLIDE_M) {
+    if (!route) {
+      glide.current = null;
       setShownM(toM);
       return;
     }
-    const t0 = Date.now();
+    const now = Date.now();
+    const prev = glide.current;
+    const fromM = prev && prev.route === route ? alongAt(prev, now) : toM;
+    // Új útvonalon (újratervezés) vagy nagy ugrásnál nincs csúsztatás
+    const g: AlongGlide = { route, fromM: Math.abs(toM - fromM) > MARKER_MAX_GLIDE_M ? toM : fromM, toM, t0: now };
+    glide.current = g;
+    const tick = () => {
+      const t = Date.now() + DONE_LEAD_MS;
+      setShownM(alongAt(g, t));
+      return t - g.t0 >= NAV_CAMERA_MS;
+    };
+    if (tick()) return;
     const id = setInterval(() => {
-      const f = Math.min((Date.now() - t0) / NAV_CAMERA_MS, 1);
-      setShownM(from.m + f * (toM - from.m));
-      if (f >= 1) clearInterval(id);
+      if (tick()) clearInterval(id);
     }, MARKER_TICK_MS);
     return () => clearInterval(id);
   }, [route, toM]);
   const d = route ? Math.min(Math.max(shownM, 0), route.distanceM) : 0;
-  const grid = Math.floor(d / DONE_STEP_M) * DONE_STEP_M;
+  const tails = useMemo(() => (route ? progressTails(route, d, DONE_STEP_M) : null), [route, d]);
+  const grid = tails?.grid ?? 0;
+  const gridAhead = tails?.gridAhead ?? 0;
   const coarse = useMemo(() => (route && grid > 0 ? doneGeometry(route, grid, DONE_STEP_M).coarse : null), [route, grid]);
-  const tail = useMemo(() => (route && d > grid ? routeSlice(route, grid, d) : null), [route, grid, d]);
+  const aheadCoarse = useMemo(() => (route ? aheadGeometry(route, gridAhead, DONE_STEP_M).coarse : null), [route, gridAhead]);
+  const tail = tails?.doneTail ?? null;
+  const aheadTail = tails?.aheadTail ?? null;
   // Az útvonal kerek kezdő vége kilógna a szürke mögül → szürke kupak az első pontra
   const start = route && d > 0 ? route.coords[0] : null;
+  // Sorrend alulról: durva szürke, vég szürke, kupak, durva fehér, vég fehér – minden fehér minden szürke fölött
   return (
     <>
-      <DoneLayer id="route-done-coarse" coords={coarse} />
-      <DoneLayer id="route-done-tail" coords={tail} />
-      <PointLayer id="route-done-cap" coord={start} paint={DONE_CAP_PAINT} />
+      <ProgressLayer id="route-progress-tail" done={tail} ahead={aheadTail} />
+      <ProgressLayer
+        id="route-progress-coarse"
+        done={coarse}
+        ahead={aheadCoarse}
+        doneBeforeId="route-progress-tail-done"
+        aheadBeforeId="route-progress-tail-ahead"
+      />
+      <PointLayer id="route-done-cap" coord={start} paint={DONE_CAP_PAINT} beforeId="route-progress-coarse-ahead" />
     </>
   );
 });
@@ -160,15 +233,45 @@ const AltLayer = memo(function AltLayer({ coords, onPress }: { coords: LngLat[] 
   );
 });
 
+// A vastagítás darabonként a sima útvonal vastagságától (t = 0) a teljesig (t = 1) – a végek belesimulnak
+const widthAt = (route: number, full: number) => ['+', route, ['*', full - route, ['get', 't']]];
 const MANEUVER_PAINT: LineLayerSpecification['paint'] = {
   'line-color': theme.fg,
-  'line-width': ['interpolate', ['linear'], ['zoom'], 10, 5, 16, 11, 19, 18],
+  'line-width': ['interpolate', ['linear'], ['zoom'], 10, widthAt(3, 4), 16, widthAt(6, 8.5), 19, widthAt(10, 14)] as never,
 };
+const MANEUVER_FADE_MS = 500;
 
-const ManeuverLayer = memo(function ManeuverLayer({ data }: { data: FeatureCollection<LineString> | null }) {
+/** A következő manőver kiemelése; megjelenéskor és eltűnéskor lágyan (MANEUVER_FADE_MS alatt) áttűnik. */
+const ManeuverLayer = memo(function ManeuverLayer({ data, visible }: { data: TaperedFeatures | null; visible: boolean }) {
+  const want = visible && !!data && data.features.length > 0;
+  // Eltűnés közben még a régi szakasz látszik, amíg el nem halványul
+  const [shown, setShown] = useState<TaperedFeatures | null>(want ? data : null);
+  const [opacity, setOpacity] = useState(want ? 1 : 0);
+  const current = useRef(opacity);
+  current.current = opacity;
+  useEffect(() => {
+    if (want) setShown(data);
+    const from = current.current;
+    const to = want ? 1 : 0;
+    if (from === to) return;
+    const t0 = Date.now();
+    const id = setInterval(() => {
+      const f = Math.min((Date.now() - t0) / MANEUVER_FADE_MS, 1);
+      setOpacity(from + (to - from) * f);
+      if (f >= 1) {
+        clearInterval(id);
+        if (!want) setShown(null);
+      }
+    }, MARKER_TICK_MS);
+    return () => clearInterval(id);
+  }, [want, data]);
+  const paint = useMemo<LineLayerSpecification['paint']>(
+    () => ({ ...MANEUVER_PAINT, 'line-opacity': opacity }),
+    [opacity],
+  );
   return (
-    <GeoJSONSource id="route-maneuvers" data={data ?? EMPTY}>
-      <Layer type="line" id="route-maneuvers" source="route-maneuvers" layout={ROUTE_LAYOUT} paint={MANEUVER_PAINT} />
+    <GeoJSONSource id="route-maneuvers" data={shown ?? EMPTY}>
+      <Layer type="line" id="route-maneuvers" source="route-maneuvers" layout={ROUTE_LAYOUT} paint={paint} />
     </GeoJSONSource>
   );
 });
@@ -188,8 +291,13 @@ const MaskLayer = memo(function MaskLayer({ index, data }: { index: number; data
 });
 
 const ARROW_IMAGES = { 'heading-arrow': require('../../assets/heading-arrow.png') };
+// A nyíl képe 48 pt-os; a jelölő ARROW_SIZE méretű (nagyobb: jobban látszik, és a megtett rész végének apró
+// ingadozását is eltakarja)
+const ARROW_IMAGE_PT = 48;
+const ARROW_SIZE = 68;
 const ARROW_LAYOUT: SymbolLayerSpecification['layout'] = {
   'icon-image': 'heading-arrow',
+  'icon-size': ARROW_SIZE / ARROW_IMAGE_PT,
   'icon-rotate': ['get', 'bearing'],
   'icon-rotation-alignment': 'map',
   'icon-pitch-alignment': 'map',
@@ -239,30 +347,98 @@ const MeLayer = memo(function MeLayer({ coord, heading }: { coord: LngLat | null
   );
 });
 
+// Kb. a MapLibre perspektívája (≈37°-os függőleges látószög) a képernyő magasságához mérten
+const PERSPECTIVE_PER_HEIGHT = 1.5;
+
+/** A saját pozíció a képernyő közepén (követő navigáció); forgatás a rövidebb úton, natív animációval. */
+function CenterArrow({ rotation, durationMs }: { rotation: number; durationMs: number }) {
+  const { height } = useWindowDimensions();
+  const angle = useRef(new Animated.Value(rotation)).current;
+  const last = useRef(rotation);
+  useEffect(() => {
+    const diff = ((rotation - last.current + 540) % 360) - 180;
+    last.current += diff;
+    Animated.timing(angle, { toValue: last.current, duration: durationMs, easing: Easing.linear, useNativeDriver: true }).start();
+  }, [rotation, angle, durationMs]);
+  const rotate = angle.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'], extrapolate: 'extend' });
+  return (
+    <View style={styles.center} pointerEvents="none">
+      <Animated.Image
+        source={ARROW_IMAGES['heading-arrow']}
+        style={[
+          styles.arrow,
+          { transform: [{ perspective: PERSPECTIVE_PER_HEIGHT * height }, { rotateX: `${NAV_PITCH_DEG}deg` }, { rotate }] },
+        ]}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  arrow: { width: ARROW_SIZE, height: ARROW_SIZE },
+});
+
 // A stílus meglévő 'roads-path' rétegét módosítja (azonos id → a MapLibre a meglévő réteget frissíti)
 const PathStyle = memo(function PathStyle({ mode }: { mode: Mode }) {
   const paint = useMemo(() => ({ 'line-opacity': pathOpacity(mode) }), [mode]);
   return <Layer type="line" id={PATH_LAYER_ID} paint={paint} />;
 });
 
-const PointLayer = memo(function PointLayer({ id, coord, paint }: { id: string; coord: LngLat | null; paint: object }) {
+const PointLayer = memo(function PointLayer({ id, coord, paint, beforeId }: { id: string; coord: LngLat | null; paint: object; beforeId?: string }) {
   const data = useMemo(() => (coord ? pointFeature(coord) : EMPTY), [coord]);
   return (
     <GeoJSONSource id={id} data={data}>
-      <Layer type="circle" id={id} source={id} paint={paint as never} />
+      <Layer type="circle" id={id} source={id} beforeId={beforeId} paint={paint as never} />
     </GeoJSONSource>
   );
 });
 
-export function MinimapView({ masks, route, doneRoute, doneToM, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode }: MinimapViewProps) {
+export function MinimapView({ mapRef, masks, route, doneRoute, doneToM, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode, centerArrow, northUp, maneuversVisible, followRoute, followToM }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
   latestCamera.current = camera;
+  const following = !!followRoute;
   useEffect(() => {
-    if (camera && cameraRef.current) applyCameraStop(cameraRef.current, camera);
+    // Útvonalkövetés közben a kamerát a követés vezeti; utána a stop azonnal újra érvényes
+    if (camera && cameraRef.current && !following) applyCameraStop(cameraRef.current, camera);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cameraKey, recenterNonce]);
+  }, [cameraKey, recenterNonce, following]);
+
+  // Útvonalkövetés: új célpontnál a mostani (csúszó) helyzettől indul tovább, rövid lépésekben az útvonal mentén
+  const glide = useRef<AlongGlide | null>(null);
+  const [followBearing, setFollowBearing] = useState(0);
+  useEffect(() => {
+    if (!followRoute) {
+      glide.current = null;
+      return;
+    }
+    const now = Date.now();
+    const prev = glide.current;
+    const fromM = prev && prev.route === followRoute ? alongAt(prev, now) : followToM;
+    glide.current = {
+      route: followRoute,
+      fromM: Math.abs(followToM - fromM) > MARKER_MAX_GLIDE_M ? followToM : fromM,
+      toM: followToM,
+      t0: now,
+    };
+    // true, ha a csúszás végére ért
+    const step = () => {
+      const g = glide.current;
+      if (!g || !cameraRef.current) return true;
+      const t = Date.now() + FOLLOW_EASE_MS;
+      const { stop, bearing } = routeFollowStep(g.route, alongAt(g, t), northUp);
+      applyCameraStop(cameraRef.current, stop);
+      if (northUp) setFollowBearing(bearing);
+      return t - g.t0 >= NAV_CAMERA_MS;
+    };
+    if (step()) return;
+    const id = setInterval(() => {
+      if (step()) clearInterval(id);
+    }, FOLLOW_TICK_MS);
+    return () => clearInterval(id);
+  }, [followRoute, followToM, northUp]);
   const lastCenter = useRef<LngLat | null>(null);
   useEffect(() => {
     if (northNonce > 0 && lastCenter.current) {
@@ -279,37 +455,47 @@ export function MinimapView({ masks, route, doneRoute, doneToM, alt, onSelectAlt
   };
 
   return (
-    <Map
-      style={StyleSheet.absoluteFill}
-      mapStyle={mapStyle}
-      attribution={false}
-      logo={false}
-      compass={false}
-      scaleBar={false}
-      touchPitch={false}
-      preferredFramesPerSecond={config.mapFps}
-      onDidFinishLoadingMap={onMapLoaded}
-      onPress={() => Keyboard.dismiss()}
-      onLongPress={(e) => onLongPress(e.nativeEvent.lngLat)}
-      onRegionWillChange={(e) => {
-        if (e.nativeEvent.userInteraction) onUserPan();
-      }}
-      onRegionIsChanging={(e) => onRegion(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
-      onRegionDidChange={(e) => onRegion(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
-    >
-      <Camera ref={cameraRef} />
-      <Images images={ARROW_IMAGES} />
-      <PathStyle mode={mode} />
-      <RouteLayer coords={route} />
-      <DoneLayers route={doneRoute} toM={doneToM} />
-      <ManeuverLayer data={maneuvers} />
-      {masks.map((m, i) => (
-        <MaskLayer key={`mask-${i}`} index={i} data={m} />
-      ))}
-      {/* A maszkok UTÁN kerül fel (beforeId=route): a maszkok fölött, a kiválasztott útvonal alatt – nem takarja semmi */}
-      <AltLayer coords={alt} onPress={onSelectAlt} />
-      <PointLayer id="dest" coord={dest} paint={DEST_PAINT} />
-      <MeLayer coord={pos} heading={heading} />
-    </Map>
+    <>
+      <Map
+        ref={mapRef}
+        style={StyleSheet.absoluteFill}
+        mapStyle={mapStyle}
+        attribution={false}
+        logo={false}
+        compass={false}
+        scaleBar={false}
+        touchPitch={false}
+        preferredFramesPerSecond={config.mapFps}
+        onDidFinishLoadingMap={onMapLoaded}
+        onPress={() => Keyboard.dismiss()}
+        onLongPress={(e) => onLongPress(e.nativeEvent.lngLat)}
+        onRegionWillChange={(e) => {
+          if (e.nativeEvent.userInteraction) onUserPan();
+        }}
+        onRegionIsChanging={(e) => onRegion(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
+        onRegionDidChange={(e) => onRegion(e.nativeEvent.center, e.nativeEvent.zoom, e.nativeEvent.bearing)}
+      >
+        <Camera ref={cameraRef} />
+        <Images images={ARROW_IMAGES} />
+        <PathStyle mode={mode} />
+        <RouteLayer coords={route} />
+        <DoneLayers route={doneRoute} toM={doneToM} />
+        <ManeuverLayer data={maneuvers} visible={maneuversVisible} />
+        {masks.map((m, i) => (
+          <MaskLayer key={`mask-${i}`} index={i} data={m} />
+        ))}
+        {/* A maszkok UTÁN kerül fel (beforeId=route): a maszkok fölött, a kiválasztott útvonal alatt – nem takarja semmi */}
+        <AltLayer coords={alt} onPress={onSelectAlt} />
+        <PointLayer id="dest" coord={dest} paint={DEST_PAINT} />
+        <MeLayer coord={centerArrow ? null : pos} heading={heading} />
+      </Map>
+      {/* A dőlés miatt a nyíl ugyanúgy „fekszik” a térképen, mint a térképi jelölő */}
+      {centerArrow && (
+        <CenterArrow
+          rotation={northUp ? (following ? followBearing : (heading ?? 0)) : 0}
+          durationMs={following ? FOLLOW_EASE_MS : NAV_CAMERA_MS}
+        />
+      )}
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import type { FeatureCollection, LineString } from 'geojson';
 import type { LngLat, Route, Step } from '../types';
+import { haversineM } from './geo';
 
 const REAL_KINDS = new Set([
   'turn',
@@ -24,7 +25,7 @@ export function isRealManeuver(step: Step): boolean {
 }
 
 /** Az útvonal pontja a d távolságnál (m), lineáris interpolációval. */
-function pointAt(route: Route, d: number, i: number): LngLat {
+function pointAt(route: Pick<Route, 'coords' | 'cumDistM'>, d: number, i: number): LngLat {
   const { coords, cumDistM } = route;
   const seg = cumDistM[i + 1] - cumDistM[i];
   const t = seg > 0 ? (d - cumDistM[i]) / seg : 0;
@@ -32,7 +33,7 @@ function pointAt(route: Route, d: number, i: number): LngLat {
 }
 
 /** Az útvonal from..to (m) közötti része, a végpontokon interpolálva. */
-export function routeSlice(route: Route, from: number, to: number): LngLat[] {
+export function routeSlice(route: Pick<Route, 'coords' | 'cumDistM'>, from: number, to: number): LngLat[] {
   const { coords, cumDistM } = route;
   const out: LngLat[] = [];
   for (let i = 0; i < coords.length - 1; i++) {
@@ -84,4 +85,33 @@ export function nextManeuverSegment(
     type: 'FeatureCollection',
     features: st && isRealManeuver(st) ? segmentFor(route, st, beforeM, afterM) : [],
   };
+}
+
+/** A vastagítás egy darabja; t: 0 = a sima útvonal vastagsága, 1 = teljes vastagítás. */
+export type TaperedFeatures = FeatureCollection<LineString, { t: number }>;
+
+/**
+ * A szakaszok két végét `steps` lépcsőben, `taperM` hosszon a sima útvonal vastagságáig vékonyítja, így a
+ * vastagítás belesimul a vékony vonalba. Rövid szakasznál a vékonyítás arányosan rövidül.
+ */
+export function taperedSegment(fc: FeatureCollection<LineString>, taperM: number, steps: number): TaperedFeatures {
+  const features: TaperedFeatures['features'] = [];
+  for (const f of fc.features) {
+    const coords = f.geometry.coordinates as LngLat[];
+    if (coords.length < 2) continue;
+    const cumDistM = [0];
+    for (let i = 1; i < coords.length; i++) cumDistM.push(cumDistM[i - 1] + haversineM(coords[i - 1], coords[i]));
+    const line = { coords, cumDistM };
+    const len = cumDistM[cumDistM.length - 1];
+    const taper = Math.min(taperM, len / 2);
+    const step = taper / steps;
+    const piece = (from: number, to: number, t: number) => {
+      const c = routeSlice(line, from, to);
+      if (c.length > 1) features.push({ type: 'Feature', properties: { t }, geometry: { type: 'LineString', coordinates: c } });
+    };
+    for (let k = 0; k < steps; k++) piece(k * step, (k + 1) * step, (k + 0.5) / steps);
+    piece(taper, len - taper, 1);
+    for (let k = steps - 1; k >= 0; k--) piece(len - (k + 1) * step, len - k * step, (k + 0.5) / steps);
+  }
+  return { type: 'FeatureCollection', features };
 }

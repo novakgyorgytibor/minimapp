@@ -16,6 +16,6 @@ export function Speed({ mps }: { mps: number | null }) {
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
-  value: { color: theme.fg, fontSize: 26, fontWeight: '300', fontVariant: ['tabular-nums'] },
-  unit: { color: theme.dim, fontSize: 11, marginTop: -2 },
+  value: { color: theme.fg, fontSize: 34, fontWeight: '400', fontVariant: ['tabular-nums'] },
+  unit: { color: theme.dim, fontSize: 13, marginTop: -3 },
 });

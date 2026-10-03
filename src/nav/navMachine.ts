@@ -2,6 +2,8 @@ import { config } from '../config';
 import type { RouteErrorKind } from '../services/route';
 import type { LngLat, Mode, Route, RoutePref } from '../types';
 import { haversineM } from './geo';
+import { angleDiff } from './heading';
+import { routeBearingAt } from './predict';
 import { snap, type Progress } from './progress';
 
 export type { RoutePref };
@@ -45,8 +47,11 @@ export type NavEvent =
   | { type: 'ROUTE_FAIL'; error: RouteErrorKind; requestId: number }
   | { type: 'RETRY' }
   | { type: 'START' }
-  /** pos: simított (megjelenítés, haladás); raw: a nyers mérés, ha elég pontos (a letérés gyorsabb észleléséhez). */
-  | { type: 'POSITION'; pos: LngLat; raw?: LngLat | null; now: number }
+  /**
+   * pos: simított (megjelenítés, haladás); raw: a nyers mérés, ha elég pontos (a letérés gyorsabb észleléséhez);
+   * course: a GPS menetirány (fok), csak haladás közben (offRouteHeadingMinSpeedMps felett), különben null.
+   */
+  | { type: 'POSITION'; pos: LngLat; raw?: LngLat | null; course?: number | null; now: number }
   | { type: 'CANCEL' };
 
 export function initialNavState(mode: Mode = 'auto'): NavState {
@@ -75,19 +80,33 @@ export function otherPref(p: RoutePref): RoutePref {
   return p === 'fast' ? 'short' : 'fast';
 }
 
+// Érkezéskor legfeljebb ennyiszer arrivalM lehet hátra az útvonalon (a cél lehet kicsit az úton kívül is)
+const ARRIVAL_REMAINING_FACTOR = 3;
+// Az útvonal iránya ekkora szakaszon nézve (egy töréspontnál ne ugorjon)
+const BEARING_WINDOW_M = 20;
+
 const request = (s: NavState): NavState => ({ ...s, loading: true, error: null, requestId: s.requestId + 1 });
 
-function onPosition(s: NavState, pos: LngLat, raw: LngLat | null, now: number): NavState {
+function onPosition(s: NavState, pos: LngLat, raw: LngLat | null, course: number | null, now: number): NavState {
   if ((s.phase !== 'navigating' && s.phase !== 'rerouting') || !s.route) return s;
   const route = s.route;
-  const progress = snap(pos, route);
-  if (haversineM(pos, route.coords[route.coords.length - 1]) <= config.arrivalM) {
+  // Az előző illesztés folytatása: oda-vissza ugyanazon az úton a visszaúton is a visszaútra illesztünk
+  const hint = s.progress ? { alongM: s.progress.distAlongM, pos: s.progress.snappedPos } : undefined;
+  const progress = snap(pos, route, hint);
+  // Az útvonal mentén is a végén kell lennünk: oda-vissza útvonalnál az odaúton elhaladva a cél mellett még nem értünk oda
+  const nearEnd = haversineM(pos, route.coords[route.coords.length - 1]) <= config.arrivalM;
+  if (nearEnd && progress.remainingM <= ARRIVAL_REMAINING_FACTOR * config.arrivalM) {
     return { ...s, phase: 'arrived', progress, loading: false };
   }
   if (s.phase === 'rerouting') return { ...s, progress };
 
   const distFromRouteM = raw ? snap(raw, route).distFromRouteM : progress.distFromRouteM;
-  const offRoute = distFromRouteM > config.offRouteM[s.mode];
+  // Rossz kanyar: a menetirány keresztben áll az útvonal ELŐTTÜNK lévő irányához képest → kisebb eltérés is elég.
+  // (Egy kihagyott kanyar után a legközelebbi pont a sarok marad; ott a középre vett irány félúton lenne.)
+  const aheadBearing = routeBearingAt(route, progress.distAlongM + BEARING_WINDOW_M / 2, BEARING_WINDOW_M);
+  const across = course !== null && angleDiff(course, aheadBearing) > config.offRouteHeadingDeg;
+  const offRoute =
+    distFromRouteM > config.offRouteM[s.mode] || (across && distFromRouteM > config.offRouteHeadingM[s.mode]);
   const offRouteCount = offRoute ? s.offRouteCount + 1 : 0;
   // Visszafelé: az útvonalon maradunk, de egyre távolodunk a legtávolabbi elért ponttól (megfordultunk)
   const maxAlongM = offRoute ? s.maxAlongM : Math.max(s.maxAlongM, progress.distAlongM);
@@ -141,7 +160,7 @@ export function navReducer(s: NavState, e: NavEvent): NavState {
       if (s.phase !== 'preview' || !s.route || s.loading) return s;
       return { ...s, phase: 'navigating', alt: null, altPref: null, progress: null, offRouteCount: 0, maxAlongM: 0, wrongWayCount: 0, error: null };
     case 'POSITION':
-      return onPosition(s, e.pos, e.raw ?? null, e.now);
+      return onPosition(s, e.pos, e.raw ?? null, e.course ?? null, e.now);
     case 'CANCEL':
       return { ...initialNavState(s.mode), requestId: s.requestId + 1 };
   }

@@ -1,6 +1,6 @@
 import { buildRoute } from '../services/route';
 import { haversineM } from './geo';
-import { offsetPoint, pointAlong, predictAlongM, predictPos } from './predict';
+import { coastLeadS, offsetPoint, pointAlong, predictAlongM, predictPos, routeBearingAt, nextAlongTarget } from './predict';
 
 // Kelet felé, majd észak felé forduló útvonal
 const route = buildRoute([[19, 47.5], [19.01, 47.5], [19.01, 47.51]], 600, []);
@@ -50,4 +50,59 @@ test('predictAlongM leads by speed × time, clamps to the destination, and does 
   expect(predictAlongM(route, route.distanceM - 5, 25, 1.2)).toBe(route.distanceM);
   expect(predictAlongM(route, 100, 0, 1.2)).toBe(100);
   expect(predictAlongM(route, 100, null, 1.2)).toBe(100);
+});
+
+test('coastLeadS: one glide ahead, plus one step per late fix', () => {
+  expect(coastLeadS(0, 1200, 1100)).toBeCloseTo(1.2);
+  expect(coastLeadS(1, 1200, 1100)).toBeCloseTo(2.3);
+  expect(coastLeadS(2, 1200, 1100)).toBeCloseTo(3.4);
+});
+
+describe('routeBearingAt', () => {
+  test('along a straight leg it is the direction of the leg', () => {
+    expect(routeBearingAt(route, leg1 / 2, 10)).toBeCloseTo(90, 0);
+    expect(routeBearingAt(route, leg1 + 200, 10)).toBeCloseTo(0, 0);
+  });
+
+  test('at the corner it is halfway, and it turns only within the window around it', () => {
+    expect(routeBearingAt(route, leg1, 10)).toBeCloseTo(45, 0);
+    expect(routeBearingAt(route, leg1 - 6, 10)).toBeCloseTo(90, 0);
+    expect(routeBearingAt(route, leg1 + 6, 10)).toBeCloseTo(0, 0);
+  });
+
+  test('at the ends of the route it uses the first / last leg', () => {
+    expect(routeBearingAt(route, 0, 10)).toBeCloseTo(90, 0);
+    expect(routeBearingAt(route, route.distanceM, 10)).toBeCloseTo(0, 0);
+  });
+});
+
+describe('nextAlongTarget', () => {
+  const base = { speedMps: 30, leadS: 1.2, gain: 0.5, resetM: 300, maxM: 10_000 };
+
+  test('on track: keeps going at the measured speed', () => {
+    expect(nextAlongTarget({ ...base, fromM: 1000, measuredM: 1000 })).toBeCloseTo(1036);
+  });
+
+  test('GPS noise: only half of the deviation is applied', () => {
+    expect(nextAlongTarget({ ...base, fromM: 1000, measuredM: 1006 })).toBeCloseTo(1039);
+    expect(nextAlongTarget({ ...base, fromM: 1000, measuredM: 994 })).toBeCloseTo(1033);
+  });
+
+  test('a steady offset is closed step by step', () => {
+    let from = 1000;
+    let truth = 1020;
+    for (let i = 0; i < 6; i++) {
+      // a csúszás 1 s múlva tart ott, ahol a cél felé jár (cél 1,2 s-ra)
+      const to = nextAlongTarget({ ...base, fromM: from, measuredM: truth });
+      from += (to - from) / 1.2;
+      truth += 30;
+    }
+    expect(Math.abs(truth - from)).toBeLessThan(2);
+  });
+
+  test('slow → the measured position; huge jump → no smoothing; clamped to the route', () => {
+    expect(nextAlongTarget({ ...base, speedMps: 1, fromM: 1000, measuredM: 1004 })).toBe(1004);
+    expect(nextAlongTarget({ ...base, fromM: 1000, measuredM: 2000 })).toBeCloseTo(2036);
+    expect(nextAlongTarget({ ...base, fromM: 9990, measuredM: 9995 })).toBe(10_000);
+  });
 });

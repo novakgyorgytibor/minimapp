@@ -40,11 +40,17 @@ export const config = {
   maskFractions: FADE.fractions,
   maskOpacities: FADE.opacities,
   idleFadeScreenFraction: 0.5,
-  corridorFadeScreenFraction: 0.3,
+  // Autóval kicsit szélesebb a látható sáv az útvonal körül: gyorsabban haladva több kell a környezetből
+  corridorFadeScreenFraction: { auto: 0.36, bicycle: 0.3, pedestrian: 0.3 } as Record<Mode, number>,
 
   // Gyalog lassú a haladás, és egy rossz utca/oldal is gyorsan számít → kisebb küszöb, kevesebb minta, gyakoribb újratervezés
   offRouteM: { auto: 40, bicycle: 40, pedestrian: 15 } as Record<Mode, number>,
-  offRouteSamples: { auto: 3, bicycle: 3, pedestrian: 2 } as Record<Mode, number>,
+  offRouteSamples: { auto: 2, bicycle: 3, pedestrian: 2 } as Record<Mode, number>,
+  // Rossz kanyar gyorsabb észlelése: ha a menetirány ennél jobban eltér az útvonal irányától, már ennyi méter
+  // eltérés is letérésnek számít (a menetirány csak haladás közben megbízható; gyalog nem használjuk)
+  offRouteHeadingM: { auto: 20, bicycle: 20, pedestrian: Infinity } as Record<Mode, number>,
+  offRouteHeadingDeg: 35,
+  offRouteHeadingMinSpeedMps: 3,
   // Visszafelé haladás (rossz helyen megfordultunk, de még az útvonalon vagyunk): ennyit mentünk vissza a legtávolabbi
   // elért ponthoz képest, és ennyi mérésen át egyre hátrébb kerültünk → újratervezés. A GPS-zaj álló helyzetben pár méter;
   // ha az útvonal közel halad el önmaga mellett, az illesztés egyszer visszaugorhat, de utána nem „hátrál” tovább.

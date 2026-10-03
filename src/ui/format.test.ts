@@ -1,4 +1,4 @@
-import { formatClock, formatDistance, formatDuration, formatSpeedKmh } from './format';
+import { formatClock, formatDistance, formatDuration, formatSpeedKmh, maneuverDistanceShown } from './format';
 
 test.each([
   [0, '0 m'],
@@ -58,4 +58,21 @@ describe('formatSpeedKmh', () => {
     expect(formatSpeedKmh(null)).toBeNull();
     expect(formatSpeedKmh(-1)).toBeNull();
   });
+});
+
+test.each([
+  [5000, 5000],
+  [1000, 1000],
+  [999, 979],
+  [120, 100],
+  [30, 10],
+  [20, 0],
+  [12, 0],
+])('maneuverDistanceShown(%p) = %p', (m, out) => {
+  expect(maneuverDistanceShown(m)).toBe(out);
+});
+
+test('az utolsó ~25 m-en már 0 m látszik', () => {
+  expect(formatDistance(maneuverDistanceShown(24))).toBe('0 m');
+  expect(formatDistance(maneuverDistanceShown(26))).toBe('10 m');
 });

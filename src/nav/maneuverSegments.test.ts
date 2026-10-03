@@ -1,6 +1,6 @@
 import { buildRoute } from '../services/route';
 import type { LngLat } from '../types';
-import { isRealManeuver, maneuverSegments, nextManeuverSegment } from './maneuverSegments';
+import { isRealManeuver, maneuverSegments, nextManeuverSegment, taperedSegment } from './maneuverSegments';
 
 // Kelet felé 21 pont, ~7.5 m lépésekkel (0.0001° lon 47.5°-on), összesen ~150 m
 const coords: LngLat[] = Array.from({ length: 21 }, (_, i) => [19 + i * 0.0001, 47.5]);
@@ -60,5 +60,40 @@ describe('highlight disappears when close to the maneuver', () => {
   });
   test('hidden within 100 m', () => {
     expect(nextManeuverSegment(route, 2, 30, 30, { distToManeuverM: 99, hideWithinM: 100 }).features).toEqual([]);
+  });
+});
+
+describe('taperedSegment', () => {
+  const lenM = (l: LngLat[]) => (l[l.length - 1][0] - l[0][0]) * 75_120;
+
+  test('both ends step down towards the thin route, the middle is full width', () => {
+    const fc = taperedSegment(nextManeuverSegment(route, 2, 30, 30), 12, 6);
+    // 6 lépcső mindkét végén + a közép
+    expect(fc.features).toHaveLength(13);
+    const t = fc.features.map((f) => f.properties.t);
+    expect(t[6]).toBe(1);
+    // kifelé egyre vékonyabb, szimmetrikusan
+    for (let i = 0; i < 6; i++) {
+      expect(t[i]).toBeLessThan(t[i + 1]);
+      expect(t[12 - i]).toBeCloseTo(t[i], 6);
+    }
+    expect(t[0]).toBeLessThan(0.15);
+    // a darabok együtt a teljes szakaszt fedik, a végeken 2 m-es lépcsőkkel
+    expect(lenM(fc.features[0].geometry.coordinates as LngLat[])).toBeCloseTo(2, 0);
+    expect(lenM(fc.features[6].geometry.coordinates as LngLat[])).toBeCloseTo(36, -1);
+    const first = fc.features[0].geometry.coordinates[0];
+    const last = fc.features[12].geometry.coordinates.at(-1)!;
+    expect((last[0] - first[0]) * 75_120).toBeCloseTo(60, -1);
+  });
+
+  test('a segment shorter than both tapers shrinks the tapers to fit', () => {
+    const fc = taperedSegment(nextManeuverSegment(route, 2, 5, 5), 12, 6);
+    const total = fc.features.reduce((n, f) => n + lenM(f.geometry.coordinates as LngLat[]), 0);
+    expect(total).toBeCloseTo(10, 0);
+    expect(Math.max(...fc.features.map((f) => f.properties.t))).toBe(1);
+  });
+
+  test('empty in, empty out', () => {
+    expect(taperedSegment(nextManeuverSegment(route, 1, 30, 30), 12, 6).features).toEqual([]);
   });
 });

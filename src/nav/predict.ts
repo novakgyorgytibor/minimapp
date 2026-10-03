@@ -56,3 +56,53 @@ export function predictAlongM(route: Route, distAlongM: number, speedMps: number
   if (v < config.courseMinSpeedMps) return distAlongM;
   return Math.min(distAlongM + v * leadS, route.distanceM);
 }
+
+/**
+ * Mennyivel előre becsüljünk (s): a csúszás végére (cameraMs), és ha a következő mérés késik, minden
+ * továbblépéskor (stepMs után) még egy csúszásnyival – így a jelölő és a kamera mérés nélkül is halad tovább.
+ */
+export function coastLeadS(steps: number, cameraMs: number, stepMs: number): number {
+  return (cameraMs + steps * stepMs) / 1000;
+}
+
+/**
+ * Az útvonal iránya (fok, észak = 0, óramutató szerint) a d távolságnál: a d körüli windowM hosszú szakasz két
+ * végpontja közötti irány. Így egy töréspontnál nem ugrik, hanem a töréspont előtti/utáni windowM/2-n át fordul.
+ */
+export function routeBearingAt(route: Route, d: number, windowM: number): number {
+  const half = windowM / 2;
+  const from = Math.min(Math.max(d - half, 0), Math.max(route.distanceM - windowM, 0));
+  const a = pointAlong(route, from);
+  const b = pointAlong(route, Math.min(from + windowM, route.distanceM));
+  const dx = (b[0] - a[0]) * Math.cos((a[1] * Math.PI) / 180);
+  const dy = b[1] - a[1];
+  return ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360;
+}
+
+export interface AlongTargetInput {
+  /** A kamera/jelölő mostani (csúszó) helyzete az útvonalon (m). */
+  fromM: number;
+  /** A mért helyzet most (m): a legutóbbi illesztés, a mérés óta eltelt idővel előrebecsülve. */
+  measuredM: number;
+  speedMps: number | null;
+  leadS: number;
+  /** A mért helyzettől való eltérés ekkora részét hozza be egy lépésben (0..1). */
+  gain: number;
+  /** Ennél nagyobb eltérésnél nincs simítás, a mért helyzetből indul. */
+  resetM: number;
+  maxM: number;
+}
+
+/**
+ * Útvonalon a következő csúszás célja (megtett táv). A mostani helyzetből a mért sebességgel halad tovább, és a mért
+ * helyzettől való eltérésnek csak a `gain`-ed részét hozza be: a GPS-pozíció másodpercenkénti zaja (pár méter előre-
+ * hátra) így nem rángatja a kamera sebességét, csak a sebesség (ami a GPS-ben sokkal simább) határozza meg.
+ * Lassan (ahol a sebesség megbízhatatlan) vagy nagy eltérésnél a mért helyzet a cél.
+ */
+export function nextAlongTarget({ fromM, measuredM, speedMps, leadS, gain, resetM, maxM }: AlongTargetInput): number {
+  const v = speedMps ?? 0;
+  const clamp = (m: number) => Math.min(Math.max(m, 0), maxM);
+  if (v < config.courseMinSpeedMps) return clamp(measuredM);
+  if (Math.abs(measuredM - fromM) > resetM) return clamp(measuredM + v * leadS);
+  return clamp(fromM + v * leadS + gain * (measuredM - fromM));
+}

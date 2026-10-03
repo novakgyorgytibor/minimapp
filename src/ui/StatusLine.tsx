@@ -11,8 +11,26 @@ const MESSAGES: Record<RouteErrorKind, StringKey> = {
   'no-position': 'errNoPosition',
 };
 
-export function StatusLine({ error, loading, onRetry }: { error: RouteErrorKind | null; loading: boolean; onRetry: () => void }) {
+/**
+ * cameraAhead: traffipax előttünk (ez a legfontosabb, mindent megelőz);
+ * rerouting: navigáció közben letértünk, új útvonalat kérünk → „Újratervezés…”
+ */
+export function StatusLine({
+  cameraAhead,
+  error,
+  loading,
+  rerouting,
+  onRetry,
+}: {
+  cameraAhead: boolean;
+  error: RouteErrorKind | null;
+  loading: boolean;
+  rerouting: boolean;
+  onRetry: () => void;
+}) {
   const { t } = useLang();
+  if (cameraAhead) return <Text style={styles.text}>{t('cameraAhead')}</Text>;
+  if (rerouting) return <Text style={styles.text}>{t('rerouting')}</Text>;
   if (loading) return <Text style={styles.text}>{t('findingRoute')}</Text>;
   if (!error) return null;
   const retryable = error !== 'no-route';

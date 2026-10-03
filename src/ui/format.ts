@@ -8,6 +8,14 @@ export function formatDistance(m: number, lang: Lang = 'en'): string {
   return `${Math.round(km)} km`;
 }
 
+/** 1 km alatt a kanyarig hátralévő táv ennyivel kevesebbnek látszik: az utolsó métereken már „0 m” → legyen idő reagálni. */
+export const MANEUVER_LEAD_M = 20;
+
+/** A manőverig kijelzett táv (m): 1 km alatt MANEUVER_LEAD_M-rel kevesebb (legalább 0). */
+export function maneuverDistanceShown(m: number): number {
+  return m < 1000 ? Math.max(0, m - MANEUVER_LEAD_M) : m;
+}
+
 export function formatDuration(s: number, lang: Lang = 'en'): string {
   const min = Math.round(s / 60);
   const [minU, hU, mU] = lang === 'hu' ? ['perc', 'ó', 'p'] : ['min', 'h', 'min'];

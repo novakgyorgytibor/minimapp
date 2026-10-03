@@ -4,19 +4,26 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { Image, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { config } from './src/config';
+import type { CameraStop, MapRef } from '@maplibre/maplibre-react-native';
 import { useLocation } from './src/hooks/useLocation';
+import { useRoadSnap } from './src/hooks/useRoadSnap';
+import { useSpeedCameras } from './src/hooks/useSpeedCameras';
 import { useSpeedLimit } from './src/hooks/useSpeedLimit';
 import { isSpeeding, speedLimitVisible } from './src/services/speedLimit';
-import { cameraFor, maskMode, NAV_CAMERA_MS } from './src/map/camera';
+import { alongAt, cameraFor, maskMode, NAV_CAMERA_MS, type AlongGlide } from './src/map/camera';
+import { MARKER_MAX_GLIDE_M } from './src/map/markerAnim';
 import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
 import { buildMasks, fullMasks, type MaskGeometry } from './src/nav/corridor';
 import { nextAnchor } from './src/nav/anchor';
 import { parseDevLink } from './src/nav/devLink';
-import { nextManeuverSegment } from './src/nav/maneuverSegments';
-import { predictAlongM, predictPos } from './src/nav/predict';
+import { nextManeuverSegment, taperedSegment } from './src/nav/maneuverSegments';
+import { coastLeadS, nextAlongTarget, pointAlong, predictAlongM, predictPos } from './src/nav/predict';
 import { rollingAwakeUntil } from './src/nav/power';
+import { rollingPose } from './src/nav/roadSnap';
+import { camerasOnRoute, nextCamera } from './src/nav/speedCameras';
 import { angleDiff } from './src/nav/heading';
+import { nearestOnRoute } from './src/nav/progress';
 import { initialNavState, navReducer, otherPref } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
 import { getRoute, needsTollFree, RouteError, sameRoute } from './src/services/route';
@@ -36,11 +43,28 @@ import { PermissionScreen } from './src/ui/PermissionScreen';
 import { SearchBar } from './src/ui/SearchBar';
 import { Speed } from './src/ui/Speed';
 import { SpeedLimitSign } from './src/ui/SpeedLimitSign';
+import { CameraGlow } from './src/ui/CameraGlow';
 import { StatusLine } from './src/ui/StatusLine';
 import { TripFooter } from './src/ui/TripFooter';
 
 const NO_POSITION_MASKS = fullMasks(config.maskFractions);
-const MANEUVER_HIDE_WITHIN_M = 100;
+const MANEUVER_HIDE_WITHIN_M = 50;
+// A vastagítás végei ennyi hosszon, ennyi lépcsőben vékonyodnak a sima útvonal vastagságáig
+const MANEUVER_TAPER_M = 15;
+const MANEUVER_TAPER_STEPS = 16;
+// Késő GPS-mérésnél ennyi idő után lép tovább a becslés (kicsit a csúszás vége előtt), legfeljebb ennyiszer
+const COAST_STEP_MS = NAV_CAMERA_MS - 100;
+const MAX_COAST_STEPS = 2;
+// Útvonalon a mért helyzettől való eltérés ekkora részét hozza be a kamera mérésenként (a többit a sebesség viszi)
+const ALONG_GAIN = 0.5;
+// ◎ / ✕ után ennyi idő alatt áll vissza a kamera a jelölőre
+const RECENTER_MS = 500;
+
+/** ◎ után a követő (középpontos) kamera gyorsan, lágyan áll vissza; az előnézet (bbox) marad a sajátjával. */
+function withRecenter(stop: CameraStop | null, recentering: boolean): CameraStop | null {
+  if (!stop || !recentering || !('center' in stop)) return stop;
+  return { ...stop, duration: RECENTER_MS, easing: 'ease' };
+}
 
 export default function App() {
   return (
@@ -59,13 +83,19 @@ function Main() {
   const { lang, t } = useLang();
   const [s, dispatch] = useReducer(navReducer, undefined, () => initialNavState());
   const navigatingish = s.phase === 'navigating' || s.phase === 'rerouting' || s.phase === 'arrived';
-  // Akkukímélés: nagy GPS-pontosság csak navigáció közben
-  const loc = useLocation(navigatingish);
-  // Sebességkorlát-tábla: autós módban navigáció közben, vagy 5 km/h felett útvonal nélkül is
-  const speedLimit = useSpeedLimit(
-    loc.pos,
-    speedLimitVisible({ mode: s.mode, navigating: s.phase === 'navigating' || s.phase === 'rerouting', speedMps: loc.speed }),
-  );
+  // Útvonal nélkül is „haladunk”, ha 5 km/h felett mentünk (és még utána egy ideig) – lásd lent
+  const rollingUntil = useRef(0);
+  const [rollingAwake, setRollingAwake] = useState(false);
+  // Akkukímélés: nagy GPS-pontosság csak navigáció közben, vagy útvonal nélkül haladva (a követő kamerához)
+  const loc = useLocation(navigatingish || rollingAwake);
+  // Sebességkorlát-tábla és traffipax: autós módban navigáció közben, vagy 5 km/h felett útvonal nélkül is
+  const roadSignsVisible = speedLimitVisible({
+    mode: s.mode,
+    navigating: s.phase === 'navigating' || s.phase === 'rerouting',
+    speedMps: loc.speed,
+  });
+  const speedLimit = useSpeedLimit(loc.pos, roadSignsVisible);
+  const speedCameras = useSpeedCameras();
   const [follow, setFollow] = useState(true);
   const { favorites, toggle: toggleFavorite } = useFavorites();
   // A kiválasztott hely második sora (város, utca) – kedvencnek jelöléskor ezt is elmentjük
@@ -78,7 +108,9 @@ function Main() {
 
   // GPS → állapotgép: minden mérésre (a simított pozíció nem mindig változik, a nyers igen)
   useEffect(() => {
-    if (loc.pos) dispatch({ type: 'POSITION', pos: loc.pos, raw: loc.fix?.raw, now: Date.now() });
+    if (!loc.pos) return;
+    const course = loc.speed !== null && loc.speed > config.offRouteHeadingMinSpeedMps ? loc.heading : null;
+    dispatch({ type: 'POSITION', pos: loc.pos, raw: loc.fix?.raw, course, now: Date.now() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc.fix]);
 
@@ -155,8 +187,6 @@ function Main() {
 
   // Útvonal nélkül is ébren marad a képernyő, ha 5 km/h felett haladunk (a telefon ki van rakva az autóban);
   // megállás után még ROLLING_KEEP_AWAKE_MS-ig (piros lámpa, dugó), utána a rendszer elsötétítheti.
-  const rollingUntil = useRef(0);
-  const [rollingAwake, setRollingAwake] = useState(false);
   useEffect(() => {
     const now = Date.now();
     rollingUntil.current = rollingAwakeUntil(rollingUntil.current, loc.speed, now);
@@ -184,13 +214,27 @@ function Main() {
   const recenter = () => {
     setFollow(true);
     setRecenterNonce((n) => n + 1);
+    startRecentering();
   };
+  // ◎ után a kamera gyorsan (RECENTER_MS alatt) áll vissza, és a középső nyíl is ennyi után jelenik meg – különben
+  // a lassú, egyenletes visszacsúszás alatt a jelölő a képernyőn kívül lenne, és a nyíl másodpercekre eltűnne
+  const [recentering, setRecentering] = useState(false);
+  const recenterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startRecentering = () => {
+    setRecentering(true);
+    if (recenterTimer.current) clearTimeout(recenterTimer.current);
+    recenterTimer.current = setTimeout(() => setRecentering(false), RECENTER_MS);
+  };
+  useEffect(() => () => {
+    if (recenterTimer.current) clearTimeout(recenterTimer.current);
+  }, []);
   // ✕ / Mégse: vissza a jelenlegi pozícióra, akkor is, ha a kamera célja nem változott
   const [recenterNonce, setRecenterNonce] = useState(0);
   const cancelTo = (type: 'CANCEL' | 'CLOSE_SEARCH') => {
     dispatch({ type });
     setFollow(true);
     setRecenterNonce((n) => n + 1);
+    startRecentering();
   };
 
   // Fázisváltáskor a kamera újra követ
@@ -229,7 +273,7 @@ function Main() {
   // Külön memo: a (drágább) útvonal-maszk ne számolódjon újra, ha csak az idle nézet mozdul
   const routeMasks = useMemo(() => {
     if (!s.route) return [];
-    const radii = radiiFor(config.corridorFadeScreenFraction * widthM, config.maskFractions);
+    const radii = radiiFor(config.corridorFadeScreenFraction[s.mode] * widthM, config.maskFractions);
     // A képernyő átlója (forgatás, döntés miatt bőven) + a legnagyobb sugár
     const half = (Math.hypot(screenW, screenH) / screenW) * widthM + radii[radii.length - 1];
     const clip = clipCenter ? viewBbox(clipCenter, half) : undefined;
@@ -240,7 +284,7 @@ function Main() {
       : { type: 'LineString', coords: s.route.coords };
     return buildMasks(geom, radii, { clip });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s.route, s.alt, s.phase, zoomB, clipCenter]);
+  }, [s.route, s.alt, s.phase, s.mode, zoomB, clipCenter]);
   // Útvonal nélkül: kör a képernyő közepe körül (húzáskor vele mozog)
   const idleMasks = useMemo(
     () =>
@@ -252,14 +296,14 @@ function Main() {
   );
   // Vastagabb kijelölés csak navigáció közben, és csak a következő manővernél (±30 m)
   const nextIdx = s.progress?.nextStepIndex ?? 1;
-  // 100 m-rel a manőver előtt eltűnik (odaérve már ne takarja a kanyart)
+  // 50 m-rel a manőver előtt lágyan eltűnik (odaérve már ne takarja a kanyart)
   const nearManeuver = (s.progress?.distToManeuverM ?? Infinity) < MANEUVER_HIDE_WITHIN_M;
   const maneuvers = useMemo(
     () =>
-      s.route && (s.phase === 'navigating' || s.phase === 'rerouting') && !nearManeuver
-        ? nextManeuverSegment(s.route, nextIdx, 30, 30)
+      s.route && (s.phase === 'navigating' || s.phase === 'rerouting')
+        ? taperedSegment(nextManeuverSegment(s.route, nextIdx, 30, 30), MANEUVER_TAPER_M, MANEUVER_TAPER_STEPS)
         : null,
-    [s.route, s.phase, nextIdx, nearManeuver],
+    [s.route, s.phase, nextIdx],
   );
 
   // Útvonal követésekor folyosó; elhúzott térképnél (vagy útvonal nélkül) kör a képernyő közepén; nézet nélkül fekete
@@ -270,38 +314,117 @@ function Main() {
   const [northUp, setNorthUp] = useState(false);
   const [northNonce, setNorthNonce] = useState(0);
   const onCompassPress = () => {
-    if (navigatingish && follow) setNorthUp((v) => !v);
+    if ((navigatingish || rolling) && follow) setNorthUp((v) => !v);
     else setNorthNonce((n) => n + 1);
   };
+
+  // Útvonal nélkül, haladás közben a jelölő az útra illeszkedik (elhúzott térképnél is, így a ◎ után azonnal megvan a
+  // célpont); követéskor a kamera is menetirányba fordulva, az útra illesztve követ
+  const rolling = s.phase === 'idle' && rollingAwake;
+  const mapRef = useRef<MapRef>(null);
 
   // Akkukímélés: alapnézetben a kamera csak érdemi (>5 m) elmozdulásnál mozdul, így nem rajzol folyton újra
   const [idleCameraPos, setIdleCameraPos] = useState<LngLat | null>(null);
   useEffect(() => {
     setIdleCameraPos((prev) => nextAnchor(prev, loc.pos, config.idleCameraStepM));
   }, [loc.pos]);
-  // Navigáció közben a jelölő az útvonalra illeszkedik, amíg nem tértünk le róla (nincs oldalirányú ugrálás)
-  const onRoute = navigatingish && s.progress !== null && s.progress.distFromRouteM <= config.offRouteM[s.mode];
-  // Előrebecslés: oda csúszik a jelölő (és a kamera), ahol a csúszás végére leszünk → folyamatos mozgás
-  const markerPos = useMemo(() => {
+  // Navigáció közben a jelölő az útvonalra illeszkedik, amíg nem tértünk le róla (nincs oldalirányú ugrálás).
+  // Az első letérésre utaló mérésnél (és újratervezés közben) már nem: különben a régi útvonalon „haladna tovább”.
+  const onRoute =
+    navigatingish &&
+    s.phase !== 'rerouting' &&
+    s.offRouteCount === 0 &&
+    s.progress !== null &&
+    s.progress.distFromRouteM <= config.offRouteM[s.mode];
+  // Egy GPS-mérés egyszer frissítse a célpontot: útvonalon a (következő renderben érkező) új illesztéssel, különben
+  // az új pozícióval. (A sebesség/irány már az előző renderben megváltozik → a régi illesztéssel újraindulna a
+  // csúszás majdnem ugyanoda, és a jelölő/kamera lelassulna.)
+  const poseKey = onRoute ? s.progress : loc.pos;
+  // Lassan / állva nincs előrebecslés, és mérés sem jön → ott az iránytű forgassa a nyilat mérés nélkül is
+  const slowHeading = (loc.speed ?? 0) < config.courseMinSpeedMps ? loc.heading : null;
+  // Ha késik a következő mérés, a becslés még legfeljebb MAX_COAST_STEPS lépésig továbbmegy → a kamera nem áll meg
+  const [coast, setCoast] = useState(0);
+  useEffect(() => setCoast(0), [poseKey]);
+  const coasting = navigatingish && s.phase !== 'arrived';
+  useEffect(() => {
+    if (!coasting || coast >= MAX_COAST_STEPS) return;
+    const t = setTimeout(() => setCoast((c) => c + 1), COAST_STEP_MS);
+    return () => clearTimeout(t);
+  }, [poseKey, coast, coasting]);
+  // Mikor jött a mostani mérés (útvonalon a mért helyzetet ehhez képest becsüljük előre)
+  const fixAt = useRef({ key: poseKey, at: Date.now() });
+  if (fixAt.current.key !== poseKey) fixAt.current = { key: poseKey, at: Date.now() };
+  // Az útvonalon a jelölő/kamera csúszása (ugyanaz, amit a MinimapView is számol): innen folytatódik a következő
+  const alongGlide = useRef<AlongGlide | null>(null);
+  // Előrebecslés: oda csúszik a jelölő (és a kamera), ahol a csúszás végére leszünk → folyamatos mozgás.
+  // A megtett útszakasz (halványszürke) ugyanoda tart → mögötte nem marad fehér sáv.
+  const nav = useMemo(() => {
     const p = onRoute && s.progress ? s.progress.snappedPos : loc.pos;
-    if (!p || s.phase === 'arrived' || !navigatingish) return p;
-    return predictPos({
-      pos: p,
+    const heading = loc.heading;
+    if (!navigatingish || !s.route || !s.progress || s.phase === 'arrived' || !onRoute) alongGlide.current = null;
+    if (!navigatingish || !s.route || !s.progress) return { pos: p, heading, doneToM: 0 };
+    if (s.phase === 'arrived') return { pos: p, heading, doneToM: s.progress.distAlongM };
+    if (!onRoute) {
+      const leadS = coastLeadS(coast, NAV_CAMERA_MS, COAST_STEP_MS);
+      const pos = p && predictPos({ pos: p, speedMps: loc.speed, heading, onRoute: null, leadS });
+      // A megtett rész a jelölő vetületéig ér (ne maradjon le a csúszásnyi előrebecsléssel → fehér sáv a nyíl mögött)
+      const hint = { alongM: s.progress.distAlongM, pos: s.progress.snappedPos };
+      const doneToM = pos ? Math.max(s.progress.distAlongM, nearestOnRoute(pos, s.route, hint).alongM) : s.progress.distAlongM;
+      return { pos, heading, doneToM };
+    }
+    // Útvonalon: a mostani csúszó helyzetből a mért sebességgel tovább, a GPS-zajt csak félig követve (nem rángat)
+    const now = Date.now();
+    const measuredM = predictAlongM(s.route, s.progress.distAlongM, loc.speed, (now - fixAt.current.at) / 1000);
+    const prev = alongGlide.current;
+    const fromM = prev && prev.route === s.route ? alongAt(prev, now) : measuredM;
+    const toM = nextAlongTarget({
+      fromM,
+      measuredM,
       speedMps: loc.speed,
-      heading: loc.heading,
-      onRoute: onRoute && s.route && s.progress ? { route: s.route, distAlongM: s.progress.distAlongM } : null,
       leadS: NAV_CAMERA_MS / 1000,
+      gain: ALONG_GAIN,
+      resetM: MARKER_MAX_GLIDE_M,
+      maxM: s.route.distanceM,
     });
+    alongGlide.current = { route: s.route, fromM, toM, t0: now };
+    return { pos: pointAlong(s.route, toM), heading, doneToM: toM };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loc.pos, s.progress, s.route, s.phase, onRoute, navigatingish, loc.speed, loc.heading]);
-  const cameraPos = navigatingish ? markerPos : idleCameraPos;
-  // A megtett útszakasz (halványszürke) ugyanoda tart, ahová a jelölő csúszik → mögötte nem marad fehér sáv
-  const doneToM =
-    navigatingish && s.route && s.progress
-      ? onRoute && s.phase !== 'arrived'
-        ? predictAlongM(s.route, s.progress.distAlongM, loc.speed, NAV_CAMERA_MS / 1000)
-        : s.progress.distAlongM
-      : 0;
+  }, [poseKey, slowHeading, coast, s.route, s.phase, onRoute, navigatingish]);
+  // Útvonal nélkül, haladás közben: a jelölő és a kamera a legközelebbi, menetirányba eső útra illeszkedik, a térkép
+  // menetirányba fordul (mint navigációban). A célpont csak az illesztés végén frissül → nem ugrál nyers és illesztett között.
+  // Állva (piros lámpa) a menetirány helyett az iránytű jönne, ami a kirakott telefon tájolása → marad az utolsó irány
+  const rollHeading = useRef<number | null>(null);
+  const snapHeading = (loc.speed ?? 0) >= config.courseMinSpeedMps ? loc.heading : (rollHeading.current ?? loc.heading);
+  const roadSnap = useRoadSnap(mapRef, loc.pos, snapHeading, rolling, s.mode);
+  const roll = useMemo(
+    () => (roadSnap ? rollingPose(roadSnap, loc.speed, snapHeading, NAV_CAMERA_MS / 1000) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [roadSnap],
+  );
+  rollHeading.current = rolling ? (roll?.heading ?? rollHeading.current) : null;
+  const markerPos = navigatingish ? nav.pos : (roll?.pos ?? loc.pos);
+  const markerHeading = navigatingish ? nav.heading : roll ? roll.heading : loc.heading;
+  const cameraPos = navigatingish ? markerPos : roll ? roll.pos : idleCameraPos;
+  const doneToM = nav.doneToM;
+
+  // Traffipax előttünk (a tábla gyorsabban pulzál): az útvonalon az útvonal mentén, letérve a menetirányban légvonalban
+  const routeCameras = useMemo(
+    () => (s.route && navigatingish ? camerasOnRoute(speedCameras, s.route) : []),
+    [speedCameras, s.route, navigatingish],
+  );
+  const cameraAhead = useMemo(
+    () =>
+      roadSignsVisible && loc.pos
+        ? nextCamera({
+            pos: loc.pos,
+            heading: loc.heading,
+            speedMps: loc.speed ?? 0,
+            cameras: speedCameras,
+            onRoute: onRoute && s.progress ? { cameras: routeCameras, distAlongM: s.progress.distAlongM } : null,
+          })
+        : null,
+    [roadSignsVisible, loc.pos, loc.heading, loc.speed, speedCameras, routeCameras, onRoute, s.progress],
+  );
 
   // Előnézetben mindkét útvonal férjen a képbe
   const previewBbox = useMemo(() => {
@@ -311,13 +434,36 @@ function Main() {
     return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])] as [number, number, number, number];
   }, [s.route, s.alt, s.phase]);
 
-  const camera = cameraFor({ phase: s.phase, pos: cameraPos, heading: loc.heading ?? 0, bbox: previewBbox, follow, northUp });
+  // Követő navigáció közben a kamera pontosan oda csúszik (natívan, simán), ahová a jelölő → a nyíl a képernyő
+  // közepén áll, a térkép mozog alatta. A kamera beállása (indulás, ◎) után kapcsol át, addig a térképi jelölő látszik.
+  // Útvonal nélkül, haladás közben ugyanígy: a JS-ből csúsztatott térképi jelölő a natívan mozgó kamerához képest ugrálna
+  const centerWanted = (navigatingish || !!roll) && follow && !!markerPos;
+  const [centerArrow, setCenterArrow] = useState(false);
+  useEffect(() => {
+    if (!centerWanted) {
+      setCenterArrow(false);
+      return;
+    }
+    const t = setTimeout(() => setCenterArrow(true), recentering ? RECENTER_MS : NAV_CAMERA_MS);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centerWanted, recenterNonce]);
+
+  // Autóval az útvonalon a kamera (és a középen álló nyíl) az útvonal mentén, annak irányába néz – kanyarban is az
+  // úton marad, nem vágja le az ívet
+  const followRoute = centerArrow && onRoute && s.mode === 'auto' && s.phase !== 'arrived' ? s.route : null;
+
+  const camera = withRecenter(
+    cameraFor({ phase: s.phase, pos: cameraPos, heading: markerHeading ?? 0, bbox: previewBbox, follow, northUp, rolling: !!roll }),
+    recentering,
+  );
 
   if (loc.status === 'denied') return <PermissionScreen onRequest={loc.request} />;
 
   return (
     <View style={styles.root}>
       <MinimapView
+        mapRef={mapRef}
         masks={masks}
         route={s.route?.coords ?? null}
         doneRoute={navigatingish ? s.route : null}
@@ -325,8 +471,13 @@ function Main() {
         alt={s.phase === 'preview' ? (s.alt?.coords ?? null) : null}
         onSelectAlt={onSelectAlt}
         maneuvers={maneuvers}
+        maneuversVisible={!nearManeuver}
         pos={markerPos}
-        heading={loc.heading}
+        heading={markerHeading}
+        centerArrow={centerArrow}
+        northUp={northUp}
+        followRoute={followRoute}
+        followToM={doneToM}
         dest={s.dest}
         camera={camera}
         onLongPress={(coord) => {
@@ -340,6 +491,8 @@ function Main() {
         mode={s.mode}
       />
       <Attribution />
+      {/* Traffipax előttünk: a képernyő szélein befelé halványuló, lüktető fehér sáv */}
+      {cameraAhead && <CameraGlow />}
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
         {/* Felső sáv */}
@@ -406,7 +559,13 @@ function Main() {
                 </Pressable>
               )}
             </View>
-            <StatusLine error={s.error} loading={s.loading} onRetry={() => dispatch({ type: 'RETRY' })} />
+            <StatusLine
+              cameraAhead={!!cameraAhead}
+              error={s.error}
+              loading={s.loading}
+              rerouting={s.phase === 'rerouting'}
+              onRetry={() => dispatch({ type: 'RETRY' })}
+            />
             {s.phase === 'preview' && (
               <>
                 {s.route && (

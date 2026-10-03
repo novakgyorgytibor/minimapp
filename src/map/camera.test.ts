@@ -1,4 +1,7 @@
-import { applyCameraStop, cameraFor, maskMode } from './camera';
+import { config } from '../config';
+import { buildRoute } from '../services/route';
+import type { LngLat } from '../types';
+import { alongAt, applyCameraStop, cameraFor, FOLLOW_EASE_MS, maskMode, NAV_CAMERA_MS, NAV_PITCH_DEG, routeFollowStep } from './camera';
 
 const pos: [number, number] = [19.04, 47.5];
 const bbox: [number, number, number, number] = [19.0, 47.4, 19.1, 47.6];
@@ -28,6 +31,16 @@ test('navigating: heading-up, tilted, zoomed in', () => {
     center: pos, zoom: 18.5, bearing: 123, pitch: 45,
   });
   expect(cameraFor({ phase: 'rerouting', pos, heading: 5, bbox, follow: true, northUp: false })).toMatchObject({ bearing: 5 });
+});
+
+test('idle while rolling (no route, > 5 km/h): heading-up and tilted like navigation; north-up on request', () => {
+  expect(cameraFor({ phase: 'idle', pos, heading: 77, bbox: null, follow: true, northUp: false, rolling: true })).toMatchObject({
+    center: pos, zoom: 18.5, bearing: 77, pitch: 45, duration: NAV_CAMERA_MS,
+  });
+  expect(cameraFor({ phase: 'idle', pos, heading: 77, bbox: null, follow: true, northUp: true, rolling: true })).toMatchObject({ bearing: 0 });
+  expect(cameraFor({ phase: 'idle', pos, heading: 77, bbox: null, follow: false, northUp: false, rolling: true })).toBeNull();
+  // Keresés közben nem
+  expect(cameraFor({ phase: 'searching', pos, heading: 77, bbox: null, follow: true, northUp: false, rolling: true })).toMatchObject({ pitch: 0 });
 });
 
 describe('applyCameraStop', () => {
@@ -82,5 +95,35 @@ test('navigation keeps the arrow in the screen center (no offset padding)', () =
 test('idle resets padding so the arrow is centred after a preview', () => {
   expect(cameraFor({ phase: 'idle', pos, heading: 0, bbox: null, follow: true, northUp: false })).toMatchObject({
     padding: { top: 0, bottom: 0, left: 0, right: 0 },
+  });
+});
+
+describe('route following', () => {
+  // Kelet felé, majd észak felé forduló útvonal
+  const route = buildRoute([[19, 47.5], [19.01, 47.5], [19.01, 47.51]], 600, []);
+  const leg1 = route.cumDistM[1];
+
+  test('alongAt glides linearly over NAV_CAMERA_MS and holds at the end', () => {
+    const g = { route, fromM: 100, toM: 220, t0: 1000 };
+    expect(alongAt(g, 1000)).toBe(100);
+    expect(alongAt(g, 1000 + NAV_CAMERA_MS / 2)).toBeCloseTo(160);
+    expect(alongAt(g, 1000 + NAV_CAMERA_MS * 2)).toBe(220);
+    expect(alongAt(g, 0)).toBe(100);
+  });
+
+  test('each step is a short linear ease to a point on the route, facing along it', () => {
+    const before = routeFollowStep(route, leg1 - 50, false);
+    expect(before.stop).toMatchObject({ zoom: config.navZoom, pitch: NAV_PITCH_DEG, duration: FOLLOW_EASE_MS, easing: 'linear' });
+    expect((before.stop as { center: LngLat }).center[1]).toBeCloseTo(47.5, 6);
+    expect(before.stop.bearing).toBeCloseTo(90, 0);
+    // a sarokban félúton fordul, utána észak felé néz
+    expect(routeFollowStep(route, leg1, false).stop.bearing).toBeCloseTo(45, 0);
+    expect(routeFollowStep(route, leg1 + 50, false).stop.bearing).toBeCloseTo(0, 0);
+  });
+
+  test('north-up keeps the map north, but still reports the route direction for the arrow', () => {
+    const s = routeFollowStep(route, leg1 - 50, true);
+    expect(s.stop.bearing).toBe(0);
+    expect(s.bearing).toBeCloseTo(90, 0);
   });
 });

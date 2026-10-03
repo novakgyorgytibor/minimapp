@@ -297,3 +297,89 @@ describe('fastest vs shortest alternative', () => {
     expect(run(navigating(), { type: 'SELECT_ALT' })).toEqual(navigating());
   });
 });
+
+test('route out and back on the same road: driving the return leg advances, no wrong-way reroute', () => {
+  // ~300 m kelet, majd ugyanazon az úton vissza a kiindulás közelébe
+  const out: LngLat[] = Array.from({ length: 5 }, (_, i) => [19 + i * 0.001, 47.5]);
+  const back = out.slice(1, -1).reverse();
+  const r = buildRoute([...out, ...back], 600, [
+    { kind: 'depart', instruction: 'Start', streetNames: [], beginIndex: 0 },
+    { kind: 'arrive', instruction: 'Arrive', streetNames: [], beginIndex: 7 },
+  ]);
+  let s = run(initialNavState('auto'), { type: 'SET_DEST', dest: r.coords[7], label: 'Cél' });
+  s = run(s, { type: 'ROUTE_OK', route: r, requestId: s.requestId }, { type: 'START' });
+  // oda 0 → 300 m, vissza 300 → 120 m (keletről nyugatra)
+  const xs = [0, 60, 120, 180, 240, 290, 260, 220, 180, 140];
+  s = run(s, ...xs.map((m, i): NavEvent => ({ type: 'POSITION', pos: along(m), now: 100_000 + i * 1000 })));
+  expect(s.phase).toBe('navigating');
+  expect(s.wrongWayCount).toBe(0);
+  // a visszaúton: 300 + (300 − 140) ≈ 460 m megtett táv
+  expect(s.progress?.distAlongM).toBeCloseTo(r.cumDistM[4] + (r.cumDistM[4] - 140), -1);
+});
+
+test('passing the destination on the way out of an out-and-back route is not an arrival', () => {
+  const out: LngLat[] = Array.from({ length: 5 }, (_, i) => [19 + i * 0.001, 47.5]);
+  const r = buildRoute([...out, ...out.slice(1, -1).reverse()], 600, [
+    { kind: 'depart', instruction: 'Start', streetNames: [], beginIndex: 0 },
+    { kind: 'arrive', instruction: 'Arrive', streetNames: [], beginIndex: 7 },
+  ]);
+  let s = run(initialNavState('auto'), { type: 'SET_DEST', dest: r.coords[7], label: 'Cél' });
+  s = run(s, { type: 'ROUTE_OK', route: r, requestId: s.requestId }, { type: 'START' });
+  // 19.001 (a cél) mellett az odaúton
+  s = run(s, ...[0, 40, 75, 110].map((m, i): NavEvent => ({ type: 'POSITION', pos: along(m), now: 100_000 + i * 1000 })));
+  expect(s.phase).toBe('navigating');
+  // a visszaúton odaérve már igen
+  s = run(s, ...[180, 260, 290, 220, 150, 90, 76].map((m, i): NavEvent => ({ type: 'POSITION', pos: along(m), now: 104_000 + i * 1000 })));
+  expect(s.phase).toBe('arrived');
+});
+
+describe('faster off-route detection by car', () => {
+  test('60 m off → reroute after 2 samples', () => {
+    let s = navigating('auto');
+    s = run(s, { type: 'POSITION', pos: off(60), now: 100_000 });
+    expect(s.phase).toBe('navigating');
+    s = run(s, { type: 'POSITION', pos: off(60), now: 101_000 });
+    expect(s.phase).toBe('rerouting');
+  });
+
+  test('turned off: 25 m away and heading across the route → reroute after 2 samples', () => {
+    let s = navigating('auto');
+    // az útvonal kelet felé tart, mi észak felé haladunk
+    s = run(s, ...[1, 2].map((i): NavEvent => ({ type: 'POSITION', pos: off(25), course: 0, now: 100_000 + i * 1000 })));
+    expect(s.phase).toBe('rerouting');
+  });
+
+  test('25 m away but heading along the route (GPS drift, parallel lane) → no reroute', () => {
+    let s = navigating('auto');
+    s = run(s, ...[1, 2, 3].map((i): NavEvent => ({ type: 'POSITION', pos: off(25), course: 85, now: 100_000 + i * 1000 })));
+    expect(s.phase).toBe('navigating');
+    // menetirány nélkül (lassan / állva) sem
+    let n = navigating('auto');
+    n = run(n, ...[1, 2, 3].map((i): NavEvent => ({ type: 'POSITION', pos: off(25), now: 100_000 + i * 1000 })));
+    expect(n.phase).toBe('navigating');
+  });
+
+  test('heading across the route but close to it (crossing a junction on the route) → no reroute', () => {
+    let s = navigating('auto');
+    s = run(s, ...[1, 2, 3].map((i): NavEvent => ({ type: 'POSITION', pos: off(12), course: 0, now: 100_000 + i * 1000 })));
+    expect(s.phase).toBe('navigating');
+  });
+});
+
+test('missed a turn: going straight on past a right-angle corner → reroute after 2 samples', () => {
+  // kelet 300 m, majd a sarokban észak felé fordul; mi egyenesen kelet felé megyünk tovább
+  const corner: LngLat = [19 + 300 / M_PER_DEG_LON, 47.5];
+  const l = buildRoute([[19, 47.5], corner, [corner[0], 47.5 + 300 / M_PER_DEG_LAT]], 100, [
+    { kind: 'depart', instruction: 'Start', streetNames: [], beginIndex: 0 },
+    { kind: 'turn', modifier: 'left', instruction: 'Left', streetNames: [], beginIndex: 1 },
+    { kind: 'arrive', instruction: 'Arrive', streetNames: [], beginIndex: 2 },
+  ]);
+  let s = run(initialNavState('auto'), { type: 'SET_DEST', dest: l.coords[2], label: 'Cél' });
+  s = run(s, { type: 'ROUTE_OK', route: l, requestId: s.requestId }, { type: 'START' });
+  s = run(s, ...[250, 290].map((m, i): NavEvent => ({ type: 'POSITION', pos: along(m), course: 90, now: 100_000 + i * 1000 })));
+  // a sarok után 22 és 36 m-rel, még mindig kelet felé (40 m alatt)
+  s = run(s, { type: 'POSITION', pos: along(322), course: 90, now: 102_000 });
+  expect(s.offRouteCount).toBe(1);
+  s = run(s, { type: 'POSITION', pos: along(336), course: 90, now: 103_000 });
+  expect(s.phase).toBe('rerouting');
+});

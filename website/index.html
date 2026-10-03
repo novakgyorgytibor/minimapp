@@ -161,7 +161,7 @@
 
       <div class="block">
         <h3>Mi hagyja el a telefonodat</h3>
-        <p>Az alkalmazás nyílt, OpenStreetMap-alapú szolgáltatásokat hív meg közvetlenül a telefonodról, titkosított (HTTPS) kapcsolaton. Ezek a kérések hozzám nem jutnak el.</p>
+        <p>Az alkalmazás nyílt, OpenStreetMap-alapú szolgáltatásokat hív meg közvetlenül a telefonodról, titkosított (HTTPS) kapcsolaton. Ezek a kérések hozzám nem jutnak el, kivéve a traffipaxlista letöltését a weboldalamról, amely a helyzetedet nem tartalmazza.</p>
         <ul class="services">
           <li>
             <span><strong>Térképcsempék</strong> · OpenFreeMap</span>
@@ -183,13 +183,18 @@
             <span class="dim">Ugyanaz, ha a Photon nem ad találatot vagy nem érhető el.</span>
             <span class="host">nominatim.openstreetmap.org · <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">adatvédelem</a></span>
           </li>
+          <li>
+            <span><strong>Traffipaxlista</strong> · a MinimApp weboldala (Vercel)</span>
+            <span class="dim">Legfeljebb hetente egyszer letölti a fix traffipaxok listáját (OpenStreetMap). A helyzeted nem kerül elküldésre: a közelben lévő traffipaxot a telefon keresi ki.</span>
+            <span class="host">theminimapp.vercel.app · <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">adatvédelem</a></span>
+          </li>
         </ul>
         <p class="dim">Ezek a szolgáltatók a saját adatvédelmi szabályaik szerint rövid ideig naplózhatják a kéréseket (például az IP-címet) üzemeltetési és visszaélés-megelőzési célból.</p>
       </div>
 
       <div class="block">
         <h3>Mit tárol az alkalmazás a telefonon</h3>
-        <p>A választott nyelvet (magyar vagy angol), és a kedvencnek jelölt helyeidet (név, cím, koordináta), ha a szívecskével elmentesz egyet. Ezek csak a telefonodon vannak, nem kerülnek hozzám és nem töltődnek fel sehová. Keresési előzményt és útvonalakat nem ment el. Egy kedvencet a szívecskével bármikor levehetsz, az alkalmazás törlésével pedig minden törlődik.</p>
+        <p>A választott nyelvet (magyar vagy angol), a letöltött traffipaxlistát, és a kedvencnek jelölt helyeidet (név, cím, koordináta), ha a szívecskével elmentesz egyet. Ezek csak a telefonodon vannak, nem kerülnek hozzám és nem töltődnek fel sehová. Keresési előzményt és útvonalakat nem ment el. Egy kedvencet a szívecskével bármikor levehetsz, az alkalmazás törlésével pedig minden törlődik.</p>
       </div>
 
       <div class="block">
@@ -332,7 +337,7 @@
 
       <div class="block">
         <h3>What leaves your phone</h3>
-        <p>The app calls open, OpenStreetMap-based services directly from your phone over an encrypted (HTTPS) connection. These requests never reach me.</p>
+        <p>The app calls open, OpenStreetMap-based services directly from your phone over an encrypted (HTTPS) connection. These requests never reach me, except downloading the speed camera list from my website, which does not include your location.</p>
         <ul class="services">
           <li>
             <span><strong>Map tiles</strong> · OpenFreeMap</span>
@@ -354,13 +359,18 @@
             <span class="dim">The same, when Photon finds nothing or is unavailable.</span>
             <span class="host">nominatim.openstreetmap.org · <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener">privacy</a></span>
           </li>
+          <li>
+            <span><strong>Speed camera list</strong> · the MinimApp website (Vercel)</span>
+            <span class="dim">At most once a week, the list of fixed speed cameras (OpenStreetMap) is downloaded. Your location is not sent: your phone looks up the nearby cameras itself.</span>
+            <span class="host">theminimapp.vercel.app · <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">privacy</a></span>
+          </li>
         </ul>
         <p class="dim">Under their own privacy policies, these providers may briefly log requests (for example the IP address) to run their service and prevent abuse.</p>
       </div>
 
       <div class="block">
         <h3>What the app stores on your phone</h3>
-        <p>Your chosen language (Hungarian or English), and the places you mark as favourites with the heart (name, address, coordinates). These stay on your phone only: they never reach me and are not uploaded anywhere. It does not save search history or routes. You can remove a favourite with the heart at any time, and deleting the app removes everything.</p>
+        <p>Your chosen language (Hungarian or English), the downloaded speed camera list, and the places you mark as favourites with the heart (name, address, coordinates). These stay on your phone only: they never reach me and are not uploaded anywhere. It does not save search history or routes. You can remove a favourite with the heart at any time, and deleting the app removes everything.</p>
       </div>
 
       <div class="block">

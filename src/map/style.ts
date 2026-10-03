@@ -9,6 +9,13 @@ const MINOR = ['minor', 'service', 'track', 'busway'];
 const PATH = ['path'];
 
 export const PATH_LAYER_ID = 'roads-path';
+const MINOR_LAYER_ID = 'roads-minor';
+const MAJOR_LAYER_ID = 'roads-major';
+
+/** Útvonal nélküli illesztéshez szóba jövő úthálózat-rétegek: autóval a járdák/gyalogutak nélkül. */
+export function roadLayerIds(mode: Mode): string[] {
+  return mode === 'auto' ? [MINOR_LAYER_ID, MAJOR_LAYER_ID] : [PATH_LAYER_ID, MINOR_LAYER_ID, MAJOR_LAYER_ID];
+}
 
 export function pathOpacity(mode: Mode): number {
   return mode === 'auto' ? 0.4 : 1;
@@ -33,7 +40,7 @@ export const mapStyle: StyleSpecification = {
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': theme.bg } },
     roadLayer(PATH_LAYER_ID, PATH, [0.3, 1, 3]),
-    roadLayer('roads-minor', MINOR, [0.3, 1, 4]),
-    roadLayer('roads-major', MAJOR, [0.6, 2, 8]),
+    roadLayer(MINOR_LAYER_ID, MINOR, [0.3, 1, 4]),
+    roadLayer(MAJOR_LAYER_ID, MAJOR, [0.6, 2, 8]),
   ],
 };
