@@ -30,6 +30,8 @@ const en = {
   infoCoffee: 'Support me',
   infoCoffeeText: 'MinimApp is free and ad-free. If you find it useful, you can support it with a coffee.',
   close: 'Close',
+  crashText: 'Something went wrong.',
+  crashRestart: 'Restart',
 };
 
 export type StringKey = keyof typeof en;
@@ -63,6 +65,8 @@ const hu: Record<StringKey, string> = {
   infoCoffee: 'Támogass',
   infoCoffeeText: 'A MinimApp ingyenes és reklámmentes. Ha hasznosnak találod, egy kávéval támogathatod.',
   close: 'Bezárás',
+  crashText: 'Valami hiba történt.',
+  crashRestart: 'Újraindítás',
 };
 
 export const STRINGS: Record<Lang, Record<StringKey, string>> = { en, hu };

@@ -37,6 +37,7 @@ import { Attribution } from './src/ui/Attribution';
 import { InfoButton } from './src/ui/InfoModal';
 import { LangToggle } from './src/ui/LangToggle';
 import { Compass } from './src/ui/Compass';
+import { ErrorBoundary } from './src/ui/ErrorBoundary';
 import { ManeuverBar } from './src/ui/ManeuverBar';
 import { ModeToggle } from './src/ui/ModeToggle';
 import { PermissionScreen } from './src/ui/PermissionScreen';
@@ -72,7 +73,9 @@ export default function App() {
       <LangProvider>
         <FavoritesProvider>
           <StatusBar style="light" />
-          <Main />
+          <ErrorBoundary>
+            <Main />
+          </ErrorBoundary>
         </FavoritesProvider>
       </LangProvider>
     </SafeAreaProvider>
@@ -201,7 +204,7 @@ function Main() {
   const keepAwake = navigatingish || rollingAwake;
   useEffect(() => {
     if (!keepAwake) return;
-    activateKeepAwakeAsync('nav');
+    activateKeepAwakeAsync('nav').catch(() => {}); // pl. Androidon még nincs aktivitás: ébren tartás nélkül megy tovább
     return () => {
       deactivateKeepAwake('nav');
     };
