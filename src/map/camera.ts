@@ -14,7 +14,39 @@ const NO_PADDING = { top: 0, bottom: 0, left: 0, right: 0 };
 export const NAV_CAMERA_MS = 1200;
 const IDLE_CAMERA_MS = 800;
 /** A navigációs nézet dőlése (fok). */
-export const NAV_PITCH_DEG = 45;
+export const NAV_PITCH_DEG = 60;
+/**
+ * Navigáció közben a nyíl nem a képernyő közepén, hanem lejjebb áll (a felső padding a képernyőmagasság ekkora
+ * része → a nyíl (1 + f) / 2 magasságban): előre többet látni, hátra kevesebbet, mint az autós szemszögéből.
+ */
+export const NAV_TOP_PADDING_FRACTION = 0.3;
+
+export function navPadding(heightPt: number) {
+  return { top: Math.round(NAV_TOP_PADDING_FRACTION * heightPt), bottom: 0, left: 0, right: 0 };
+}
+
+/**
+ * Gyorsabban haladva kijjebb zoomol (a sebesség és a megengedett sebesség közül a nagyobb számít, így pl.
+ * autópályán egy rövid lassításra nem ugrik vissza). Csökkenő sorrendben: ettől a km/h-tól ez a zoom.
+ */
+const SPEED_ZOOMS: readonly { fromKmh: number; zoom: number }[] = [
+  { fromKmh: 100, zoom: 17 },
+  { fromKmh: 80, zoom: 17.5 },
+  { fromKmh: 60, zoom: 18 },
+];
+/** Visszazoomolni csak ennyivel a küszöb alatt (ne ugráljon a határon). */
+export const SPEED_ZOOM_HYSTERESIS_KMH = 8;
+
+function zoomForKmh(kmh: number): number {
+  return SPEED_ZOOMS.find((z) => kmh >= z.fromKmh)?.zoom ?? config.navZoom;
+}
+
+/** A navigációs zoom az előzőből: kijjebb azonnal, vissza (befelé) csak a hiszterézisen túl. */
+export function nextSpeedZoom(prev: number, kmh: number): number {
+  const z = zoomForKmh(kmh);
+  if (z <= prev) return z;
+  return Math.max(prev, zoomForKmh(kmh + SPEED_ZOOM_HYSTERESIS_KMH));
+}
 
 /**
  * Útvonalkövetés (autóval, az útvonalon): a kamera nem egyenesen csúszik a következő célpontig (kanyarban levágná
@@ -40,16 +72,21 @@ export function alongAt(g: AlongGlide, t: number): number {
 }
 
 /** A kamera következő lépése a d távolságnál lévő útvonalpontra; bearing: az útvonal iránya ott. */
-export function routeFollowStep(route: Route, d: number, northUp: boolean): { stop: CameraStop; bearing: number } {
+export function routeFollowStep(
+  route: Route,
+  d: number,
+  northUp: boolean,
+  view: { zoom: number; heightPt: number },
+): { stop: CameraStop; bearing: number } {
   const bearing = routeBearingAt(route, d, FOLLOW_BEARING_WINDOW_M);
   return {
     bearing,
     stop: {
       center: pointAlong(route, d),
-      zoom: config.navZoom,
+      zoom: view.zoom,
       bearing: northUp ? 0 : bearing,
       pitch: NAV_PITCH_DEG,
-      padding: NO_PADDING,
+      padding: navPadding(view.heightPt),
       duration: FOLLOW_EASE_MS,
       easing: 'linear',
     },
@@ -66,9 +103,13 @@ export interface CameraInput {
   northUp: boolean;
   /** Útvonal nélkül, haladás közben: a navigációhoz hasonlóan menetirányba fordulva, döntve követ. */
   rolling?: boolean;
+  /** Navigációs zoom (sebességfüggő, lásd nextSpeedZoom). */
+  navZoom?: number;
+  /** A térkép magassága (pont) – ebből a navigációs nézet felső paddingje. */
+  heightPt?: number;
 }
 
-export function cameraFor({ phase, pos, heading, bbox, follow, northUp, rolling = false }: CameraInput): CameraStop | null {
+export function cameraFor({ phase, pos, heading, bbox, follow, northUp, rolling = false, navZoom = config.navZoom, heightPt = 0 }: CameraInput): CameraStop | null {
   if (!follow) return null;
   // Előnézetben mindig az útvonalválasztós nézet (a ◎ is ide áll vissza)
   if (phase === 'preview' && bbox) {
@@ -78,10 +119,10 @@ export function cameraFor({ phase, pos, heading, bbox, follow, northUp, rolling 
   if (phase === 'navigating' || phase === 'rerouting' || phase === 'arrived' || (phase === 'idle' && rolling)) {
     return {
       center: pos,
-      zoom: config.navZoom,
+      zoom: navZoom,
       bearing: northUp ? 0 : heading,
       pitch: NAV_PITCH_DEG,
-      padding: NO_PADDING,
+      padding: navPadding(heightPt),
       duration: NAV_CAMERA_MS,
       easing: 'linear',
     };

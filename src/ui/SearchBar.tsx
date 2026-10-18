@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, Image, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { config } from '../config';
 import { useFavorites } from '../favorites/FavoritesContext';
+import { useSearchHistory } from '../favorites/useSearchHistory';
 import { useLang } from '../i18n/LangContext';
 import { isAbortError } from '../services/http';
 import { searchPlaces } from '../services/geocode';
@@ -10,14 +11,23 @@ import type { LngLat, Place } from '../types';
 
 const HEART = require('../../assets/heart.png');
 
+type Row = { kind: 'place'; place: Place; favorite: boolean } | { kind: 'query'; text: string };
+
 export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onPick: (p: Place) => void; onCancel: () => void }) {
   const { lang, t } = useLang();
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Place[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error'>('idle');
   const { favorites } = useFavorites();
-  // Amíg nem gépel, a kedvencek látszanak
-  const showFavorites = q.trim().length === 0 && favorites.length > 0;
+  const { history, add: addToHistory } = useSearchHistory();
+  // Amíg nem gépel, a kedvencek és alattuk a legutóbbi keresések látszanak (koppintásra újra lefut a keresés)
+  const typing = q.trim().length > 0;
+  const rows: Row[] = typing
+    ? results.map((place) => ({ kind: 'place', place, favorite: false }))
+    : [
+        ...favorites.map((place): Row => ({ kind: 'place', place, favorite: true })),
+        ...history.map((text): Row => ({ kind: 'query', text })),
+      ];
 
   useEffect(() => {
     if (q.trim().length < config.searchMinChars) {
@@ -77,25 +87,38 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
         style={styles.list}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        data={showFavorites ? favorites : results}
-        keyExtractor={(p, i) => `${p.coord.join(',')}-${i}`}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => {
-              Keyboard.dismiss(); // Androidon a mező eltűnésekor nem mindig záródik be magától
-              onPick(item);
-            }}
-            style={styles.item}
-          >
-            <View style={styles.nameRow}>
-              {showFavorites && <Image source={HEART} style={styles.heart} />}
-              <Text style={styles.name} numberOfLines={1}>
-                {item.name}
-              </Text>
-            </View>
-            {item.detail ? <Text style={styles.detail} numberOfLines={1}>{item.detail}</Text> : null}
-          </Pressable>
-        )}
+        data={rows}
+        keyExtractor={(r, i) => (r.kind === 'place' ? `${r.place.coord.join(',')}-${i}` : `q-${r.text}`)}
+        renderItem={({ item }) => {
+          if (item.kind === 'query') {
+            return (
+              <Pressable onPress={() => setQ(item.text)} style={styles.item}>
+                <Text style={styles.query} numberOfLines={1}>
+                  {item.text}
+                </Text>
+              </Pressable>
+            );
+          }
+          const { place, favorite } = item;
+          return (
+            <Pressable
+              onPress={() => {
+                Keyboard.dismiss(); // Androidon a mező eltűnésekor nem mindig záródik be magától
+                if (!favorite) addToHistory(q);
+                onPick(place);
+              }}
+              style={styles.item}
+            >
+              <View style={styles.nameRow}>
+                {favorite && <Image source={HEART} style={styles.heart} />}
+                <Text style={styles.name} numberOfLines={1}>
+                  {place.name}
+                </Text>
+              </View>
+              {place.detail ? <Text style={styles.detail} numberOfLines={1}>{place.detail}</Text> : null}
+            </Pressable>
+          );
+        }}
       />
     </Pressable>
   );
@@ -112,5 +135,6 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   name: { flexShrink: 1, color: theme.fg, fontSize: 18 },
   detail: { color: theme.dim, fontSize: 14, marginTop: 2 },
+  query: { color: theme.dim, fontSize: 18 },
   heart: { width: 16, height: 16, tintColor: theme.dim },
 });

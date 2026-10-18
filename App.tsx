@@ -10,7 +10,7 @@ import { useRoadSnap } from './src/hooks/useRoadSnap';
 import { useSpeedCameras } from './src/hooks/useSpeedCameras';
 import { useSpeedLimit } from './src/hooks/useSpeedLimit';
 import { isSpeeding, speedLimitVisible } from './src/services/speedLimit';
-import { alongAt, cameraFor, maskMode, NAV_CAMERA_MS, type AlongGlide } from './src/map/camera';
+import { alongAt, cameraFor, maskMode, NAV_CAMERA_MS, nextSpeedZoom, type AlongGlide } from './src/map/camera';
 import { MARKER_MAX_GLIDE_M } from './src/map/markerAnim';
 import { MinimapView } from './src/map/MinimapView';
 import { nextView, radiiFor, screenWidthM, viewBbox, zoomBucket, type View as MapViewState } from './src/map/viewport';
@@ -456,8 +456,23 @@ function Main() {
   // úton marad, nem vágja le az ívet
   const followRoute = centerArrow && onRoute && s.mode === 'auto' && s.phase !== 'arrived' ? s.route : null;
 
+  // Gyorsabban haladva (vagy nagyobb megengedett sebességnél) kijjebb zoomol, hiszterézissel
+  const speedKmh = Math.max((loc.speed ?? 0) * 3.6, speedLimit ?? 0);
+  const [navZoom, setNavZoom] = useState<number>(config.navZoom);
+  useEffect(() => setNavZoom((z) => nextSpeedZoom(z, speedKmh)), [speedKmh]);
+
   const camera = withRecenter(
-    cameraFor({ phase: s.phase, pos: cameraPos, heading: markerHeading ?? 0, bbox: previewBbox, follow, northUp, rolling: !!roll }),
+    cameraFor({
+      phase: s.phase,
+      pos: cameraPos,
+      heading: markerHeading ?? 0,
+      bbox: previewBbox,
+      follow,
+      northUp,
+      rolling: !!roll,
+      navZoom,
+      heightPt: screenH,
+    }),
     recentering,
   );
 
@@ -481,6 +496,7 @@ function Main() {
         northUp={northUp}
         followRoute={followRoute}
         followToM={doneToM}
+        navZoom={navZoom}
         dest={s.dest}
         camera={camera}
         onLongPress={(coord) => {

@@ -20,7 +20,7 @@ import { theme } from '../theme';
 import { aheadGeometry, doneGeometry, progressTails } from '../nav/doneGeometry';
 import { routeSlice, type TaperedFeatures } from '../nav/maneuverSegments';
 import type { LngLat, Mode, Route } from '../types';
-import { alongAt, applyCameraStop, FOLLOW_EASE_MS, FOLLOW_TICK_MS, NAV_CAMERA_MS, NAV_PITCH_DEG, routeFollowStep, type AlongGlide } from './camera';
+import { alongAt, applyCameraStop, FOLLOW_EASE_MS, FOLLOW_TICK_MS, NAV_CAMERA_MS, NAV_PITCH_DEG, navPadding, routeFollowStep, type AlongGlide } from './camera';
 import { lerpPose, MARKER_MAX_GLIDE_M, shouldGlide, type MarkerPose } from './markerAnim';
 import { pulseOpacity } from './pulse';
 import { mapStyle, PATH_LAYER_ID, pathOpacity } from './style';
@@ -57,7 +57,7 @@ export interface MinimapViewProps {
   /** Közlekedési mód: autóval a járdák/gyalogutak halványabbak. */
   mode: Mode;
   /**
-   * Követő navigáció: a kamera pontosan a jelölő célpontjára csúszik, így a nyíl a képernyő közepén áll
+   * Követő navigáció: a kamera pontosan a jelölő célpontjára csúszik, így a nyíl egy helyben áll (a közepénél lejjebb)
    * (natív animáció, nincs JS-es léptetés) – ilyenkor a térképi jelölő rejtve.
    */
   centerArrow: boolean;
@@ -69,7 +69,12 @@ export interface MinimapViewProps {
    */
   followRoute: Route | null;
   followToM: number;
+  /** Navigációs zoom (sebességfüggő); útvonalkövetéskor a kamera lépésenként, fokozatosan áll rá. */
+  navZoom: number;
 }
+
+// Útvonalkövetéskor ennyit változhat a zoom egy lépésben (FOLLOW_TICK_MS) → fél zoomszint kb. 2 s alatt
+const FOLLOW_ZOOM_STEP = 0.05;
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 const pointFeature = (c: LngLat): Feature<Point> => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c } });
@@ -350,9 +355,10 @@ const MeLayer = memo(function MeLayer({ coord, heading }: { coord: LngLat | null
 // Kb. a MapLibre perspektívája (≈37°-os függőleges látószög) a képernyő magasságához mérten
 const PERSPECTIVE_PER_HEIGHT = 1.5;
 
-/** A saját pozíció a képernyő közepén (követő navigáció); forgatás a rövidebb úton, natív animációval. */
+/** A saját pozíció egy helyben a képernyőn (követő navigáció); forgatás a rövidebb úton, natív animációval. */
 function CenterArrow({ rotation, durationMs }: { rotation: number; durationMs: number }) {
   const { height } = useWindowDimensions();
+  const padTop = navPadding(height).top;
   const angle = useRef(new Animated.Value(rotation)).current;
   const last = useRef(rotation);
   useEffect(() => {
@@ -362,7 +368,8 @@ function CenterArrow({ rotation, durationMs }: { rotation: number; durationMs: n
   }, [rotation, angle, durationMs]);
   const rotate = angle.interpolate({ inputRange: [-360, 360], outputRange: ['-360deg', '360deg'], extrapolate: 'extend' });
   return (
-    <View style={styles.center} pointerEvents="none">
+    // Ugyanoda, ahová a kamera a navigációs nézet paddingjével a pozíciót teszi (a képernyő közepénél lejjebb)
+    <View style={[styles.center, { paddingTop: padTop }]} pointerEvents="none">
       <Animated.Image
         source={ARROW_IMAGES['heading-arrow']}
         style={[
@@ -394,8 +401,13 @@ const PointLayer = memo(function PointLayer({ id, coord, paint, beforeId }: { id
   );
 });
 
-export function MinimapView({ mapRef, masks, route, doneRoute, doneToM, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode, centerArrow, northUp, maneuversVisible, followRoute, followToM }: MinimapViewProps) {
+export function MinimapView({ mapRef, masks, route, doneRoute, doneToM, alt, onSelectAlt, maneuvers, pos, heading, dest, camera, onLongPress, onUserPan, onViewChange, northNonce, recenterNonce, mode, centerArrow, northUp, maneuversVisible, followRoute, followToM, navZoom }: MinimapViewProps) {
   const cameraRef = useRef<CameraRef>(null);
+  const { height } = useWindowDimensions();
+  const viewRef = useRef({ navZoom, height });
+  viewRef.current = { navZoom, height };
+  // Útvonalkövetéskor a kamera mostani zoomja (a célzoom felé lépked)
+  const followZoom = useRef(navZoom);
   const cameraKey = camera ? JSON.stringify(camera) : null;
   const latestCamera = useRef(camera);
   latestCamera.current = camera;
@@ -412,6 +424,7 @@ export function MinimapView({ mapRef, masks, route, doneRoute, doneToM, alt, onS
   useEffect(() => {
     if (!followRoute) {
       glide.current = null;
+      followZoom.current = viewRef.current.navZoom;
       return;
     }
     const now = Date.now();
@@ -428,7 +441,10 @@ export function MinimapView({ mapRef, masks, route, doneRoute, doneToM, alt, onS
       const g = glide.current;
       if (!g || !cameraRef.current) return true;
       const t = Date.now() + FOLLOW_EASE_MS;
-      const { stop, bearing } = routeFollowStep(g.route, alongAt(g, t), northUp);
+      const { navZoom: target, height: heightPt } = viewRef.current;
+      const z = followZoom.current;
+      followZoom.current = z + Math.max(-FOLLOW_ZOOM_STEP, Math.min(FOLLOW_ZOOM_STEP, target - z));
+      const { stop, bearing } = routeFollowStep(g.route, alongAt(g, t), northUp, { zoom: followZoom.current, heightPt });
       applyCameraStop(cameraRef.current, stop);
       if (northUp) setFollowBearing(bearing);
       return t - g.t0 >= NAV_CAMERA_MS;
