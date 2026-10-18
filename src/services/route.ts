@@ -68,6 +68,7 @@ interface OsrmLane {
 
 interface OsrmStep {
   geometry: string;
+  duration?: number;
   name?: string;
   ref?: string;
   destinations?: string;
@@ -105,6 +106,7 @@ export function parseOsrm(json: unknown): Route {
       roundaboutExit: st.maneuver.exit,
       lanes: lanes?.map((l) => ({ indications: l.indications.length ? l.indications : ['straight'], valid: !!l.valid })),
       beginIndex,
+      durationS: st.duration,
     };
   });
   if (coords.length < 2) throw new RouteError('no-route');

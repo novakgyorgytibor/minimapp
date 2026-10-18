@@ -158,3 +158,9 @@ test('detects toll roads from intersection classes', () => {
     for (const it of st.intersections ?? []) it.classes = (it.classes ?? []).filter((c: string) => c !== 'toll');
   expect(parseOsrm(noToll).hasToll).toBe(false);
 });
+
+test('parseOsrm keeps the per-step durations', () => {
+  const r = parseOsrm(fixture);
+  const steps = fixture.routes[0].legs[0].steps;
+  expect(r.steps.map((s) => s.durationS)).toEqual(steps.map((s: { duration: number }) => s.duration));
+});

@@ -34,6 +34,8 @@ export interface Step {
   beginIndex: number;
   /** Távolság az útvonal elejétől a manőverig (m). */
   beginDistM: number;
+  /** A lépés menetideje (s), a manővertől a következő manőverig (Valhalla). */
+  durationS?: number;
 }
 
 export interface Route {

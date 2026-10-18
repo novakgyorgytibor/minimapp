@@ -93,6 +93,27 @@ export function nearestOnRoute(pos: LngLat, route: Route, hint?: SnapHint): { al
   return { alongM: Math.min(alongM, route.distanceM), distM, pos: p };
 }
 
+/**
+ * Hátralévő menetidő: a hátralévő lépések ideje + az aktuális lépés hátralévő része (a lépésen belül arányosan).
+ * Így a városi szakasz után nem „viszi magával” a lassú átlagot az autópályára. Lépésidők nélkül arányosan a teljes időből.
+ */
+export function remainingDurationS(route: Route, distAlongM: number): number {
+  const { steps } = route;
+  if (route.distanceM <= 0) return 0;
+  if (steps.length === 0 || !steps.every((st) => Number.isFinite(st.durationS))) {
+    return route.durationS * (Math.max(0, route.distanceM - distAlongM) / route.distanceM);
+  }
+  let total = 0;
+  for (let i = 0; i < steps.length; i++) {
+    const begin = steps[i].beginDistM;
+    const end = steps[i + 1]?.beginDistM ?? route.distanceM;
+    const dur = steps[i].durationS as number;
+    if (distAlongM <= begin) total += dur;
+    else if (distAlongM < end) total += dur * ((end - distAlongM) / (end - begin));
+  }
+  return total;
+}
+
 export function snap(pos: LngLat, route: Route, hint?: SnapHint): Progress {
   const near = nearest(pos, route, hint);
   const distAlongM = Math.min(near.alongM, route.distanceM);
@@ -108,7 +129,7 @@ export function snap(pos: LngLat, route: Route, hint?: SnapHint): Progress {
   }
   const distToManeuverM = Math.max(0, route.steps[nextStepIndex].beginDistM - distAlongM);
   const remainingM = Math.max(0, route.distanceM - distAlongM);
-  const remainingS = route.distanceM > 0 ? route.durationS * (remainingM / route.distanceM) : 0;
+  const remainingS = remainingDurationS(route, distAlongM);
 
   return { distAlongM, distFromRouteM, nextStepIndex, distToManeuverM, remainingM, remainingS, snappedPos: near.pos };
 }

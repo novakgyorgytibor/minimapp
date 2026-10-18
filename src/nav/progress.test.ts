@@ -97,3 +97,28 @@ describe('out-and-back route (the same road there and back)', () => {
     expect(p.distAlongM).toBeCloseTo(corner + 10, 0);
   });
 });
+
+describe('remaining time from per-step durations', () => {
+  // Lassú első szakasz (város, 0..4: 500 s), gyors második (4..9: 100 s)
+  const timed = buildRoute(coords, 600, [
+    { kind: 'depart', instruction: 'Start', streetNames: [], beginIndex: 0, durationS: 500 },
+    { kind: 'turn', modifier: 'right', instruction: 'Turn right', streetNames: [], beginIndex: 4, durationS: 100 },
+    { kind: 'arrive', instruction: 'Arrive', streetNames: [], beginIndex: 9, durationS: 0 },
+  ]);
+
+  test('past the slow part only the fast part remains', () => {
+    const p = snap(coords[4], timed);
+    expect(p.remainingS).toBeCloseTo(100, 0);
+  });
+
+  test('inside a step its duration is prorated by the distance left in it', () => {
+    const p = snap(coords[2], timed);
+    expect(p.remainingS).toBeCloseTo(250 + 100, 0);
+    const q = snap(coords[6], timed);
+    expect(q.remainingS).toBeCloseTo(100 * ((timed.cumDistM[9] - timed.cumDistM[6]) / (timed.cumDistM[9] - timed.cumDistM[4])), 0);
+  });
+
+  test('at the destination nothing remains', () => {
+    expect(snap(coords[9], timed).remainingS).toBeCloseTo(0, 3);
+  });
+});
