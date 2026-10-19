@@ -1,4 +1,4 @@
-import { addSearch, MAX_HISTORY, parseHistory } from './history';
+import { addSearch, MAX_HISTORY, parseHistory, removeSearch } from './history';
 
 test('newest search goes to the front, duplicates move up', () => {
   let l = addSearch([], 'Keleti pályaudvar');
@@ -6,6 +6,11 @@ test('newest search goes to the front, duplicates move up', () => {
   expect(l).toEqual(['Deák tér', 'Keleti pályaudvar']);
   l = addSearch(l, '  keleti PÁLYAUDVAR ');
   expect(l).toEqual(['keleti PÁLYAUDVAR', 'Deák tér']);
+});
+
+test('remove deletes just that entry', () => {
+  expect(removeSearch(['a', 'b', 'c'], 'b')).toEqual(['a', 'c']);
+  expect(removeSearch(['a'], 'x')).toEqual(['a']);
 });
 
 test('blank query is ignored', () => {

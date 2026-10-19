@@ -19,7 +19,7 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
   const [results, setResults] = useState<Place[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'empty' | 'error'>('idle');
   const { favorites } = useFavorites();
-  const { history, add: addToHistory } = useSearchHistory();
+  const { history, add: addToHistory, remove: removeFromHistory } = useSearchHistory();
   // Amíg nem gépel, a kedvencek és alattuk a legutóbbi keresések látszanak (koppintásra újra lefut a keresés)
   const typing = q.trim().length > 0;
   const rows: Row[] = typing
@@ -73,6 +73,8 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
         <Pressable
           onPress={() => {
             Keyboard.dismiss();
+            // Volt rá találat, csak nem választott → a keresés így is bekerül az előzmények közé
+            if (typing && results.length > 0) addToHistory(q);
             onCancel();
           }}
           hitSlop={12}
@@ -92,11 +94,16 @@ export function SearchBar({ near, onPick, onCancel }: { near: LngLat | null; onP
         renderItem={({ item }) => {
           if (item.kind === 'query') {
             return (
-              <Pressable onPress={() => setQ(item.text)} style={styles.item}>
-                <Text style={styles.query} numberOfLines={1}>
-                  {item.text}
-                </Text>
-              </Pressable>
+              <View style={styles.queryRow}>
+                <Pressable onPress={() => setQ(item.text)} style={[styles.item, styles.queryItem]}>
+                  <Text style={styles.query} numberOfLines={1}>
+                    {item.text}
+                  </Text>
+                </Pressable>
+                <Pressable onPress={() => removeFromHistory(item.text)} hitSlop={12} style={styles.remove}>
+                  <Text style={styles.removeText}>✕</Text>
+                </Pressable>
+              </View>
             );
           }
           const { place, favorite } = item;
@@ -135,6 +142,10 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   name: { flexShrink: 1, color: theme.fg, fontSize: 18 },
   detail: { color: theme.dim, fontSize: 14, marginTop: 2 },
+  queryRow: { flexDirection: 'row', alignItems: 'center' },
+  queryItem: { flex: 1 },
   query: { color: theme.dim, fontSize: 18 },
+  remove: { paddingLeft: 8, paddingRight: 20, paddingVertical: 14 },
+  removeText: { color: theme.dim, fontSize: 16 },
   heart: { width: 16, height: 16, tintColor: theme.dim },
 });

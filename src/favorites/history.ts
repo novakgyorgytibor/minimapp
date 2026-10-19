@@ -8,6 +8,11 @@ export function addSearch(list: string[], query: string): string[] {
   return [q, ...list.filter((s) => s.toLocaleLowerCase() !== key)].slice(0, MAX_HISTORY);
 }
 
+/** Egy keresés törlése az előzményekből. */
+export function removeSearch(list: string[], query: string): string[] {
+  return list.filter((s) => s !== query);
+}
+
 /** A tárolt JSON ellenőrzése (sérült vagy régi adat ne törje el az appot). */
 export function parseHistory(json: string | null): string[] {
   if (!json) return [];
