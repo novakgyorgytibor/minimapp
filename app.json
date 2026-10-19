@@ -19,7 +19,7 @@
         "NSLocationWhenInUseUsageDescription": "Navigation needs your location.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "29"
+      "buildNumber": "30"
     },
     "android": {
       "package": "hu.minimapp.app",
