@@ -27,6 +27,24 @@ export const config = {
   // Ennyi legutóbbi útvonal csomagjai maradnak meg (újratervezésnél a régi is kellhet még)
   offlineKeepRoutes: 3,
 
+  // Forgalmi menetidő (TomTom, ingyenes keret: 20 000 útvonal-kérés / hó). Kulcs nélkül ki van kapcsolva.
+  // A kulcs a .env.local-ból (fejlesztés) / az EAS környezeti változójából (build) jön: EXPO_PUBLIC_TOMTOM_KEY
+  tomtomRoutingUrl: 'https://api.tomtom.com/routing/1/calculateRoute',
+  tomtomKey: process.env.EXPO_PUBLIC_TOMTOM_KEY ?? '',
+  // Navigáció közben ennyi időnként frissül; újratervezés után is legfeljebb ilyen sűrűn kérdezünk
+  trafficRefreshMs: 5 * 60_000,
+  trafficMinIntervalMs: 60_000,
+  trafficSpacingM: 100,
+  trafficMaxPoints: 1000,
+  // A TomTom által összerakott út hossza ennyire térhet el a miénktől (különben máshol ment, az ideje nem jó)
+  trafficLengthTolM: 300,
+  trafficLengthTolFraction: 0.03,
+  trafficFactorMin: 0.5,
+  trafficFactorMax: 4,
+  // Előnézetben az alternatíva ennyivel gyorsabb forgalommal → az lesz kiválasztva
+  trafficFasterMinS: 60,
+  trafficFasterFraction: 0.03,
+
   httpTimeoutMs: 10_000,
   httpRetries: 3,
   nominatimMinIntervalMs: 1_000,

@@ -9,6 +9,7 @@ import { useLocation } from './src/hooks/useLocation';
 import { useRoadSnap } from './src/hooks/useRoadSnap';
 import { useSpeedCameras } from './src/hooks/useSpeedCameras';
 import { useSpeedLimit } from './src/hooks/useSpeedLimit';
+import { useTraffic } from './src/hooks/useTraffic';
 import { isSpeeding, speedLimitVisible } from './src/services/speedLimit';
 import { alongAt, cameraFor, maskMode, NAV_CAMERA_MS, nextSpeedZoom, type AlongGlide } from './src/map/camera';
 import { MARKER_MAX_GLIDE_M } from './src/map/markerAnim';
@@ -27,8 +28,9 @@ import { nearestOnRoute } from './src/nav/progress';
 import { initialNavState, navReducer, otherPref } from './src/nav/navMachine';
 import { isAbortError } from './src/services/http';
 import { getRoute, needsTollFree, RouteError, sameRoute } from './src/services/route';
+import { altIsFaster } from './src/services/traffic';
 import { theme } from './src/theme';
-import type { LngLat, RoutePref } from './src/types';
+import type { LngLat, Route, RoutePref } from './src/types';
 import { LangProvider, useLang } from './src/i18n/LangContext';
 import { FavoritesProvider, useFavorites } from './src/favorites/FavoritesContext';
 import { findFavorite } from './src/favorites/favorites';
@@ -456,6 +458,25 @@ function Main() {
   // úton marad, nem vágja le az ívet
   const followRoute = centerArrow && onRoute && s.mode === 'auto' && s.phase !== 'arrived' ? s.route : null;
 
+  // Forgalmi menetidő (TomTom): a Valhalla-idők szorzója; előnézetben mindkét útvonalra, navigáció közben 5 percenként
+  const trafficFor = useTraffic({
+    active: s.mode === 'auto',
+    previewRoutes: s.phase === 'preview' ? [s.route, s.alt] : [null, null],
+    navRoute: s.phase === 'navigating' || s.phase === 'rerouting' ? s.route : null,
+    progress: s.progress,
+  });
+  const routeFactor = trafficFor(s.route);
+  const altFactor = trafficFor(s.alt);
+  // Ha a leggyorsabbat kértük, de forgalommal az alternatíva érdemben gyorsabb, az lesz kiválasztva (útvonalpáronként
+  // egyszer: ha a felhasználó visszavált, nem írjuk felül)
+  const trafficDecided = useRef(new WeakSet<Route>());
+  useEffect(() => {
+    if (s.phase !== 'preview' || s.loading || !s.route || !s.alt || s.pref !== 'fast') return;
+    if (routeFactor === null || altFactor === null || trafficDecided.current.has(s.route)) return;
+    trafficDecided.current.add(s.route).add(s.alt);
+    if (altIsFaster(s.route.durationS * routeFactor, s.alt.durationS * altFactor)) dispatch({ type: 'SELECT_ALT' });
+  }, [s.phase, s.loading, s.route, s.alt, s.pref, routeFactor, altFactor]);
+
   // Gyorsabban haladva (vagy nagyobb megengedett sebességnél) kijjebb zoomol, hiszterézissel
   const speedKmh = Math.max((loc.speed ?? 0) * 3.6, speedLimit ?? 0);
   const [navZoom, setNavZoom] = useState<number>(config.navZoom);
@@ -590,7 +611,7 @@ function Main() {
                 {s.route && (
                   <TripFooter
                     remainingM={s.route.distanceM}
-                    remainingS={s.route.durationS}
+                    remainingS={s.route.durationS * (routeFactor ?? 1)}
                     label={s.route.hasToll ? t('toll') : undefined}
                   />
                 )}
@@ -605,7 +626,7 @@ function Main() {
             {(s.phase === 'navigating' || s.phase === 'rerouting') && s.route && (
               <TripFooter
                 remainingM={s.progress?.remainingM ?? s.route.distanceM}
-                remainingS={s.progress?.remainingS ?? s.route.durationS}
+                remainingS={(s.progress?.remainingS ?? s.route.durationS) * (routeFactor ?? 1)}
               />
             )}
           </View>
